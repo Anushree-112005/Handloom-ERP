@@ -8,6 +8,7 @@ import {
   Filter, Download
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import MasterDropdown from '../../components/MasterDropdown';
 
 const TripPlanning = () => {
   const [trips, setTrips] = useState([]);
@@ -227,17 +228,23 @@ const TripPlanning = () => {
   if (view === 'form') {
     return (
       <div className="animate-fade">
-        <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{editingTrip ? 'Edit Trip' : 'Plan New Trip'}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setView('list')}><X size={16} /> Close</button>
-              <button type="submit" form="tripForm" className="btn btn-primary"><Save size={16} /> {editingTrip ? 'Update Trip' : 'Save Trip'}</button>
-            </div>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+          <button 
+            type="button"
+            onClick={() => setView('list')} 
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+            onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+            onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            {editingTrip ? 'Edit Trip' : 'Plan New Trip'}
+          </h2>
+        </div>
 
-          <div style={{ padding: 32, background: '#fff' }}>
-            <form id="tripForm" onSubmit={handleSubmit}>
+        <div className="card" style={{ padding: 32, background: '#fff' }}>
+          <form id="tripForm" onSubmit={handleSubmit}>
               <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Trip Information</h4>
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 <div className="form-group">
@@ -246,17 +253,21 @@ const TripPlanning = () => {
                 </div>
                 <div className="form-group">
                   <label>Vehicle *</label>
-                  <select className="form-control" name="vehicle_id" value={formData.vehicle_id} onChange={handleInputChange} required>
-                    <option value="">Select Vehicle</option>
-                    {vehicles.map(v => <option key={v.id} value={v.id}>{v.vehicle_number}</option>)}
-                  </select>
+                  <MasterDropdown
+                    value={formData.vehicle_id}
+                    onChange={(val) => setFormData({ ...formData, vehicle_id: val })}
+                    options={vehicles.map(v => ({ value: v.id, label: v.vehicle_number }))}
+                    placeholder="Select Vehicle"
+                  />
                 </div>
                 <div className="form-group">
                   <label>Driver *</label>
-                  <select className="form-control" name="driver_id" value={formData.driver_id} onChange={handleInputChange} required>
-                    <option value="">Select Driver</option>
-                    {drivers.map(d => <option key={d.id} value={d.id}>{d.driver_name}</option>)}
-                  </select>
+                  <MasterDropdown
+                    value={formData.driver_id}
+                    onChange={(val) => setFormData({ ...formData, driver_id: val })}
+                    options={drivers.map(d => ({ value: d.id, label: d.driver_name }))}
+                    placeholder="Select Driver"
+                  />
                 </div>
 
                 <div className="form-group">
@@ -285,15 +296,23 @@ const TripPlanning = () => {
                     <label>Qty (Tons) *</label>
                     <input type="number" step="0.1" className="form-control" name="quantity_tons" value={formData.quantity_tons} onChange={handleInputChange} placeholder="0" required />
                   </div>
-                  <div>
-                    <label>Rate / Ton *</label>
+                  <div className="form-group">
+                    <label>Rate Per Ton (₹) *</label>
                     <input type="number" step="0.01" className="form-control" name="rate_per_ton" value={formData.rate_per_ton} onChange={handleInputChange} placeholder="₹" required />
                   </div>
                 </div>
               </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
+                  <X size={16} /> Close
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  <Save size={16} /> {editingTrip ? 'Update Trip' : 'Save Trip'}
+                </button>
+              </div>
             </form>
           </div>
-        </div>
       </div>
     );
   }
@@ -377,13 +396,21 @@ const TripPlanning = () => {
             <span style={{ fontSize: 13, fontWeight: 600 }}>Filter:</span>
           </div>
 
-          <select className="form-control" style={{ width: 180, margin: 0 }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-            <option value="All Status">All Status</option>
-            <option value="Planned">Planned</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Completed">Completed</option>
-            <option value="Cancelled">Cancelled</option>
-          </select>
+          <div style={{ width: 180 }}>
+            <MasterDropdown
+              value={statusFilter}
+              onChange={(val) => setStatusFilter(val || 'All Status')}
+              options={[
+                { value: 'All Status', label: 'All Status' },
+                { value: 'Planned', label: 'Planned' },
+                { value: 'In Progress', label: 'In Progress' },
+                { value: 'Completed', label: 'Completed' },
+                { value: 'Cancelled', label: 'Cancelled' }
+              ]}
+              placeholder="Filter Status"
+              allowClear={false}
+            />
+          </div>
 
           <button className="btn btn-secondary" onClick={handleExportExcel} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <Download size={16} /> Export Excel

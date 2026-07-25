@@ -9,6 +9,7 @@ import {
   Cell, PieChart, Pie, Legend 
 } from 'recharts';
 import api from '../../services/api';
+import MasterDropdown from '../../components/MasterDropdown';
 import { showError } from '../../utils/notifications';
 
 const VehicleUtilization = () => {
@@ -141,26 +142,28 @@ const VehicleUtilization = () => {
         <div className="form-row">
           <div className="space-y-1.5">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Vehicle</label>
-            <select 
-              className="form-control"
+            <MasterDropdown
               value={filters.vehicleId}
-              onChange={(e) => setFilters({...filters, vehicleId: e.target.value})}
-            >
-              <option value="">All Vehicles</option>
-              {vehicles.map(v => <option key={v.id} value={v.id}>{v.vehicle_number}</option>)}
-            </select>
+              onChange={(val) => setFilters({...filters, vehicleId: val})}
+              options={[
+                { value: '', label: 'All Vehicles' },
+                ...vehicles.map(v => ({ value: v.id, label: v.vehicle_number }))
+              ]}
+              placeholder="All Vehicles"
+            />
           </div>
 
           <div className="space-y-1.5">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Driver</label>
-            <select 
-              className="form-control"
+            <MasterDropdown
               value={filters.driverId}
-              onChange={(e) => setFilters({...filters, driverId: e.target.value})}
-            >
-              <option value="">All Drivers</option>
-              {drivers.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-            </select>
+              onChange={(val) => setFilters({...filters, driverId: val})}
+              options={[
+                { value: '', label: 'All Drivers' },
+                ...drivers.map(d => ({ value: d.id, label: d.driver_name || d.name }))
+              ]}
+              placeholder="All Drivers"
+            />
           </div>
 
           <div className="space-y-1.5">

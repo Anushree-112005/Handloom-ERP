@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { storesService } from '../../services/storesService';
 import { Plus, Save, Edit2, Trash2, Search, X, Loader, Ruler, AlertCircle, ArrowLeft, CheckCircle, XCircle } from 'lucide-react';
+import MasterDropdown from '../../components/MasterDropdown';
+import { confirmDialog, alertDialog } from '../../utils/dialogs';
 
 export default function UOMMaster() {
   const [view, setView] = useState('list');
@@ -68,14 +70,20 @@ export default function UOMMaster() {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this UOM? This will soft delete the record.')) {
+    const confirmed = await confirmDialog({
+      title: 'Delete UOM',
+      message: 'Are you sure you want to delete this UOM? This will soft delete the record.',
+      type: 'delete',
+      confirmText: 'Delete'
+    });
+    if (confirmed) {
       try {
         setLoading(true);
         await storesService.deleteUOM(id);
         await fetchUOMs();
       } catch (err) {
         console.error(err);
-        alert(err.response?.data?.detail || 'Failed to delete UOM.');
+        alertDialog({ title: 'Error', message: err.response?.data?.detail || 'Failed to delete UOM.', type: 'error' });
       } finally {
         setLoading(false);
       }
@@ -94,10 +102,10 @@ export default function UOMMaster() {
     try {
       if (editingId) {
         await storesService.updateUOM(editingId, formData);
-        alert('UOM updated successfully!');
+        alertDialog({ title: 'Success', message: 'UOM updated successfully!', type: 'success' });
       } else {
         await storesService.createUOM(formData);
-        alert('UOM saved successfully!');
+        alertDialog({ title: 'Success', message: 'UOM saved successfully!', type: 'success' });
       }
       setView('list');
       await fetchUOMs();
@@ -117,27 +125,20 @@ export default function UOMMaster() {
 
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Ruler style={{ color: '#10b981' }} /> UOM Master
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Standardize units of measurements</p>
-        </div>
-        {view === 'list' && (
-          <button onClick={() => handleOpenForm()} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Plus size={16} /> Add UOM
-          </button>
-        )}
-        {view === 'form' && (
-          <button onClick={() => setView('list')} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            Back to List
-          </button>
-        )}
-      </div>
-
       {view === 'list' ? (
         <>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Ruler style={{ color: '#10b981' }} /> UOM Master
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Standardize units of measurements</p>
+            </div>
+            <button onClick={() => handleOpenForm()} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Plus size={16} /> Add UOM
+            </button>
+          </div>
+
           <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
             {stats.map((s, i) => (
               <div key={i} className="stat-card" style={{ '--stat-color': s.color }}>
@@ -303,29 +304,24 @@ export default function UOMMaster() {
                         />
                       </div>
                       <div className="form-group">
-                        <label>Measurement Category *</label>
-                        <select
+                        <MasterDropdown
+                          label="Measurement Category"
+                          name="category"
                           value={formData.category}
-                          onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                          className="form-control"
-                          required
-                        >
-                          <option value="">-- Select Category --</option>
-                          {uomCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                        </select>
+                          options={uomCategories}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
                       <div className="form-group">
-                        <label>Status *</label>
-                        <select
+                        <MasterDropdown
+                          label="Status"
+                          name="status"
                           value={formData.status}
-                          onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                          className="form-control"
-                          required
-                        >
-                          <option value="">-- Select Status --</option>
-                          <option value="Active">Active</option>
-                          <option value="Inactive">Inactive</option>
-                        </select>
+                          options={['Active', 'Inactive']}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
                       <div className="form-group" style={{ gridColumn: 'span 3' }}>
                         <label>Description</label>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Wrench, Search, Filter, Edit2, Trash2, X, Save, Calendar, DollarSign } from 'lucide-react';
+import { Plus, Wrench, Search, Filter, Edit2, Trash2, X, Save, Calendar, DollarSign, ArrowLeft } from 'lucide-react';
 import api from '../../services/api';
+import MasterDropdown from '../../components/MasterDropdown';
 import { showError, showSuccess } from '../../utils/notifications';
 import { showConfirm } from '../../components/ConfirmDialog';
 
@@ -136,37 +137,53 @@ export default function MaintenanceLog() {
   if (view === 'form') {
     return (
       <div className="animate-fade">
-        <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{editingId ? 'Edit Maintenance Log' : 'New Maintenance Log'}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setView('list')}><X size={16} /> Close</button>
-              <button type="submit" form="logForm" className="btn btn-primary"><Save size={16} /> Save Log</button>
-            </div>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+          <button 
+            type="button"
+            onClick={() => setView('list')} 
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+            onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+            onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            {editingId ? 'Edit Maintenance Log' : 'New Maintenance Log'}
+          </h2>
+        </div>
 
-          <div style={{ padding: 32 }}>
-            <form id="logForm" onSubmit={handleSubmit}>
+        <div className="card" style={{ padding: 32, background: '#fff' }}>
+          <form id="logForm" onSubmit={handleSubmit}>
               <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Maintenance Details</h4>
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 <div className="form-group">
                   <label>Vehicle *</label>
-                  <select className="form-control" name="vehicle_id" value={formData.vehicle_id} onChange={handleInputChange} required>
-                    <option value="">-- Select Vehicle --</option>
-                    {vehicles.map(v => <option key={v.id} value={v.id}>{v.vehicle_number}</option>)}
-                  </select>
+                  <MasterDropdown
+                    value={formData.vehicle_id}
+                    onChange={(val) => setFormData({ ...formData, vehicle_id: val })}
+                    options={vehicles.map(v => ({ value: v.id, label: v.vehicle_number }))}
+                    placeholder="Select Vehicle"
+                  />
                 </div>
                 <div className="form-group">
                   <label>Maintenance Type *</label>
-                  <select className="form-control" name="maintenance_type" value={formData.maintenance_type} onChange={handleInputChange} required>
-                    {maintenanceTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
+                  <MasterDropdown
+                    entity="maintenance_type"
+                    value={formData.maintenance_type}
+                    onChange={(val) => setFormData({ ...formData, maintenance_type: val })}
+                    options={maintenanceTypes.map(t => ({ value: t, label: t }))}
+                    placeholder="Select Maintenance Type"
+                  />
                 </div>
                 <div className="form-group">
                   <label>Status *</label>
-                  <select className="form-control" name="status" value={formData.status} onChange={handleInputChange} required>
-                    {statuses.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
+                  <MasterDropdown
+                    entity="maintenance_status"
+                    value={formData.status}
+                    onChange={(val) => setFormData({ ...formData, status: val })}
+                    options={statuses.map(s => ({ value: s, label: s }))}
+                    placeholder="Select Status"
+                  />
                 </div>
 
                 <div className="form-group">
@@ -187,9 +204,17 @@ export default function MaintenanceLog() {
                   <textarea className="form-control" name="work_description" value={formData.work_description} onChange={handleInputChange} rows="4" style={{ resize: 'vertical' }}></textarea>
                 </div>
               </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
+                  <X size={16} /> Close
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  <Save size={16} /> {editingId ? 'Update Log' : 'Save Log'}
+                </button>
+              </div>
             </form>
           </div>
-        </div>
       </div>
     );
   }
@@ -264,10 +289,18 @@ export default function MaintenanceLog() {
           <Filter size={16} />
           <span style={{ fontSize: 13, fontWeight: 600 }}>Status:</span>
         </div>
-        <select className="form-control" style={{ width: 150, margin: 0 }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-          <option value="All Status">All Status</option>
-          {statuses.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
+        <div style={{ width: 180 }}>
+          <MasterDropdown
+            value={statusFilter}
+            onChange={(val) => setStatusFilter(val || 'All Status')}
+            options={[
+              { value: 'All Status', label: 'All Status' },
+              ...statuses.map(s => ({ value: s, label: s }))
+            ]}
+            placeholder="Filter Status"
+            allowClear={false}
+          />
+        </div>
       </div>
 
       {/* Split Layout */}

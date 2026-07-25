@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Truck, Phone, MapPin, DollarSign, Star, Calendar, ArrowLeft, Save, X, Edit2, Trash2 } from 'lucide-react';
+import MasterDropdown from '../../components/MasterDropdown';
+import { confirmDialog } from '../../utils/dialogs';
 
 const TransportVendorList = () => {
   const [vendors, setVendors] = useState([]);
@@ -111,8 +113,14 @@ const TransportVendorList = () => {
     backToList();
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this vendor?')) {
+  const handleDelete = async (id) => {
+    const confirmed = await confirmDialog({
+      title: 'Delete Vendor',
+      message: 'Are you sure you want to delete this transport vendor? This action cannot be undone.',
+      type: 'delete',
+      confirmText: 'Delete'
+    });
+    if (confirmed) {
       setVendors(vendors.filter(v => v.id !== id));
     }
   };
@@ -141,52 +149,25 @@ const TransportVendorList = () => {
   // Form View
   if (mode === 'form') {
     return (
-      <div className="min-h-screen bg-slate-50">
-        {/* Sticky Header */}
-        <div className="btn btn-secondary">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={backToList}
-                  className="btn btn-secondary"
-                >
-                  <ArrowLeft size={20} />
-                </button>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-xl font-semibold text-slate-900">
-                    {editingVendor ? 'Edit Vendor' : 'New Vendor'}
-                  </h1>
-                  <span className="btn btn-danger">
-                    Not Saved
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={backToList}
-                  className="btn btn-secondary"
-                >
-                  <X size={16} />
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  className="flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-700"
-                >
-                  <Save size={16} />
-                  Save
-                </button>
-              </div>
-            </div>
-          </div>
+      <div className="animate-fade">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+          <button 
+            type="button"
+            onClick={backToList} 
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+            onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+            onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            {editingVendor ? 'Edit Vendor' : 'New Vendor'}
+          </h2>
         </div>
 
-        {/* Form Content */}
-        <div className="p-6">
-          <div className="mx-auto max-w-4xl">
-            <div className="btn btn-secondary">
-              <form onSubmit={handleSubmit} className="form-row">
+        <div className="card" style={{ padding: 32, background: '#fff' }}>
+          <form onSubmit={handleSubmit}>
+            <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Vendor Name *</label>
                   <input
@@ -310,16 +291,13 @@ const TransportVendorList = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Payment Terms *</label>
-                  <select
-                    required
+                  <MasterDropdown
+                    entity="payment_terms"
                     value={formData.paymentTerms}
-                    onChange={(e) => setFormData({...formData, paymentTerms: e.target.value})}
-                    className="form-control"
-                  >
-                    {paymentTermsOptions.map(term => (
-                      <option key={term.value} value={term.value}>{term.label}</option>
-                    ))}
-                  </select>
+                    onChange={(val) => setFormData({...formData, paymentTerms: val})}
+                    options={paymentTermsOptions.map(term => ({ value: term.value, label: term.label }))}
+                    placeholder="Select Payment Terms"
+                  />
                 </div>
 
                 <div className="md:col-span-2">
@@ -332,9 +310,17 @@ const TransportVendorList = () => {
                     className="form-control"
                   />
                 </div>
-              </form>
             </div>
-          </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+              <button type="button" className="btn btn-secondary" onClick={backToList}>
+                <X size={16} /> Cancel
+              </button>
+              <button type="submit" className="btn btn-primary">
+                <Save size={16} /> {editingVendor ? 'Update Vendor' : 'Save Vendor'}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     );

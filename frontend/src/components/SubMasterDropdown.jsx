@@ -61,7 +61,12 @@ export default function SubMasterDropdown({
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleOutsideClick = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target) &&
+        !e.target.closest('.master-dropdown-portal') &&
+        !e.target.closest('.submaster-dropdown-portal')
+      ) {
         setIsOpen(false);
         setEditingId(null);
         setAddingMode(false);
@@ -271,6 +276,7 @@ export default function SubMasterDropdown({
       {/* Floating Dropdown Menu */}
       {isOpen && !disabled && dropdownCoords && createPortal(
         <div
+          className="submaster-dropdown-portal"
           style={{
             position: 'absolute',
             top: `${dropdownCoords.top + 4}px`,

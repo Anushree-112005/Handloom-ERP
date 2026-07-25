@@ -10,6 +10,7 @@ import {
   ShieldCheck, UploadCloud, X, Tag, IndianRupee, Package, Save, Printer,
   FileSpreadsheet, ArrowLeft
 } from 'lucide-react';
+import MasterDropdown from '../../components/MasterDropdown';
 
 /* ─── helpers ─── */
 const statusColor = {
@@ -806,17 +807,14 @@ export default function QuotationEntry() {
                       <div className="form-group">
                         <label className="font-semibold text-slate-700 text-xs mb-1.5 block">Supplier / Vendor *</label>
                         <div className="flex gap-2">
-                          <select
-                            className="form-control"
+                          <MasterDropdown
+                            label=""
+                            name="vendor_id"
                             value={formData.vendor_id}
-                            onChange={e => setFormData(prev => ({ ...prev, vendor_id: e.target.value }))}
-                            required
-                          >
-                            <option value="">-- Select Supplier --</option>
-                            {vendors.map(v => (
-                              <option key={v.vendor_id} value={v.vendor_id}>{v.vendor_name}</option>
-                            ))}
-                          </select>
+                            options={vendors.map(v => ({...v, name: v.vendor_name, id: v.vendor_id}))}
+                            required={true}
+                            onChange={(name, val) => setFormData(prev => ({ ...prev, [name]: val }))}
+                          />
                           <button
                             type="button"
                             className="btn btn-secondary px-3"
@@ -946,17 +944,13 @@ export default function QuotationEntry() {
                               />
                             </td>
                             <td className="px-4 py-3">
-                              <select
-                                className="form-control"
+                              <MasterDropdown
+                                label=""
+                                name="gst_percentage"
                                 value={item.gst_percentage}
-                                onChange={e => handleItemFieldChange(idx, 'gst_percentage', e.target.value)}
-                              >
-                                <option value="0">0%</option>
-                                <option value="5">5%</option>
-                                <option value="12">12%</option>
-                                <option value="18">18%</option>
-                                <option value="28">28%</option>
-                              </select>
+                                options={['0', '5', '12', '18', '28']}
+                                onChange={(name, val) => handleItemFieldChange(idx, name, val)}
+                              />
                             </td>
                             <td className="px-4 py-3 text-right">
                               <input

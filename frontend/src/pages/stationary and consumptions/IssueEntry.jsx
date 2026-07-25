@@ -4,6 +4,7 @@ import {
   Plus, Trash2, Search, RefreshCw, FileText, CheckCircle,
   AlertCircle, Package, Users, Building2, Loader2, Save, X, ArrowLeft
 } from 'lucide-react';
+import MasterDropdown from '../../components/MasterDropdown';
 
 export default function IssueEntry() {
   const [view, setView] = useState('list');
@@ -394,50 +395,37 @@ export default function IssueEntry() {
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                       <div className="form-group">
                         <label>Department Selection *</label>
-                        <select
+                        <MasterDropdown
+                          label=""
+                          name="requesting_department_id"
                           value={formData.requesting_department_id}
-                          onChange={e => setFormData({ ...formData, requesting_department_id: e.target.value })}
-                          required
-                          disabled={deptLoading || departments.length === 0}
-                          className="form-control"
-                        >
-                          <option value="">-- Select a Department --</option>
-                          {filteredDepts.map(dept => (
-                            <option key={dept.id} value={dept.id}>
-                              {dept.department_name}
-                              {dept.department_code ? ` (${dept.department_code})` : ''}
-                            </option>
-                          ))}
-                        </select>
+                          options={filteredDepts.map(dept => ({...dept, name: `${dept.department_name}${dept.department_code ? ` (${dept.department_code})` : ''}`}))}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
 
                       <div className="form-group">
                         <label>Issued By *</label>
-                        <select
+                        <MasterDropdown
+                          label=""
+                          name="issued_by_id"
                           value={formData.issued_by_id}
-                          onChange={e => setFormData({ ...formData, issued_by_id: e.target.value })}
-                          required
-                          className="form-control"
-                        >
-                          <option value="">-- Select Issuer --</option>
-                          {employees.map(emp => (
-                            <option key={emp.id} value={emp.id}>{emp.name}</option>
-                          ))}
-                        </select>
+                          options={employees}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
 
                       <div className="form-group">
                         <label>Received By</label>
-                        <select
+                        <MasterDropdown
+                          label=""
+                          name="received_by_id"
                           value={formData.received_by_id}
-                          onChange={e => setFormData({ ...formData, received_by_id: e.target.value })}
-                          className="form-control"
-                        >
-                          <option value="">-- Select Receiver --</option>
-                          {employees.map(emp => (
-                            <option key={emp.id} value={emp.id}>{emp.name}</option>
-                          ))}
-                        </select>
+                          options={employees}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
 
                       <div className="form-group" style={{ gridColumn: 'span 3' }}>
@@ -494,20 +482,14 @@ export default function IssueEntry() {
                                 <tr key={idx} style={{ background: stockOk ? 'transparent' : 'rgba(245, 158, 11, 0.05)' }}>
                                   <td style={{ fontWeight: 600, color: 'var(--text-muted)' }}>{idx + 1}</td>
                                   <td>
-                                    <select
+                                    <MasterDropdown
+                                      label=""
+                                      name="item_id"
                                       value={item.item_id}
-                                      onChange={e => handleItemChange(idx, e.target.value)}
-                                      required
-                                      className="form-control"
-                                      style={{ margin: 0, minWidth: 200 }}
-                                    >
-                                      <option value="">-- Select Item --</option>
-                                      {itemsList.map(i => (
-                                        <option key={i.id} value={i.id}>
-                                          {i.item_code} — {i.item_name}
-                                        </option>
-                                      ))}
-                                    </select>
+                                      options={itemsList.map(i => ({...i, name: `${i.item_code} — ${i.item_name}`}))}
+                                      required={true}
+                                      onChange={(name, val) => handleItemChange(idx, val)}
+                                    />
                                   </td>
                                   <td style={{ textAlign: 'center' }}>
                                     {dbItem ? (
@@ -532,21 +514,17 @@ export default function IssueEntry() {
                                     )}
                                   </td>
                                   <td>
-                                    <select
+                                    <MasterDropdown
+                                      label=""
+                                      name="warehouse_id"
                                       value={item.warehouse_id}
-                                      onChange={e => {
+                                      options={warehouses.map(w => ({...w, name: w.warehouse_name}))}
+                                      onChange={(name, val) => {
                                         const updated = [...formData.items];
-                                        updated[idx].warehouse_id = e.target.value;
+                                        updated[idx].warehouse_id = val;
                                         setFormData({ ...formData, items: updated });
                                       }}
-                                      className="form-control"
-                                      style={{ margin: 0 }}
-                                    >
-                                      <option value="">-- Warehouse --</option>
-                                      {warehouses.map(w => (
-                                        <option key={w.id} value={w.id}>{w.warehouse_name}</option>
-                                      ))}
-                                    </select>
+                                    />
                                   </td>
                                   <td>
                                     <input

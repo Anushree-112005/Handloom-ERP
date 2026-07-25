@@ -1,6 +1,20 @@
-export const showConfirm = ({ title, description, confirmText, cancelText }) => {
-  return new Promise((resolve) => {
-    const result = window.confirm(`${title}\n\n${description}`);
-    resolve(result);
-  });
+import ConfirmationModal from './ConfirmationModal';
+import { 
+  showConfirm, 
+  showAlert, 
+  showPrompt, 
+  confirmDialog, 
+  alertDialog, 
+  promptDialog 
+} from '../utils/dialogs';
+
+export {
+  showConfirm,
+  showAlert,
+  showPrompt,
+  confirmDialog,
+  alertDialog,
+  promptDialog
 };
+
+export default ConfirmationModal;

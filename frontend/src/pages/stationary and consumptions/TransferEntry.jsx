@@ -4,6 +4,7 @@ import {
   Plus, Trash2, Search, RefreshCw, CheckCircle, AlertCircle,
   Loader2, Package, ArrowRightLeft, Warehouse, Users, Save, X, ArrowLeft
 } from 'lucide-react';
+import MasterDropdown from '../../components/MasterDropdown';
 
 const statusColors = {
   'Completed': 'bg-emerald-50 text-emerald-600',
@@ -317,26 +318,38 @@ export default function TransferEntry() {
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                       <div className="form-group">
                         <label>From Warehouse *</label>
-                        <select value={formData.source_warehouse_id} onChange={e => setFormData({ ...formData, source_warehouse_id: e.target.value })} required className="form-control">
-                          <option value="">-- Select Source --</option>
-                          {warehouses.map(w => <option key={w.id} value={w.id}>{w.warehouse_name}</option>)}
-                        </select>
+                        <MasterDropdown
+                          label=""
+                          name="source_warehouse_id"
+                          value={formData.source_warehouse_id}
+                          options={warehouses.map(w => ({...w, name: w.warehouse_name}))}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
 
                       <div className="form-group">
                         <label>To Warehouse *</label>
-                        <select value={formData.destination_warehouse_id} onChange={e => setFormData({ ...formData, destination_warehouse_id: e.target.value })} required className={`form-control ${sameSrc ? 'border-red-300 bg-red-50' : ''}`}>
-                          <option value="">-- Select Destination --</option>
-                          {warehouses.filter(w => w.id !== parseInt(formData.source_warehouse_id)).map(w => <option key={w.id} value={w.id}>{w.warehouse_name}</option>)}
-                        </select>
+                        <MasterDropdown
+                          label=""
+                          name="destination_warehouse_id"
+                          value={formData.destination_warehouse_id}
+                          options={warehouses.filter(w => w.id !== parseInt(formData.source_warehouse_id)).map(w => ({...w, name: w.warehouse_name}))}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
 
                       <div className="form-group">
                         <label>Transferred By *</label>
-                        <select value={formData.transferred_by_id} onChange={e => setFormData({ ...formData, transferred_by_id: e.target.value })} required className="form-control">
-                          <option value="">-- Select Operator --</option>
-                          {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
-                        </select>
+                        <MasterDropdown
+                          label=""
+                          name="transferred_by_id"
+                          value={formData.transferred_by_id}
+                          options={employees}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
                     </div>
 
@@ -380,11 +393,13 @@ export default function TransferEntry() {
                                 <tr key={idx} style={{ background: insufficient ? 'rgba(239, 68, 68, 0.05)' : 'transparent' }}>
                                   <td style={{ fontWeight: 600, color: 'var(--text-muted)' }}>{idx + 1}</td>
                                   <td>
-                                    <select value={item.item_id} onChange={e => handleItemChange(idx, e.target.value)}
-                                      className="form-control" style={{ margin: 0, minWidth: 200 }}>
-                                      <option value="">-- Select Item --</option>
-                                      {itemsList.map(i => <option key={i.id} value={i.id}>{i.item_code} — {i.item_name}</option>)}
-                                    </select>
+                                    <MasterDropdown
+                                      label=""
+                                      name="item_id"
+                                      value={item.item_id}
+                                      options={itemsList.map(i => ({...i, name: `${i.item_code} — ${i.item_name}`}))}
+                                      onChange={(name, val) => handleItemChange(idx, val)}
+                                    />
                                   </td>
                                   <td style={{ textAlign: 'center' }}>
                                     <span style={{ display: 'inline-block', padding: '4px 8px', borderRadius: '4px', fontSize: '13px', fontWeight: '700', background: db?.current_stock > 0 ? '#ecfdf5' : '#fef2f2', color: db?.current_stock > 0 ? '#059669' : '#dc2626' }}>

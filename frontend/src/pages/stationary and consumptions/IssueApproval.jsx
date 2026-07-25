@@ -37,22 +37,17 @@ export default function IssueApproval() {
 
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Check style={{ color: '#6366f1' }} /> Store Issue Voucher Approval
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Review and authorize store issue slips before stock release</p>
-        </div>
-        {view === 'form' && (
-          <button onClick={() => setView('list')} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            Back to List
-          </button>
-        )}
-      </div>
-
       {view === 'list' ? (
         <>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Check style={{ color: '#6366f1' }} /> Store Issue Voucher Approval
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Review and authorize store issue slips before stock release</p>
+            </div>
+          </div>
+
           <div className="stats-grid">
             {stats.map((s, i) => (
               <div key={i} className="stat-card" style={{ '--stat-color': s.color }}>

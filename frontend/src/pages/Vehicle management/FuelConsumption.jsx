@@ -7,6 +7,7 @@ import {
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import MasterDropdown from '../../components/MasterDropdown';
 import api from '../../services/api';
 import { showError } from '../../utils/notifications';
 
@@ -363,27 +364,29 @@ const FuelConsumption = () => {
         </div>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', flex: 1, justifyContent: 'flex-end' }}>
-          <select 
-            name="vehicle_id" 
-            value={filters.vehicle_id} 
-            onChange={handleFilterChange} 
-            className="form-control"
-            style={{ width: 180, margin: 0, height: 38 }}
-          >
-            <option value="">All Vehicles</option>
-            {vehicles.map(v => <option key={v.id} value={v.id}>{v.vehicle_number}</option>)}
-          </select>
+          <div style={{ width: 180 }}>
+            <MasterDropdown
+              value={filters.vehicle_id}
+              onChange={(val) => setFilters({...filters, vehicle_id: val})}
+              options={[
+                { value: '', label: 'All Vehicles' },
+                ...vehicles.map(v => ({ value: v.id, label: v.vehicle_number }))
+              ]}
+              placeholder="All Vehicles"
+            />
+          </div>
           
-          <select 
-            name="driver_id" 
-            value={filters.driver_id} 
-            onChange={handleFilterChange} 
-            className="form-control"
-            style={{ width: 180, margin: 0, height: 38 }}
-          >
-            <option value="">All Drivers</option>
-            {drivers.map(d => <option key={d.id} value={d.id}>{d.driver_name}</option>)}
-          </select>
+          <div style={{ width: 180 }}>
+            <MasterDropdown
+              value={filters.driver_id}
+              onChange={(val) => setFilters({...filters, driver_id: val})}
+              options={[
+                { value: '', label: 'All Drivers' },
+                ...drivers.map(d => ({ value: d.id, label: d.driver_name || d.name }))
+              ]}
+              placeholder="All Drivers"
+            />
+          </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>From:</span>

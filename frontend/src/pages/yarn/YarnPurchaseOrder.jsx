@@ -818,6 +818,9 @@ export default function YarnPurchaseOrder() {
             ...taxUpdates
           }));
           return;
+        } else {
+          setForm(prev => ({ ...prev, design_no: value }));
+          return;
         }
       } else {
         setForm(prev => ({ ...prev, design_no: '' }));
@@ -912,6 +915,9 @@ export default function YarnPurchaseOrder() {
             indent_details: newIndentDetails.length > 0 ? newIndentDetails : form.indent_details,
             ...taxUpdates
           }));
+          return;
+        } else {
+          setForm(prev => ({ ...prev, against_ref: value }));
           return;
         }
       }

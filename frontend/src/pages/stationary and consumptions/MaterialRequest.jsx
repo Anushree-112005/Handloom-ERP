@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { storesService } from '../../services/storesService';
 import { Plus, Save, Trash2, X, FileText, Clock, CheckCircle, AlertTriangle, Loader, AlertCircle, Search, ArrowLeft } from 'lucide-react';
+import MasterDropdown from '../../components/MasterDropdown';
 
 export default function MaterialRequest() {
   const [view, setView] = useState('list');
@@ -396,16 +397,15 @@ export default function MaterialRequest() {
                     </h4>
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                       <div className="form-group">
-                        <label>Department *</label>
-                        <select
+                        <MasterDropdown
+                          label="Department"
+                          name="department_id"
+                          entityType="department"
                           value={formData.department_id}
-                          required
-                          onChange={(e) => setFormData({ ...formData, department_id: e.target.value })}
-                          className="form-control"
-                        >
-                          <option value="">-- Select Department --</option>
-                          {departments.map(d => <option key={d.id} value={d.id}>{d.department_name}</option>)}
-                        </select>
+                          options={departments}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
                       <div className="form-group">
                         <label>Requested By *</label>
@@ -423,67 +423,57 @@ export default function MaterialRequest() {
                     </h4>
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                       <div className="form-group">
-                        <label>Material Category *</label>
-                        <select
+                        <MasterDropdown
+                          label="Material Category"
+                          name="category_id"
+                          entityType="category"
                           value={formData.category_id}
-                          required
-                          onChange={(e) => setFormData({ ...formData, category_id: e.target.value, item_id: '' })}
-                          className="form-control"
-                        >
-                          <option value="">-- Select Category --</option>
-                          {categories.map(c => <option key={c.id} value={c.id}>{c.category_name}</option>)}
-                        </select>
+                          options={categories}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, category_id: val, item_id: '' })}
+                        />
                       </div>
                       <div className="form-group">
-                        <label>Material/Item Requested *</label>
-                        <select
+                        <MasterDropdown
+                          label="Material/Item Requested"
+                          name="item_id"
+                          entityType="item"
                           value={formData.item_id}
-                          required
-                          onChange={(e) => handleItemSelect(e.target.value)}
-                          className="form-control"
-                        >
-                          <option value="">-- Choose Item --</option>
-                          {filteredItemsDropdown.map(i => (
-                            <option key={i.id} value={i.id}>{i.item_name} [{i.item_code}] (Stock: {i.current_stock})</option>
-                          ))}
-                        </select>
+                          options={filteredItemsDropdown.map(i => ({...i, item_name: `${i.item_name} [${i.item_code}] (Stock: ${i.current_stock})`}))}
+                          required={true}
+                          onChange={(name, val) => handleItemSelect(val)}
+                        />
                       </div>
                       <div className="form-group">
-                        <label>Unit of Measure (UOM) *</label>
-                        <select
+                        <MasterDropdown
+                          label="Unit of Measure (UOM)"
+                          name="uom_id"
+                          entityType="uom"
                           value={formData.uom_id}
-                          required
-                          onChange={(e) => setFormData({ ...formData, uom_id: e.target.value })}
-                          className="form-control"
-                        >
-                          <option value="">-- Select UOM --</option>
-                          {uoms.map(u => <option key={u.id} value={u.id}>{u.uom_name} ({u.symbol || u.uom_code})</option>)}
-                        </select>
+                          options={uoms}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
                       <div className="form-group">
-                        <label>Suggested Supplier / Vendor</label>
-                        <select
+                        <MasterDropdown
+                          label="Suggested Supplier / Vendor"
+                          name="vendor_id"
+                          entityType="vendor"
                           value={formData.vendor_id}
-                          onChange={(e) => setFormData({ ...formData, vendor_id: e.target.value })}
-                          className="form-control"
-                        >
-                          <option value="">-- Select Vendor --</option>
-                          {vendors.map(v => <option key={v.id} value={v.id}>{v.vendor_name}</option>)}
-                        </select>
+                          options={vendors}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
                       <div className="form-group">
-                        <label>Priority *</label>
-                        <select
+                        <MasterDropdown
+                          label="Priority"
+                          name="priority"
                           value={formData.priority}
-                          required
-                          onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                          className="form-control"
-                        >
-                          <option value="">-- Select Priority --</option>
-                          <option value="Low">Low</option>
-                          <option value="Medium">Medium</option>
-                          <option value="High">High</option>
-                        </select>
+                          options={['Low', 'Medium', 'High']}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
                       <div className="form-group">
                         <label>Quantity Requested *</label>

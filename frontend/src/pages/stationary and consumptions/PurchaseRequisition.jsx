@@ -6,6 +6,7 @@ import {
   MapPin, Printer, Download, Sparkles, Building, Box, Users, ChevronRight, Check, X, Shield, RefreshCw,
   Save, Loader, ArrowLeft
 } from 'lucide-react';
+import MasterDropdown from '../../components/MasterDropdown';
 
 export default function PurchaseRequisition() {
   // Navigation tabs: 'list', 'new', 'view', 'analytics'
@@ -184,13 +185,18 @@ export default function PurchaseRequisition() {
 
   // Handle requester employee selection -> auto fill department details
   const handleEmployeeChange = (empId) => {
-    const emp = masters.employees.find(e => e.id === parseInt(empId));
+    const emp = masters.employees.find(e => e.id === parseInt(empId) || e.id.toString() === empId.toString());
     if (emp) {
       const deptObj = masters.departments.find(d => d.department_name === emp.department);
       setForm(prev => ({
         ...prev,
         requester_id: empId,
         department_id: deptObj ? deptObj.id : prev.department_id
+      }));
+    } else {
+      setForm(prev => ({
+        ...prev,
+        requester_id: empId
       }));
     }
   };
@@ -818,31 +824,22 @@ export default function PurchaseRequisition() {
                         />
                       </div>
                       <div className="form-group">
-                        <label>Type</label>
-                        <select
+                        <MasterDropdown
+                          label="Type"
+                          name="request_type"
                           value={form.request_type}
-                          onChange={(e) => setForm(prev => ({ ...prev, request_type: e.target.value }))}
-                          className="form-control"
-                        >
-                          <option value="">-- Select Type --</option>
-                          <option value="Normal">Normal</option>
-                          <option value="Urgent">Urgent</option>
-                          <option value="Emergency">Emergency</option>
-                        </select>
+                          options={['Normal', 'Urgent', 'Emergency']}
+                          onChange={(name, val) => setForm(prev => ({ ...prev, [name]: val }))}
+                        />
                       </div>
                       <div className="form-group">
-                        <label>Priority</label>
-                        <select
+                        <MasterDropdown
+                          label="Priority"
+                          name="priority"
                           value={form.priority}
-                          onChange={(e) => setForm(prev => ({ ...prev, priority: e.target.value }))}
-                          className="form-control"
-                        >
-                          <option value="">-- Select Priority --</option>
-                          <option value="Low">Low</option>
-                          <option value="Medium">Medium</option>
-                          <option value="High">High</option>
-                          <option value="Critical">Critical</option>
-                        </select>
+                          options={['Low', 'Medium', 'High', 'Critical']}
+                          onChange={(name, val) => setForm(prev => ({ ...prev, [name]: val }))}
+                        />
                       </div>
                       <div className="form-group" style={{ gridColumn: 'span 3' }}>
                         <label>General Description</label>
@@ -861,45 +858,34 @@ export default function PurchaseRequisition() {
                     </h4>
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                       <div className="form-group">
-                        <label>Employee Requisitioner *</label>
-                        <select
+                        <MasterDropdown
+                          label="Employee Requisitioner"
+                          name="requester_id"
                           value={form.requester_id}
-                          onChange={(e) => handleEmployeeChange(e.target.value)}
-                          className="form-control"
-                          required
-                        >
-                          <option value="">-- Select Employee --</option>
-                          {masters.employees.map(e => (
-                            <option key={e.id} value={e.id}>{e.employee_code} - {e.name}</option>
-                          ))}
-                        </select>
+                          options={masters.employees.map(e => ({...e, name: `${e.employee_code} - ${e.name}`}))}
+                          required={true}
+                          onChange={(name, val) => handleEmployeeChange(val)}
+                        />
                       </div>
                       <div className="form-group">
-                        <label>Department</label>
-                        <select
+                        <MasterDropdown
+                          label="Department"
+                          name="department_id"
+                          entityType="department"
                           value={form.department_id}
-                          onChange={(e) => setForm(prev => ({ ...prev, department_id: e.target.value }))}
-                          className="form-control"
-                        >
-                          <option value="">-- Select Department --</option>
-                          {masters.departments.map(d => (
-                            <option key={d.id} value={d.id}>{d.department_name}</option>
-                          ))}
-                        </select>
+                          options={masters.departments}
+                          onChange={(name, val) => setForm(prev => ({ ...prev, [name]: val }))}
+                        />
                       </div>
                       <div className="form-group">
-                        <label>Cost Center *</label>
-                        <select
+                        <MasterDropdown
+                          label="Cost Center"
+                          name="cost_center_id"
                           value={form.cost_center_id}
-                          onChange={(e) => setForm(prev => ({ ...prev, cost_center_id: e.target.value }))}
-                          required
-                          className="form-control"
-                        >
-                          <option value="">-- Select Cost Center --</option>
-                          {masters.costCenters.map(c => (
-                            <option key={c.id} value={c.id}>{c.code} - {c.name}</option>
-                          ))}
-                        </select>
+                          options={masters.costCenters.map(c => ({...c, name: `${c.code} - ${c.name}`}))}
+                          required={true}
+                          onChange={(name, val) => setForm(prev => ({ ...prev, [name]: val }))}
+                        />
                       </div>
                       <div className="form-group">
                         <label>Branch / Factory</label>
@@ -968,44 +954,36 @@ export default function PurchaseRequisition() {
                             className="form-control"
                           />
                         ) : (
-                          <select
+                          <MasterDropdown
+                            label=""
+                            name="item_id"
+                            entityType="item"
                             value={row.item_id}
-                            onChange={(e) => handleItemChange(index, 'item_id', e.target.value)}
-                            required
-                            className="form-control"
-                          >
-                            <option value="">-- Select Item Code --</option>
-                            {masters.items.map(i => (
-                              <option key={i.id} value={i.id}>{i.item_code} - {i.item_name}</option>
-                            ))}
-                          </select>
+                            options={masters.items.map(i => ({...i, name: `${i.item_code} - ${i.item_name}`}))}
+                            required={true}
+                            onChange={(name, val) => handleItemChange(index, name, val)}
+                          />
                         )}
                       </div>
                       <div className="form-group">
-                        <label>UOM</label>
-                        <select
+                        <MasterDropdown
+                          label="UOM"
+                          name="uom_id"
+                          entityType="uom"
                           value={row.uom_id}
-                          onChange={(e) => handleItemChange(index, 'uom_id', e.target.value)}
-                          className="form-control"
-                        >
-                          <option value="">-- Select UOM --</option>
-                          {masters.uoms.map(u => (
-                            <option key={u.id} value={u.id}>{u.uom_name}</option>
-                          ))}
-                        </select>
+                          options={masters.uoms}
+                          onChange={(name, val) => handleItemChange(index, name, val)}
+                        />
                       </div>
                       <div className="form-group">
-                        <label>Category</label>
-                        <select
+                        <MasterDropdown
+                          label="Category"
+                          name="category_id"
+                          entityType="category"
                           value={row.category_id}
-                          onChange={(e) => handleItemChange(index, 'category_id', e.target.value)}
-                          className="form-control"
-                        >
-                          <option value="">-- Select Category --</option>
-                          {masters.categories.map(c => (
-                            <option key={c.id} value={c.id}>{c.category_name}</option>
-                          ))}
-                        </select>
+                          options={masters.categories}
+                          onChange={(name, val) => handleItemChange(index, name, val)}
+                        />
                       </div>
                       <div className="form-group">
                         <label>Qty Requested *</label>
@@ -1051,17 +1029,13 @@ export default function PurchaseRequisition() {
 
                     <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 16, marginTop: 16 }}>
                       <div className="form-group">
-                        <label style={{ fontSize: 11, color: 'var(--text-muted)' }}>WAREHOUSE LOCATION</label>
-                        <select
+                        <MasterDropdown
+                          label="WAREHOUSE LOCATION"
+                          name="warehouse_id"
                           value={row.warehouse_id}
-                          onChange={(e) => handleItemChange(index, 'warehouse_id', e.target.value)}
-                          className="form-control"
-                        >
-                          <option value="">-- Select Warehouse --</option>
-                          {masters.warehouses.map(w => (
-                            <option key={w.id} value={w.id}>{w.warehouse_name}</option>
-                          ))}
-                        </select>
+                          options={masters.warehouses.map(w => ({...w, name: w.warehouse_name}))}
+                          onChange={(name, val) => handleItemChange(index, name, val)}
+                        />
                       </div>
                       <div className="form-group">
                         <label style={{ fontSize: 11, color: 'var(--text-muted)' }}>RACK / BIN LOCATION</label>
@@ -1103,21 +1077,17 @@ export default function PurchaseRequisition() {
                     </h4>
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                       <div className="form-group">
-                        <label>Allocated Budget Code *</label>
-                        <select
+                        <MasterDropdown
+                          label="Allocated Budget Code"
+                          name="budget_id"
                           value={form.budget_id}
-                          onChange={(e) => {
-                            setForm(prev => ({ ...prev, budget_id: e.target.value }));
-                            validateRequisitionBudget(form.items, e.target.value);
+                          options={masters.budgets.map(b => ({...b, name: `${b.budget_code} (Project: ${b.project_code})`}))}
+                          required={true}
+                          onChange={(name, val) => {
+                            setForm(prev => ({ ...prev, [name]: val }));
+                            validateRequisitionBudget(form.items, val);
                           }}
-                          required
-                          className="form-control"
-                        >
-                          <option value="">-- Select Budget --</option>
-                          {masters.budgets.map(b => (
-                            <option key={b.id} value={b.id}>{b.budget_code} (Project: {b.project_code})</option>
-                          ))}
-                        </select>
+                        />
                       </div>
                       <div className="form-group">
                         <label>Available Budget</label>
@@ -1157,18 +1127,14 @@ export default function PurchaseRequisition() {
 
                     <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr 2fr', marginTop: 20 }}>
                       <div className="form-group">
-                        <label>Delivery Warehouse *</label>
-                        <select
+                        <MasterDropdown
+                          label="Delivery Warehouse"
+                          name="delivery_warehouse_id"
                           value={form.delivery_warehouse_id}
-                          onChange={(e) => setForm(prev => ({ ...prev, delivery_warehouse_id: e.target.value }))}
-                          required
-                          className="form-control"
-                        >
-                          <option value="">-- Select Warehouse --</option>
-                          {masters.warehouses.map(w => (
-                            <option key={w.id} value={w.id}>{w.warehouse_name}</option>
-                          ))}
-                        </select>
+                          options={masters.warehouses.map(w => ({...w, name: w.warehouse_name}))}
+                          required={true}
+                          onChange={(name, val) => setForm(prev => ({ ...prev, [name]: val }))}
+                        />
                       </div>
                       <div className="form-group">
                         <label>Expected Delivery Date</label>

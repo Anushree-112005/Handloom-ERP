@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { storesService } from '../../services/storesService';
 import { Plus, Save, Edit2, Trash2, Search, X, Box, Loader, AlertCircle, ArrowLeft, CheckCircle, XCircle } from 'lucide-react';
+import MasterDropdown from '../../components/MasterDropdown';
+import { confirmDialog, alertDialog } from '../../utils/dialogs';
 
 export default function ItemMaster() {
   const [view, setView] = useState('list');
@@ -137,14 +139,20 @@ export default function ItemMaster() {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this item? This will soft delete the record.')) {
+    const confirmed = await confirmDialog({
+      title: 'Delete Item',
+      message: 'Are you sure you want to delete this item? This will soft delete the record.',
+      type: 'delete',
+      confirmText: 'Delete'
+    });
+    if (confirmed) {
       try {
         setLoading(true);
         await storesService.deleteItem(id);
         await fetchItems();
       } catch (err) {
         console.error(err);
-        alert(err.response?.data?.detail || 'Failed to delete item.');
+        alertDialog({ title: 'Error', message: err.response?.data?.detail || 'Failed to delete item.', type: 'error' });
       } finally {
         setLoading(false);
       }
@@ -181,10 +189,10 @@ export default function ItemMaster() {
     try {
       if (editingId) {
         await storesService.updateItem(editingId, payload);
-        alert('Item updated successfully!');
+        alertDialog({ title: 'Success', message: 'Item updated successfully!', type: 'success' });
       } else {
         await storesService.createItem(payload);
-        alert('Item saved successfully!');
+        alertDialog({ title: 'Success', message: 'Item saved successfully!', type: 'success' });
       }
       setView('list');
       await fetchItems();
@@ -204,27 +212,20 @@ export default function ItemMaster() {
 
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Box style={{ color: '#6366f1' }} /> Item Master
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Register consumables, packaging, tools, and safety supplies</p>
-        </div>
-        {view === 'list' && (
-          <button onClick={() => handleOpenForm()} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Plus size={16} /> New Item
-          </button>
-        )}
-        {view === 'form' && (
-          <button onClick={() => setView('list')} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            Back to List
-          </button>
-        )}
-      </div>
-
       {view === 'list' ? (
         <>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Box style={{ color: '#6366f1' }} /> Item Master
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Register consumables, packaging, tools, and safety supplies</p>
+            </div>
+            <button onClick={() => handleOpenForm()} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Plus size={16} /> New Item
+            </button>
+          </div>
+
           <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
             {stats.map((s, i) => (
               <div key={i} className="stat-card" style={{ '--stat-color': s.color }}>
@@ -401,53 +402,44 @@ export default function ItemMaster() {
                         />
                       </div>
                       <div className="form-group">
-                        <label>Status *</label>
-                        <select
+                        <MasterDropdown
+                          label="Status"
+                          name="status"
                           value={formData.status}
-                          onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                          className="form-control"
-                          required
-                        >
-                          <option value="">-- Select Status --</option>
-                          <option value="Active">Active</option>
-                          <option value="Inactive">Inactive</option>
-                        </select>
+                          options={['Active', 'Inactive']}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
                       <div className="form-group">
-                        <label>Category *</label>
-                        <select
+                        <MasterDropdown
+                          label="Category"
+                          name="category_id"
+                          entityType="category"
                           value={formData.category_id}
-                          required
-                          onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                          className="form-control"
-                        >
-                          <option value="">-- Select Category --</option>
-                          {categories.map(c => <option key={c.id} value={c.id}>{c.category_name}</option>)}
-                        </select>
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
                       <div className="form-group">
-                        <label>UOM *</label>
-                        <select
+                        <MasterDropdown
+                          label="UOM"
+                          name="uom_id"
+                          entityType="uom"
                           value={formData.uom_id}
-                          required
-                          onChange={(e) => setFormData({ ...formData, uom_id: e.target.value })}
-                          className="form-control"
-                        >
-                          <option value="">-- Select UOM --</option>
-                          {uoms.map(u => <option key={u.id} value={u.id}>{u.uom_name} ({u.symbol || u.uom_code})</option>)}
-                        </select>
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
                       <div className="form-group">
-                        <label>Department *</label>
-                        <select
+                        <MasterDropdown
+                          label="Department"
+                          name="department_id"
+                          entityType="department"
                           value={formData.department_id}
-                          required
-                          onChange={(e) => setFormData({ ...formData, department_id: e.target.value })}
-                          className="form-control"
-                        >
-                          <option value="">-- Select Department --</option>
-                          {departments.map(d => <option key={d.id} value={d.id}>{d.department_name}</option>)}
-                        </select>
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
                       <div className="form-group" style={{ gridColumn: 'span 3' }}>
                         <label>Description</label>
@@ -502,15 +494,13 @@ export default function ItemMaster() {
                         />
                       </div>
                       <div className="form-group">
-                        <label>Default Preferred Supplier</label>
-                        <select
+                        <MasterDropdown
+                          label="Default Preferred Supplier"
+                          name="vendor_id"
+                          entityType="vendor"
                           value={formData.vendor_id}
-                          onChange={(e) => setFormData({ ...formData, vendor_id: e.target.value })}
-                          className="form-control"
-                        >
-                          <option value="">-- Select Vendor --</option>
-                          {vendors.map(v => <option key={v.id} value={v.id}>{v.vendor_name}</option>)}
-                        </select>
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
                     </div>
 

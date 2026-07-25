@@ -5,7 +5,7 @@ import api from '../../services/api';
 import { 
   Package, Receipt, ShoppingBag, ClipboardList, CheckCircle, 
   AlertTriangle, TrendingUp, BarChart2, MapPin, Search, Plus, 
-  Trash2, Edit, X, RefreshCw, Save 
+  Trash2, Edit, X, RefreshCw, Save, ArrowLeft 
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -189,6 +189,162 @@ export default function Dashboard() {
     loadDashboardStats();
   }, []);
 
+  if (showLocForm) {
+    return (
+      <div className="animate-fade">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+          <button 
+            type="button"
+            onClick={() => {
+              setShowLocForm(false);
+              setEditingLocId(null);
+            }} 
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+            onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+            onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            {editingLocId ? "Edit Location Record" : "Record Material Placement Details"}
+          </h2>
+        </div>
+
+        <div className="card">
+          <form onSubmit={handleLocSubmit}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Product / Material Name *</label>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  placeholder="e.g. 40s Comb Yarn, Red Dye"
+                  value={locFormValues.product_name}
+                  onChange={e => setLocFormValues({...locFormValues, product_name: e.target.value})}
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Material Type</label>
+                <select 
+                  className="form-control"
+                  value={locFormValues.material_type}
+                  onChange={e => setLocFormValues({...locFormValues, material_type: e.target.value})}
+                >
+                  {materialTypes.map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Received Date</label>
+                <input 
+                  type="date" 
+                  className="form-control" 
+                  value={locFormValues.received_date}
+                  onChange={e => setLocFormValues({...locFormValues, received_date: e.target.value})}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 16 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Warehouse Zone *</label>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  placeholder="e.g. Zone A, Shed 2"
+                  value={locFormValues.zone}
+                  onChange={e => setLocFormValues({...locFormValues, zone: e.target.value})}
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Shelf / Rack *</label>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  placeholder="e.g. Shelf 4, Row C"
+                  value={locFormValues.shelf}
+                  onChange={e => setLocFormValues({...locFormValues, shelf: e.target.value})}
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Bin / Box No</label>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  placeholder="e.g. Bin 12 (Optional)"
+                  value={locFormValues.bin}
+                  onChange={e => setLocFormValues({...locFormValues, bin: e.target.value})}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: 16, marginBottom: 16 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Quantity</label>
+                <input 
+                  type="number" 
+                  step="any"
+                  className="form-control" 
+                  placeholder="0"
+                  value={locFormValues.quantity}
+                  onChange={e => setLocFormValues({...locFormValues, quantity: e.target.value})}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>UOM</label>
+                <select 
+                  className="form-control"
+                  value={locFormValues.uom}
+                  onChange={e => setLocFormValues({...locFormValues, uom: e.target.value})}
+                >
+                  <option value="Kg">Kg</option>
+                  <option value="Rolls">Rolls</option>
+                  <option value="Bags">Bags</option>
+                  <option value="Boxes">Boxes</option>
+                  <option value="Pcs">Pcs</option>
+                  <option value="Meters">Meters</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Location Remarks / Details</label>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  placeholder="Additional details (e.g., Near gate 2, fragile, handle with care)"
+                  value={locFormValues.remarks}
+                  onChange={e => setLocFormValues({...locFormValues, remarks: e.target.value})}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+              <button 
+                type="button" 
+                onClick={() => {
+                  setShowLocForm(false);
+                  setEditingLocId(null);
+                }}
+                className="btn btn-secondary"
+              >
+                <X size={16} /> Close
+              </button>
+              <button 
+                type="submit" 
+                className="btn btn-primary"
+              >
+                <Save size={16} /> {editingLocId ? "Update Location" : "Save Location"}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="animate-fade">
       {/* Header */}
@@ -346,173 +502,26 @@ export default function Dashboard() {
           </div>
           <button 
             onClick={() => {
-              if (showLocForm) {
-                setShowLocForm(false);
-                setEditingLocId(null);
-              } else {
-                setLocFormValues({
-                  product_name: '',
-                  material_type: 'Yarn',
-                  zone: '',
-                  shelf: '',
-                  bin: '',
-                  quantity: 0,
-                  uom: 'Kg',
-                  received_date: new Date().toISOString().split('T')[0],
-                  remarks: ''
-                });
-                setEditingLocId(null);
-                setShowLocForm(true);
-              }
+              setLocFormValues({
+                product_name: '',
+                material_type: 'Yarn',
+                zone: '',
+                shelf: '',
+                bin: '',
+                quantity: 0,
+                uom: 'Kg',
+                received_date: new Date().toISOString().split('T')[0],
+                remarks: ''
+              });
+              setEditingLocId(null);
+              setShowLocForm(true);
             }} 
             className="btn btn-primary"
             style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', fontSize: 13, borderRadius: 8 }}
           >
-            {showLocForm ? <X size={16} /> : <Plus size={16} />}
-            {showLocForm ? "Cancel" : "Record New Location"}
+            <Plus size={16} /> Record New Location
           </button>
         </div>
-
-        {/* Collapsible New/Edit Location Form */}
-        {showLocForm && (
-          <div className="card" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', padding: 20, marginBottom: 24, borderRadius: 'var(--radius-md)' }}>
-            <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-              {editingLocId ? <Edit size={16} /> : <Plus size={16} />}
-              {editingLocId ? "Edit Location Record" : "Record Material Placement Details"}
-            </h3>
-            <form onSubmit={handleLocSubmit}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16 }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Product / Material Name *</label>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    placeholder="e.g. 40s Comb Yarn, Red Dye"
-                    value={locFormValues.product_name}
-                    onChange={e => setLocFormValues({...locFormValues, product_name: e.target.value})}
-                    required
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Material Type</label>
-                  <select 
-                    className="form-control"
-                    value={locFormValues.material_type}
-                    onChange={e => setLocFormValues({...locFormValues, material_type: e.target.value})}
-                  >
-                    {materialTypes.map(type => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Received Date</label>
-                  <input 
-                    type="date" 
-                    className="form-control" 
-                    value={locFormValues.received_date}
-                    onChange={e => setLocFormValues({...locFormValues, received_date: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 16 }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Warehouse Zone *</label>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    placeholder="e.g. Zone A, Shed 2"
-                    value={locFormValues.zone}
-                    onChange={e => setLocFormValues({...locFormValues, zone: e.target.value})}
-                    required
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Shelf / Rack *</label>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    placeholder="e.g. Shelf 4, Row C"
-                    value={locFormValues.shelf}
-                    onChange={e => setLocFormValues({...locFormValues, shelf: e.target.value})}
-                    required
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Bin / Box No</label>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    placeholder="e.g. Bin 12 (Optional)"
-                    value={locFormValues.bin}
-                    onChange={e => setLocFormValues({...locFormValues, bin: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: 16, marginBottom: 16 }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Quantity</label>
-                  <input 
-                    type="number" 
-                    step="any"
-                    className="form-control" 
-                    placeholder="0"
-                    value={locFormValues.quantity}
-                    onChange={e => setLocFormValues({...locFormValues, quantity: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>UOM</label>
-                  <select 
-                    className="form-control"
-                    value={locFormValues.uom}
-                    onChange={e => setLocFormValues({...locFormValues, uom: e.target.value})}
-                  >
-                    <option value="Kg">Kg</option>
-                    <option value="Rolls">Rolls</option>
-                    <option value="Bags">Bags</option>
-                    <option value="Boxes">Boxes</option>
-                    <option value="Pcs">Pcs</option>
-                    <option value="Meters">Meters</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Location Remarks / Details</label>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    placeholder="Additional details (e.g., Near gate 2, fragile, handle with care)"
-                    value={locFormValues.remarks}
-                    onChange={e => setLocFormValues({...locFormValues, remarks: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 20 }}>
-                <button 
-                  type="button" 
-                  onClick={() => {
-                    setShowLocForm(false);
-                    setEditingLocId(null);
-                  }}
-                  className="btn btn-outline"
-                  style={{ padding: '8px 16px', fontSize: 13, borderRadius: 8 }}
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit" 
-                  className="btn btn-primary"
-                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', fontSize: 13, borderRadius: 8 }}
-                >
-                  <Save size={16} /> {editingLocId ? "Update Location" : "Save Location"}
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
 
         {/* Filter and Search Bar */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>

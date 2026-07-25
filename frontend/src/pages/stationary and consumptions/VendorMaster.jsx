@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { storesService } from '../../services/storesService';
 import { Plus, Save, Edit2, Trash2, Search, X, Loader, Users, AlertCircle, ArrowLeft, CheckCircle, XCircle } from 'lucide-react';
+import MasterDropdown from '../../components/MasterDropdown';
+import { confirmDialog, alertDialog } from '../../utils/dialogs';
 
 export default function VendorMaster() {
   const [view, setView] = useState('list');
@@ -88,14 +90,20 @@ export default function VendorMaster() {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this vendor? This will soft delete the record.')) {
+    const confirmed = await confirmDialog({
+      title: 'Delete Vendor',
+      message: 'Are you sure you want to delete this vendor? This will soft delete the record.',
+      type: 'delete',
+      confirmText: 'Delete'
+    });
+    if (confirmed) {
       try {
         setLoading(true);
         await storesService.deleteVendor(id);
         await fetchVendors();
       } catch (err) {
         console.error(err);
-        alert(err.response?.data?.detail || 'Failed to delete vendor.');
+        alertDialog({ title: 'Error', message: err.response?.data?.detail || 'Failed to delete vendor.', type: 'error' });
       } finally {
         setLoading(false);
       }
@@ -114,10 +122,10 @@ export default function VendorMaster() {
     try {
       if (editingId) {
         await storesService.updateVendor(editingId, formData);
-        alert('Vendor updated successfully!');
+        alertDialog({ title: 'Success', message: 'Vendor updated successfully!', type: 'success' });
       } else {
         await storesService.createVendor(formData);
-        alert('Vendor saved successfully!');
+        alertDialog({ title: 'Success', message: 'Vendor saved successfully!', type: 'success' });
       }
       setView('list');
       await fetchVendors();
@@ -137,27 +145,20 @@ export default function VendorMaster() {
 
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Users style={{ color: '#6366f1' }} /> Vendor Master
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Manage suppliers of stationery, safety and office supplies</p>
-        </div>
-        {view === 'list' && (
-          <button onClick={() => handleOpenForm()} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Plus size={16} /> Add Vendor
-          </button>
-        )}
-        {view === 'form' && (
-          <button onClick={() => setView('list')} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            Back to List
-          </button>
-        )}
-      </div>
-
       {view === 'list' ? (
         <>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Users style={{ color: '#6366f1' }} /> Vendor Master
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Manage suppliers of stationery, safety and office supplies</p>
+            </div>
+            <button onClick={() => handleOpenForm()} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Plus size={16} /> Add Vendor
+            </button>
+          </div>
+
           <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
             {stats.map((s, i) => (
               <div key={i} className="stat-card" style={{ '--stat-color': s.color }}>
@@ -323,29 +324,24 @@ export default function VendorMaster() {
                         />
                       </div>
                       <div className="form-group">
-                        <label>Vendor Type *</label>
-                        <select
+                        <MasterDropdown
+                          label="Vendor Type"
+                          name="vendor_type"
                           value={formData.vendor_type}
-                          onChange={(e) => setFormData({ ...formData, vendor_type: e.target.value })}
-                          className="form-control"
-                          required
-                        >
-                          <option value="">-- Select Vendor Type --</option>
-                          {vendorTypeList.map(t => <option key={t} value={t}>{t}</option>)}
-                        </select>
+                          options={vendorTypeList}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
                       <div className="form-group">
-                        <label>Status *</label>
-                        <select
+                        <MasterDropdown
+                          label="Status"
+                          name="status"
                           value={formData.status}
-                          onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                          className="form-control"
-                          required
-                        >
-                          <option value="">-- Select Status --</option>
-                          <option value="Active">Active</option>
-                          <option value="Inactive">Inactive</option>
-                        </select>
+                          options={['Active', 'Inactive']}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
                     </div>
 
@@ -381,16 +377,14 @@ export default function VendorMaster() {
                         />
                       </div>
                       <div className="form-group">
-                        <label>Payment Terms *</label>
-                        <select
+                        <MasterDropdown
+                          label="Payment Terms"
+                          name="payment_terms"
                           value={formData.payment_terms}
-                          onChange={(e) => setFormData({ ...formData, payment_terms: e.target.value })}
-                          className="form-control"
-                          required
-                        >
-                          <option value="">-- Select Payment Terms --</option>
-                          {paymentTermsList.map(term => <option key={term} value={term}>{term}</option>)}
-                        </select>
+                          options={paymentTermsList}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
                     </div>
 

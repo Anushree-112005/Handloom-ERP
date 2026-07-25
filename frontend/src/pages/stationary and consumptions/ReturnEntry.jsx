@@ -4,6 +4,7 @@ import {
   Plus, Trash2, Search, RefreshCw, CheckCircle, AlertCircle,
   Loader2, Package, RotateCcw, Users, ArrowDownLeft, Save, X, ArrowLeft
 } from 'lucide-react';
+import MasterDropdown from '../../components/MasterDropdown';
 
 const conditionColors = {
   'Good': 'bg-emerald-50 text-emerald-600',
@@ -289,10 +290,13 @@ export default function ReturnEntry() {
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                       <div className="form-group">
                         <label>Link Issue Reference (optional)</label>
-                        <select value={formData.issue_id} onChange={e => handleIssueChange(e.target.value)} className="form-control">
-                          <option value="">-- Select Issue (auto-fills items) --</option>
-                          {issuesList.map(iss => <option key={iss.id} value={iss.id}>{iss.issue_no} — {iss.requesting_department_name || 'Unknown'}</option>)}
-                        </select>
+                        <MasterDropdown
+                          label=""
+                          name="issue_id"
+                          value={formData.issue_id}
+                          options={issuesList.map(iss => ({...iss, name: `${iss.issue_no} — ${iss.requesting_department_name || 'Unknown'}`, id: iss.id.toString()}))}
+                          onChange={(name, val) => handleIssueChange(val)}
+                        />
                         {linkedIssue && (
                           <p style={{ marginTop: '8px', fontSize: '12px', color: '#ea580c', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <CheckCircle size={14} /> {linkedIssue.items?.length || 0} item(s) from issue
@@ -302,18 +306,25 @@ export default function ReturnEntry() {
 
                       <div className="form-group">
                         <label>Returned By *</label>
-                        <select value={formData.returned_by_id} onChange={e => setFormData({ ...formData, returned_by_id: e.target.value })} required className="form-control">
-                          <option value="">-- Select Employee --</option>
-                          {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
-                        </select>
+                        <MasterDropdown
+                          label=""
+                          name="returned_by_id"
+                          value={formData.returned_by_id}
+                          options={employees}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
 
                       <div className="form-group">
                         <label>Received By Storekeeper</label>
-                        <select value={formData.received_by_id} onChange={e => setFormData({ ...formData, received_by_id: e.target.value })} className="form-control">
-                          <option value="">-- Select Receiver (optional) --</option>
-                          {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
-                        </select>
+                        <MasterDropdown
+                          label=""
+                          name="received_by_id"
+                          value={formData.received_by_id}
+                          options={employees}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
                     </div>
 
@@ -353,12 +364,17 @@ export default function ReturnEntry() {
                                         className="form-control" style={{ width: 100, margin: 0, display: 'inline-block' }} />
                                     </td>
                                     <td>
-                                      <select value={item.condition} onChange={e => setItemField(idx, 'condition', e.target.value)}
-                                        className="form-control" style={{ margin: 0 }}>
-                                        <option value="Good">Good (Restockable)</option>
-                                        <option value="Damaged">Damaged</option>
-                                        <option value="Partial">Partial</option>
-                                      </select>
+                                      <MasterDropdown
+                                        label=""
+                                        name="condition"
+                                        value={item.condition}
+                                        options={[
+                                          {id: 'Good', name: 'Good (Restockable)'},
+                                          {id: 'Damaged', name: 'Damaged'},
+                                          {id: 'Partial', name: 'Partial'}
+                                        ]}
+                                        onChange={(name, val) => setItemField(idx, name, val)}
+                                      />
                                     </td>
                                     <td>
                                       <input type="text" value={item.reason} onChange={e => setItemField(idx, 'reason', e.target.value)}

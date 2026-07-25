@@ -7,6 +7,7 @@ import {
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import MasterDropdown from '../../components/MasterDropdown';
 import api from '../../services/api';
 import { showError } from '../../utils/notifications';
 
@@ -305,37 +306,43 @@ export default function FleetExpiryAlerts() {
             <span style={{ fontSize: 13, fontWeight: 600 }}>Filters:</span>
           </div>
 
-          <select 
-            className="form-control"
-            style={{ width: 140, margin: 0, height: 38 }}
-            value={filters.vehicle}
-            onChange={(e) => setFilters({...filters, vehicle: e.target.value})}
-          >
-            <option value="">All Vehicles</option>
-            {vehicles.map(v => <option key={v.id} value={v.vehicle_number}>{v.vehicle_number}</option>)}
-          </select>
+          <div style={{ width: 160 }}>
+            <MasterDropdown
+              value={filters.vehicle}
+              onChange={(val) => setFilters({...filters, vehicle: val})}
+              options={[
+                { value: '', label: 'All Vehicles' },
+                ...vehicles.map(v => ({ value: v.vehicle_number, label: v.vehicle_number }))
+              ]}
+              placeholder="All Vehicles"
+            />
+          </div>
 
-          <select 
-            className="form-control"
-            style={{ width: 140, margin: 0, height: 38 }}
-            value={filters.driver}
-            onChange={(e) => setFilters({...filters, driver: e.target.value})}
-          >
-            <option value="">All Drivers</option>
-            {drivers.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
-          </select>
+          <div style={{ width: 160 }}>
+            <MasterDropdown
+              value={filters.driver}
+              onChange={(val) => setFilters({...filters, driver: val})}
+              options={[
+                { value: '', label: 'All Drivers' },
+                ...drivers.map(d => ({ value: d.name, label: d.name }))
+              ]}
+              placeholder="All Drivers"
+            />
+          </div>
 
-          <select 
-            className="form-control"
-            style={{ width: 140, margin: 0, height: 38 }}
-            value={filters.status}
-            onChange={(e) => setFilters({...filters, status: e.target.value})}
-          >
-            <option value="">All Statuses</option>
-            <option value="Expired">Expired</option>
-            <option value="Expiring Soon">Expiring Soon</option>
-            <option value="Valid">Valid</option>
-          </select>
+          <div style={{ width: 160 }}>
+            <MasterDropdown
+              value={filters.status}
+              onChange={(val) => setFilters({...filters, status: val})}
+              options={[
+                { value: '', label: 'All Statuses' },
+                { value: 'Expired', label: 'Expired' },
+                { value: 'Expiring Soon', label: 'Expiring Soon' },
+                { value: 'Valid', label: 'Valid' }
+              ]}
+              placeholder="All Statuses"
+            />
+          </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>From:</span>

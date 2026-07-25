@@ -4,6 +4,7 @@ import {
   Plus, Trash2, Search, RefreshCw, CheckCircle, AlertCircle,
   Loader2, Package, TrendingUp, Warehouse, ClipboardCheck, ShieldCheck, Save, X, ArrowLeft
 } from 'lucide-react';
+import MasterDropdown from '../../components/MasterDropdown';
 
 const inspectionColors = {
   'Accepted': 'bg-emerald-50 text-emerald-600',
@@ -322,10 +323,14 @@ export default function GRNStockInward() {
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                       <div className="form-group">
                         <label>Purchase Order *</label>
-                        <select value={formData.po_id} onChange={e => handlePOChange(e.target.value)} required className="form-control">
-                          <option value="">-- Select PO Number --</option>
-                          {pos.map(po => <option key={po.id} value={po.id}>{po.po_no} — {po.vendor_name}</option>)}
-                        </select>
+                        <MasterDropdown
+                          label=""
+                          name="po_id"
+                          value={formData.po_id}
+                          options={pos.map(po => ({...po, name: `${po.po_no} — ${po.vendor_name}`, id: po.id.toString()}))}
+                          required={true}
+                          onChange={(name, val) => handlePOChange(val)}
+                        />
                         {linkedPO && (
                           <p style={{ marginTop: '8px', fontSize: '12px', color: 'rgb(5, 150, 105)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <CheckCircle size={14} /> {linkedPO.items?.length || 0} item(s) loaded from PO
@@ -335,18 +340,26 @@ export default function GRNStockInward() {
 
                       <div className="form-group">
                         <label>Received By *</label>
-                        <select value={formData.received_by_id} onChange={e => setFormData({ ...formData, received_by_id: e.target.value })} required className="form-control">
-                          <option value="">-- Select Receiver --</option>
-                          {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
-                        </select>
+                        <MasterDropdown
+                          label=""
+                          name="received_by_id"
+                          value={formData.received_by_id}
+                          options={employees}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
 
                       <div className="form-group">
                         <label>Storage Warehouse *</label>
-                        <select value={formData.warehouse_id} onChange={e => setFormData({ ...formData, warehouse_id: e.target.value })} required className="form-control">
-                          <option value="">-- Select Warehouse --</option>
-                          {warehouses.map(wh => <option key={wh.id} value={wh.id}>{wh.warehouse_name}</option>)}
-                        </select>
+                        <MasterDropdown
+                          label=""
+                          name="warehouse_id"
+                          value={formData.warehouse_id}
+                          options={warehouses.map(wh => ({...wh, name: wh.warehouse_name}))}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
                     </div>
 
@@ -392,9 +405,13 @@ export default function GRNStockInward() {
                                       {short && <div style={{ fontSize: 11, color: '#d97706', marginTop: 4 }}>Short by {item.ordered_quantity - item.received_quantity}</div>}
                                     </td>
                                     <td>
-                                      <select value={item.inspection_status} onChange={e => setItemField(idx, 'inspection_status', e.target.value)} className="form-control" style={{ minWidth: 110, margin: 0 }}>
-                                        {['Accepted', 'Rejected', 'Partial', 'Pending'].map(s => <option key={s} value={s}>{s}</option>)}
-                                      </select>
+                                      <MasterDropdown
+                                        label=""
+                                        name="inspection_status"
+                                        value={item.inspection_status}
+                                        options={['Accepted', 'Rejected', 'Partial', 'Pending']}
+                                        onChange={(name, val) => setItemField(idx, name, val)}
+                                      />
                                     </td>
                                     <td>
                                       <input type="text" value={item.room || ''} onChange={e => setItemField(idx, 'room', e.target.value)} placeholder="e.g. Room A" className="form-control" style={{ minWidth: 90, margin: 0 }} />

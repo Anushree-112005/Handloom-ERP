@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Settings2, Save, Search, Trash2, X, ArrowLeft, CheckCircle, AlertTriangle, Settings, Plus, Eye, Edit2 } from 'lucide-react';
 import { ppcAPI } from '../../services/api';
+import { confirmDialog, alertDialog } from '../../utils/dialogs';
 
 export default function LoomRegistration() {
   const [looms, setLooms] = useState([]);
@@ -60,10 +61,10 @@ export default function LoomRegistration() {
 
       if (formData.id) {
         await ppcAPI.updateLoom(formData.id, payload);
-        alert('Loom successfully updated!');
+        alertDialog({ title: 'Success', message: 'Loom successfully updated!', type: 'success' });
       } else {
         await ppcAPI.createLoom(payload);
-        alert('Loom successfully registered!');
+        alertDialog({ title: 'Success', message: 'Loom successfully registered!', type: 'success' });
       }
 
       setFormData({
@@ -76,7 +77,7 @@ export default function LoomRegistration() {
       fetchLooms();
     } catch (error) {
       console.error("Failed to save loom", error);
-      alert('Error saving loom. Ensure the name is unique.');
+      alertDialog({ title: 'Error', message: 'Error saving loom. Ensure the name is unique.', type: 'error' });
     }
   };
 
@@ -103,13 +104,19 @@ export default function LoomRegistration() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this loom?')) return;
+    const confirmed = await confirmDialog({
+      title: 'Delete Loom',
+      message: 'Are you sure you want to delete this loom? This action cannot be undone.',
+      type: 'delete',
+      confirmText: 'Delete'
+    });
+    if (!confirmed) return;
     try {
       await ppcAPI.deleteLoom(id);
       fetchLooms();
     } catch (err) {
       console.error(err);
-      alert('Failed to delete loom');
+      alertDialog({ title: 'Error', message: 'Failed to delete loom', type: 'error' });
     }
   };
 

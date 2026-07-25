@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Users, Phone, User, MapPin, ArrowLeft, Save, X, Edit2, Trash2, Eye } from 'lucide-react';
 import api from '../../services/api';
+import MasterDropdown from '../../components/MasterDropdown';
 import { showError, showSuccess } from '../../utils/notifications';
 import { showConfirm } from '../../components/ConfirmDialog';
 
@@ -125,18 +126,13 @@ const HelperList = () => {
   };
 
   const handleDelete = async (id) => {
-    let confirmed = false;
-    try {
-      confirmed = await showConfirm({
-        title: 'Delete Helper',
-        description: 'Are you sure you want to delete this helper?',
-        confirmText: 'Delete',
-        cancelText: 'Cancel',
-        variant: 'destructive'
-      });
-    } catch {
-      confirmed = window.confirm('Are you sure you want to delete this helper?');
-    }
+    const confirmed = await showConfirm({
+      title: 'Delete Helper',
+      description: 'Are you sure you want to delete this helper?',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      variant: 'destructive'
+    });
 
     if (confirmed) {
       try {
@@ -219,36 +215,24 @@ const HelperList = () => {
 
   if (mode === 'form') {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col">
-        <div className="btn btn-secondary">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button onClick={handleCancel} className="text-slate-600 hover:text-slate-900 transition-colors">
-                <ArrowLeft size={20} />
-              </button>
-              <h1 className="text-xl font-bold text-slate-900">
-                {editingHelper ? 'Edit Helper' : 'New Helper'}
-              </h1>
-            </div>
-            <div className="flex items-center gap-3">
-              <button onClick={handleCancel} className="btn btn-secondary">
-                Cancel
-              </button>
-              <button 
-                onClick={handleSubmit} 
-                disabled={isSaving}
-                className="btn btn-success"
-              >
-                <Save size={16} />
-                {isSaving ? 'Saving...' : 'Save'}
-              </button>
-            </div>
-          </div>
+      <div className="animate-fade" style={{ padding: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+          <button 
+            type="button"
+            onClick={handleCancel} 
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+            onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+            onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            {editingHelper ? 'Edit Helper' : 'New Helper'}
+          </h2>
         </div>
 
-        <div className="p-6">
-          <div className="btn btn-secondary">
-            <form onSubmit={handleSubmit} className="form-row">
+        <div className="card" style={{ padding: 32, background: '#fff' }}>
+          <form onSubmit={handleSubmit} className="form-row">
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-slate-700">Helper Name *</label>
                 <div className="relative">
@@ -292,16 +276,17 @@ const HelperList = () => {
 
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-slate-700">Status *</label>
-                <select
-                  required
+                <MasterDropdown
+                  entity="helper_status"
                   value={formData.status}
-                  onChange={(e) => setFormData({...formData, status: e.target.value})}
-                  className="form-control"
-                >
-                  <option value="ACTIVE">Active</option>
-                  <option value="INACTIVE">Inactive</option>
-                  <option value="ON_LEAVE">On Leave</option>
-                </select>
+                  onChange={(val) => setFormData({ ...formData, status: val })}
+                  options={[
+                    { value: 'ACTIVE', label: 'Active' },
+                    { value: 'INACTIVE', label: 'Inactive' },
+                    { value: 'ON_LEAVE', label: 'On Leave' }
+                  ]}
+                  placeholder="Select Status"
+                />
               </div>
 
               <div className="space-y-2">
@@ -339,8 +324,16 @@ const HelperList = () => {
                   />
                 </div>
               </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+                <button type="button" className="btn btn-secondary" onClick={handleCancel}>
+                  <X size={16} /> Close
+                </button>
+                <button type="submit" disabled={isSaving} className="btn btn-primary">
+                  <Save size={16} /> {isSaving ? 'Saving...' : (editingHelper ? 'Update Helper' : 'Save Helper')}
+                </button>
+              </div>
             </form>
-          </div>
         </div>
       </div>
     );

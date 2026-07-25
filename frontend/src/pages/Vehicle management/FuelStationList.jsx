@@ -122,52 +122,25 @@ const FuelStationList = () => {
   // Form View
   if (mode === 'form') {
     return (
-      <div className="min-h-screen bg-slate-50">
-        {/* Sticky Header */}
-        <div className="btn btn-secondary">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={handleCancel}
-                  className="btn btn-secondary"
-                >
-                  <ArrowLeft size={20} />
-                </button>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-xl font-semibold text-slate-900">
-                    {editingStation ? 'Edit Fuel Station' : 'New Fuel Station'}
-                  </h1>
-                  <span className="btn btn-danger">
-                    Not Saved
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={handleCancel}
-                  className="btn btn-secondary"
-                >
-                  <X size={16} />
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  className="btn btn-danger"
-                >
-                  <Save size={16} />
-                  Save
-                </button>
-              </div>
-            </div>
-          </div>
+      <div className="animate-fade">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+          <button 
+            type="button"
+            onClick={handleCancel} 
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+            onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+            onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            {editingStation ? 'Edit Fuel Station' : 'New Fuel Station'}
+          </h2>
         </div>
 
-        {/* Form Content */}
-        <div className="p-6">
-          <div className="mx-auto max-w-4xl">
-            <div className="btn btn-secondary">
-              <form onSubmit={handleSubmit} className="form-row">
+        <div className="card" style={{ padding: 32, background: '#fff' }}>
+          <form onSubmit={handleSubmit}>
+            <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Station Name *</label>
                   <input
@@ -267,9 +240,17 @@ const FuelStationList = () => {
                     />
                   </div>
                 )}
-              </form>
             </div>
-          </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+              <button type="button" className="btn btn-secondary" onClick={handleCancel}>
+                <X size={16} /> Cancel
+              </button>
+              <button type="submit" className="btn btn-primary">
+                <Save size={16} /> {editingStation ? 'Update Station' : 'Save Station'}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     );

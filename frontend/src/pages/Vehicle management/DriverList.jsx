@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Users, Search, Filter, Edit2, Trash2, X, Save, Phone, Award } from 'lucide-react';
+import { Plus, Users, Search, Filter, Edit2, Trash2, X, Save, Phone, Award, ArrowLeft } from 'lucide-react';
 import api from '../../services/api';
+import MasterDropdown from '../../components/MasterDropdown';
 import { showError, showSuccess } from '../../utils/notifications';
 import { showConfirm } from '../../components/ConfirmDialog';
 import { fetchEmployees } from '../../services/hrService';
@@ -148,17 +149,23 @@ export default function DriverList() {
   if (view === 'form') {
     return (
       <div className="animate-fade">
-        <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{editingId ? 'Edit Driver' : 'New Driver'}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setView('list')}><X size={16} /> Close</button>
-              <button type="submit" form="driverForm" className="btn btn-primary"><Save size={16} /> Save Driver</button>
-            </div>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+          <button 
+            type="button"
+            onClick={() => setView('list')} 
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+            onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+            onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            {editingId ? 'Edit Driver' : 'New Driver'}
+          </h2>
+        </div>
 
-          <div style={{ padding: 32 }}>
-            <form id="driverForm" onSubmit={handleSubmit}>
+        <div className="card" style={{ padding: 32 }}>
+          <form id="driverForm" onSubmit={handleSubmit}>
               <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Driver Information</h4>
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 <div className="form-group">
@@ -179,9 +186,13 @@ export default function DriverList() {
                 </div>
                 <div className="form-group">
                   <label>Status *</label>
-                  <select className="form-control" name="status" value={formData.status} onChange={handleInputChange} required>
-                    {statuses.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
+                  <MasterDropdown
+                    entity="driver_status"
+                    value={formData.status}
+                    onChange={(val) => setFormData({ ...formData, status: val })}
+                    options={statuses.map(s => ({ value: s, label: s }))}
+                    placeholder="Select Status"
+                  />
                 </div>
 
                 <div className="form-group">
@@ -194,19 +205,15 @@ export default function DriverList() {
                 </div>
                 <div className="form-group">
                   <label>Assigned Vehicle</label>
-                  <select
-                    className="form-control"
-                    name="assigned_vehicle_id"
+                  <MasterDropdown
                     value={formData.assigned_vehicle_id}
-                    onChange={handleInputChange}
-                  >
-                    <option value="">Select a Vehicle</option>
-                    {vehicles.map(v => (
-                      <option key={v.id} value={v.id}>
-                        {v.vehicle_number}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => setFormData({ ...formData, assigned_vehicle_id: val })}
+                    options={vehicles.map(v => ({
+                      value: v.id,
+                      label: `${v.vehicle_number} (${v.make || ''} ${v.model || ''})`.trim()
+                    }))}
+                    placeholder="Select a Vehicle"
+                  />
                 </div>
 
                 <div className="form-group">
@@ -214,9 +221,17 @@ export default function DriverList() {
                   <input type="number" className="form-control" name="years_of_experience" value={formData.years_of_experience} onChange={handleInputChange} min="0" />
                 </div>
               </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
+                  <X size={16} /> Close
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  <Save size={16} /> {editingId ? 'Update Driver' : 'Save Driver'}
+                </button>
+              </div>
             </form>
           </div>
-        </div>
       </div>
     );
   }
@@ -291,10 +306,18 @@ export default function DriverList() {
           <Filter size={16} />
           <span style={{ fontSize: 13, fontWeight: 600 }}>Status:</span>
         </div>
-        <select className="form-control" style={{ width: 150, margin: 0 }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-          <option value="All">All Status</option>
-          {statuses.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
+        <div style={{ width: 180 }}>
+          <MasterDropdown
+            value={statusFilter}
+            onChange={(val) => setStatusFilter(val || 'All')}
+            options={[
+              { value: 'All', label: 'All Status' },
+              ...statuses.map(s => ({ value: s, label: s }))
+            ]}
+            placeholder="Filter Status"
+            allowClear={false}
+          />
+        </div>
       </div>
 
       {/* Split Layout */}

@@ -4,6 +4,7 @@ import {
   Plus, Trash2, Search, RefreshCw, CheckCircle, AlertCircle,
   Loader2, Package, BarChart3, TrendingDown, TrendingUp, ShieldAlert, Save, X, ArrowLeft
 } from 'lucide-react';
+import MasterDropdown from '../../components/MasterDropdown';
 
 const NEGATIVE_TYPES = ['Damage', 'Expired', 'Lost', 'Breakage'];
 
@@ -328,30 +329,44 @@ export default function AdjustmentEntry() {
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                       <div className="form-group">
                         <label>Adjustment Type *</label>
-                        <select value={formData.type} onChange={e => handleTypeChange(e.target.value)} required className="form-control">
-                          <option value="Damage">Damage (Deduction)</option>
-                          <option value="Expired">Expired (Deduction)</option>
-                          <option value="Lost">Lost (Deduction)</option>
-                          <option value="Breakage">Breakage (Deduction)</option>
-                          <option value="Surplus">Surplus (Addition)</option>
-                          <option value="Audit Correction">Audit Correction (Manual)</option>
-                        </select>
+                        <MasterDropdown
+                          label=""
+                          name="type"
+                          value={formData.type}
+                          options={[
+                            {id: 'Damage', name: 'Damage (Deduction)'},
+                            {id: 'Expired', name: 'Expired (Deduction)'},
+                            {id: 'Lost', name: 'Lost (Deduction)'},
+                            {id: 'Breakage', name: 'Breakage (Deduction)'},
+                            {id: 'Surplus', name: 'Surplus (Addition)'},
+                            {id: 'Audit Correction', name: 'Audit Correction (Manual)'}
+                          ]}
+                          onChange={(name, val) => handleTypeChange(val)}
+                        />
                       </div>
 
                       <div className="form-group">
                         <label>Adjusted By (Auditor) *</label>
-                        <select value={formData.adjusted_by_id} onChange={e => setFormData({ ...formData, adjusted_by_id: e.target.value })} required className="form-control">
-                          <option value="">-- Select Auditor --</option>
-                          {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
-                        </select>
+                        <MasterDropdown
+                          label=""
+                          name="adjusted_by_id"
+                          value={formData.adjusted_by_id}
+                          options={employees}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
 
                       <div className="form-group">
                         <label>Authorized By (Manager) *</label>
-                        <select value={formData.authorized_by_id} onChange={e => setFormData({ ...formData, authorized_by_id: e.target.value })} required className="form-control">
-                          <option value="">-- Select Manager --</option>
-                          {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
-                        </select>
+                        <MasterDropdown
+                          label=""
+                          name="authorized_by_id"
+                          value={formData.authorized_by_id}
+                          options={employees}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
 
                       <div className="form-group">
@@ -400,11 +415,13 @@ export default function AdjustmentEntry() {
                                 <tr key={idx}>
                                   <td style={{ fontWeight: 600, color: 'var(--text-muted)' }}>{idx + 1}</td>
                                   <td>
-                                    <select value={item.item_id} onChange={e => handleItemChange(idx, e.target.value)}
-                                      className="form-control" style={{ margin: 0, minWidth: 200 }}>
-                                      <option value="">-- Select Item --</option>
-                                      {itemsList.map(i => <option key={i.id} value={i.id}>{i.item_code} — {i.item_name}</option>)}
-                                    </select>
+                                    <MasterDropdown
+                                      label=""
+                                      name="item_id"
+                                      value={item.item_id}
+                                      options={itemsList.map(i => ({...i, name: `${i.item_code} — ${i.item_name}`}))}
+                                      onChange={(name, val) => handleItemChange(idx, val)}
+                                    />
                                   </td>
                                   <td style={{ textAlign: 'center', fontWeight: 'bold', color: 'var(--text-secondary)' }}>
                                     {item.current_stock}

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Edit2, Trash2, Truck, Search, Filter, Eye, Download, FilePlus, Save, X, ArrowLeft } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import api from '../../services/api';
+import MasterDropdown from '../../components/MasterDropdown';
 import { showError, showSuccess } from '../../utils/notifications';
 import { showConfirm } from '../../components/ConfirmDialog';
 
@@ -214,17 +215,23 @@ export default function VehicleList() {
   if (view === 'form') {
     return (
       <div className="animate-fade">
-        <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{editingId ? 'Edit Vehicle' : 'Add New Vehicle'}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setView('list')}><X size={16} /> Close</button>
-              <button type="submit" form="vehicleForm" className="btn btn-primary"><Save size={16} /> {editingId ? 'Update Vehicle' : 'Save Vehicle'}</button>
-            </div>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+          <button 
+            type="button"
+            onClick={() => setView('list')} 
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+            onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+            onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            {editingId ? 'Edit Vehicle' : 'Add New Vehicle'}
+          </h2>
+        </div>
 
-          <div style={{ padding: 32, background: '#fff' }}>
-            <form id="vehicleForm" onSubmit={handleSubmit}>
+        <div className="card" style={{ padding: 32, background: '#fff' }}>
+          <form id="vehicleForm" onSubmit={handleSubmit}>
               <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Vehicle Information</h4>
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 <div className="form-group">
@@ -233,15 +240,23 @@ export default function VehicleList() {
                 </div>
                 <div className="form-group">
                   <label>Vehicle Type *</label>
-                  <select className="form-control" name="vehicle_type" value={formData.vehicle_type} onChange={handleInputChange} required>
-                    {vehicleTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                  </select>
+                  <MasterDropdown
+                    entity="vehicle_type"
+                    value={formData.vehicle_type}
+                    onChange={(val) => setFormData({ ...formData, vehicle_type: val })}
+                    options={vehicleTypes}
+                    placeholder="Select Vehicle Type"
+                  />
                 </div>
                 <div className="form-group">
                   <label>Status *</label>
-                  <select className="form-control" name="status" value={formData.status} onChange={handleInputChange} required>
-                    {statusOptions.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                  </select>
+                  <MasterDropdown
+                    entity="vehicle_status"
+                    value={formData.status}
+                    onChange={(val) => setFormData({ ...formData, status: val })}
+                    options={statusOptions}
+                    placeholder="Select Status"
+                  />
                 </div>
 
                 <div className="form-group">
@@ -301,9 +316,17 @@ export default function VehicleList() {
                   <input type="number" className="form-control" name="current_mileage" value={formData.current_mileage} onChange={handleInputChange} step="0.1" />
                 </div>
               </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
+                  <X size={16} /> Close
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  <Save size={16} /> {editingId ? 'Update Vehicle' : 'Save Vehicle'}
+                </button>
+              </div>
             </form>
           </div>
-        </div>
       </div>
     );
   }
@@ -387,12 +410,20 @@ export default function VehicleList() {
             <span style={{ fontSize: 13, fontWeight: 600 }}>Filter:</span>
           </div>
 
-          <select className="form-control" style={{ width: 180, margin: 0 }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-            <option value="All Status">All Status</option>
-            <option value="ACTIVE">Active</option>
-            <option value="INACTIVE">Inactive</option>
-            <option value="UNDER_MAINTENANCE">Under Maintenance</option>
-          </select>
+          <div style={{ width: 200 }}>
+            <MasterDropdown
+              value={statusFilter}
+              onChange={(val) => setStatusFilter(val || 'All Status')}
+              options={[
+                { value: 'All Status', label: 'All Status' },
+                { value: 'ACTIVE', label: 'Active' },
+                { value: 'INACTIVE', label: 'Inactive' },
+                { value: 'UNDER_MAINTENANCE', label: 'Under Maintenance' }
+              ]}
+              placeholder="Filter Status"
+              allowClear={false}
+            />
+          </div>
 
           <button className="btn btn-secondary" onClick={handleExportExcel} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <Download size={16} /> Export Excel

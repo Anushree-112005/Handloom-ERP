@@ -10,6 +10,7 @@ import {
   ShieldCheck, UploadCloud, X, Tag, IndianRupee, Package, Save, Printer,
   FileSpreadsheet, Box, ArrowLeft
 } from 'lucide-react';
+import MasterDropdown from '../../components/MasterDropdown';
 
 export default function PurchaseOrder() {
   const [view, setView] = useState('list');
@@ -83,7 +84,7 @@ export default function PurchaseOrder() {
       }));
       return;
     }
-    const selectedQ = procurementQuotations.find(q => q.quotation_id === parseInt(qId));
+    const selectedQ = procurementQuotations.find(q => q.quotation_id === parseInt(qId) || q.quotation_id.toString() === qId.toString());
     if (selectedQ) {
       const formattedItems = selectedQ.items.map(i => ({
         item_name: i.item_name,
@@ -100,6 +101,11 @@ export default function PurchaseOrder() {
         quotation_id: qId,
         vendor_id: selectedQ.vendor_id.toString(),
         items: formattedItems
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        quotation_id: qId
       }));
     }
   };
@@ -689,31 +695,25 @@ export default function PurchaseOrder() {
 
                       <div className="form-group">
                         <label className="font-semibold text-slate-700 text-xs mb-1.5 block">Link Vendor Quotation</label>
-                        <select
+                        <MasterDropdown
+                          label=""
+                          name="quotation_id"
                           value={formData.quotation_id}
-                          onChange={(e) => handleQuotationChange(e.target.value)}
-                          className="form-control"
-                        >
-                          <option value="">-- Select Quotation --</option>
-                          {procurementQuotations.map(q => (
-                            <option key={q.quotation_id} value={q.quotation_id}>QTN-{q.quotation_id} ({q.vendor?.vendor_name})</option>
-                          ))}
-                        </select>
+                          options={procurementQuotations.map(q => ({...q, name: `QTN-${q.quotation_id} (${q.vendor?.vendor_name})`, id: q.quotation_id.toString()}))}
+                          onChange={(name, val) => handleQuotationChange(val)}
+                        />
                       </div>
 
                       <div className="form-group">
                         <label className="font-semibold text-slate-700 text-xs mb-1.5 block">Supplier Name *</label>
-                        <select
+                        <MasterDropdown
+                          label=""
+                          name="vendor_id"
                           value={formData.vendor_id}
-                          onChange={(e) => setFormData({ ...formData, vendor_id: e.target.value })}
-                          required
-                          className="form-control"
-                        >
-                          <option value="">Select Supplier...</option>
-                          {vendors.map(v => (
-                            <option key={v.vendor_id} value={v.vendor_id}>{v.vendor_name}</option>
-                          ))}
-                        </select>
+                          options={vendors.map(v => ({...v, name: v.vendor_name, id: v.vendor_id}))}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
 
                       <div className="form-group">
@@ -728,17 +728,14 @@ export default function PurchaseOrder() {
 
                       <div className="form-group">
                         <label className="font-semibold text-slate-700 text-xs mb-1.5 block">Delivery At *</label>
-                        <select
+                        <MasterDropdown
+                          label=""
+                          name="delivery_warehouse_id"
                           value={formData.delivery_warehouse_id}
-                          onChange={(e) => setFormData({ ...formData, delivery_warehouse_id: e.target.value })}
-                          required
-                          className="form-control"
-                        >
-                          <option value="">Select Delivery Location...</option>
-                          {warehouses.map(w => (
-                            <option key={w.id} value={w.id}>{w.warehouse_name}</option>
-                          ))}
-                        </select>
+                          options={warehouses.map(w => ({...w, name: w.warehouse_name}))}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
 
                     </div>
@@ -832,17 +829,13 @@ export default function PurchaseOrder() {
                               />
                             </td>
                             <td className="px-4 py-3">
-                              <select
-                                className="form-control"
+                              <MasterDropdown
+                                label=""
+                                name="gst"
                                 value={item.gst}
-                                onChange={e => handleItemFieldChange(idx, 'gst', e.target.value)}
-                              >
-                                <option value="0">0%</option>
-                                <option value="5">5%</option>
-                                <option value="12">12%</option>
-                                <option value="18">18%</option>
-                                <option value="28">28%</option>
-                              </select>
+                                options={['0', '5', '12', '18', '28']}
+                                onChange={(name, val) => handleItemFieldChange(idx, name, val)}
+                              />
                             </td>
                             <td className="px-4 py-3">
                               <input

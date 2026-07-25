@@ -5,6 +5,7 @@ import {
   AlertCircle, Loader2, CalendarClock, Building2, Users,
   ClipboardList, ArrowLeftRight, Clock, Package, Tag, Save, X, ArrowLeft
 } from 'lucide-react';
+import MasterDropdown from '../../components/MasterDropdown';
 
 /* ── status colour mapping ── */
 const statusColor = {
@@ -385,14 +386,13 @@ export default function ReturnableDCManagement() {
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                       <div className="form-group">
                         <label>Link Dept. Issue (optional)</label>
-                        <select value={formData.issue_id} onChange={e => handleIssueChange(e.target.value)} className="form-control">
-                          <option value="">-- Select Issue Reference --</option>
-                          {issuesList.map(iss => (
-                            <option key={iss.id} value={iss.id}>
-                              {iss.issue_no} — {iss.requesting_department_name || 'Unknown Dept'}
-                            </option>
-                          ))}
-                        </select>
+                        <MasterDropdown
+                          label=""
+                          name="issue_id"
+                          value={formData.issue_id}
+                          options={issuesList.map(iss => ({...iss, name: `${iss.issue_no} — ${iss.requesting_department_name || 'Unknown Dept'}`, id: iss.id.toString()}))}
+                          onChange={(name, val) => handleIssueChange(val)}
+                        />
                         {linkedIssue && (
                           <p style={{ marginTop: '8px', fontSize: '12px', color: '#0d9488', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <CheckCircle size={14} />
@@ -403,10 +403,14 @@ export default function ReturnableDCManagement() {
 
                       <div className="form-group">
                         <label>Issued To Department *</label>
-                        <select value={formData.issued_to_department_id} onChange={e => setFormData({ ...formData, issued_to_department_id: e.target.value })} required className="form-control">
-                          <option value="">-- Select Department --</option>
-                          {departments.map(d => <option key={d.id} value={d.id}>{d.department_name}</option>)}
-                        </select>
+                        <MasterDropdown
+                          label=""
+                          name="issued_to_department_id"
+                          value={formData.issued_to_department_id}
+                          options={departments.map(d => ({...d, name: d.department_name}))}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                         {selectedDept && (
                           <p style={{ marginTop: '8px', fontSize: '12px', color: '#0d9488', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <CheckCircle size={14} /> {selectedDept.department_name}
@@ -416,10 +420,14 @@ export default function ReturnableDCManagement() {
 
                       <div className="form-group">
                         <label>Issued By *</label>
-                        <select value={formData.issued_by_id} onChange={e => setFormData({ ...formData, issued_by_id: e.target.value })} required className="form-control">
-                          <option value="">-- Select Employee --</option>
-                          {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
-                        </select>
+                        <MasterDropdown
+                          label=""
+                          name="issued_by_id"
+                          value={formData.issued_by_id}
+                          options={employees}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
                       </div>
 
                       <div className="form-group">
@@ -489,15 +497,13 @@ export default function ReturnableDCManagement() {
                                     />
                                   </td>
                                   <td>
-                                    <select
-                                      value={item.return_terms}
-                                      onChange={e => setItemField(idx, 'return_terms', e.target.value)}
-                                      className="form-control" style={{ margin: 0 }}
-                                    >
-                                      {['Returnable in 7 Days', 'Returnable in 15 Days', 'Returnable in 30 Days', 'Return on Demand', 'Permanent Transfer'].map(t => (
-                                        <option key={t} value={t}>{t}</option>
-                                      ))}
-                                    </select>
+                                      <MasterDropdown
+                                        label=""
+                                        name="return_terms"
+                                        value={item.return_terms}
+                                        options={['Returnable in 7 Days', 'Returnable in 15 Days', 'Returnable in 30 Days', 'Return on Demand', 'Permanent Transfer'].map(t => ({ id: t, name: t }))}
+                                        onChange={(name, val) => setItemField(idx, name, val)}
+                                      />
                                   </td>
                                   <td>
                                     <input
