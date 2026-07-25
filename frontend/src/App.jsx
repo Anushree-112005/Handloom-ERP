@@ -63,6 +63,15 @@ import ETACalculation from './pages/ppc/ETACalculation';
 import CostingSheetModule from './pages/costing_sheet/CostingSheetModule';
 import StockSheetModule from './pages/inventory/StockSheetModule';
 
+// ERP DDD Imports
+import WarehouseDashboard from './pages/erp/warehouse/WarehouseDashboard';
+import GodownMaster from './pages/erp/warehouse/GodownMaster';
+import GoodsReceiptDock from './pages/erp/warehouse/GoodsReceiptDock';
+import PutAwayEntry from './pages/erp/warehouse/PutAwayEntry';
+import PickList from './pages/erp/warehouse/PickList';
+import StoreDashboard from './pages/erp/stores/StoreDashboard';
+import StockDashboard from './pages/erp/stock/StockDashboard';
+import StockLedger from './pages/erp/stock/StockLedger';
 // Status Update Module Imports
 import StatusUpdateLogin from './pages/status_update/StatusUpdateLogin';
 import StatusUpdateDashboard from './pages/status_update/StatusUpdateDashboard';
@@ -138,7 +147,10 @@ import WarpSizingTransaction from './pages/warp/WarpSizingTransaction';
 import WeavingDelivery from './pages/cloth/WeavingDelivery';
 import JobWorkStatus from './pages/jobwork/JobWorkStatus';
 import StockSummary from './pages/inventory/StockSummary';
-import StockLedger from './pages/inventory/StockLedger';
+import InventoryStockLedger from './pages/inventory/StockLedger';
+import ComingSoonPlaceholder from './components/ComingSoonPlaceholder';
+import StockListView from './pages/inventory/StockListView';
+import PhysicalAudit from './pages/inventory/PhysicalAudit';
 import FabricDyeingDelivery from './pages/jobwork/FabricDyeingDelivery';
 import DyedFabricReceipt from './pages/jobwork/DyedFabricReceipt';
 import PrintingDelivery from './pages/jobwork/PrintingDelivery';
@@ -171,6 +183,7 @@ const routeModuleMapping = {
   '/packing': 'textile_operations',
   '/warehouse': 'textile_operations',
   '/inventory': 'textile_operations',
+  '/erp': 'textile_operations',
   '/my-approvals': 'dashboard',
   '/user-management': 'admin',
   '/role-management': 'admin',
@@ -616,6 +629,28 @@ export default function App() {
         <Route path="stores-consumables/returnable-dc" element={<MockDbSyncWrapper><ReturnableDCManagement /></MockDbSyncWrapper>} />
         <Route path="stores-consumables/fabric-inspection" element={<MockDbSyncWrapper><FabricInspectionBook /></MockDbSyncWrapper>} />
 
+        {/* Warehouse & Stores Routes */}
+        <Route path="warehouse/dashboard" element={<WarehouseDashboard />} />
+        <Route path="warehouse/godown-master" element={<GodownMaster />} />
+        <Route path="warehouse/goods-receipt-dock" element={<GoodsReceiptDock />} />
+        <Route path="warehouse/putaway-entry" element={<PutAwayEntry />} />
+        <Route path="warehouse/pick-list" element={<PickList />} />
+        <Route path="stores/dashboard" element={<StoreDashboard />} />
+
+        {/* Complete Inventory Module Routes */}
+        <Route path="inventory/dashboard" element={<StockDashboard />} />
+        <Route path="inventory/raw/yarn" element={<YarnStock />} />
+        <Route path="inventory/raw/consumables" element={<MockDbSyncWrapper><StockReport /></MockDbSyncWrapper>} />
+        <Route path="inventory/wip/:unit" element={<StockListView />} />
+        <Route path="inventory/finished/:type" element={<StockListView />} />
+        <Route path="inventory/summary" element={<StockSummary />} />
+        <Route path="inventory/ledger" element={<InventoryStockLedger />} />
+        <Route path="inventory/lot-reconciliation" element={<StockListView />} />
+        <Route path="inventory/surplus-stock" element={<StockListView />} />
+        <Route path="inventory/spares-stock" element={<StockListView />} />
+        <Route path="inventory/audit" element={<PhysicalAudit />} />
+        <Route path="inventory/godown-transfer" element={<StockListView />} />
+        <Route path="inventory/alerts" element={<StockListView />} />
         <Route path="about" element={
           <div className="card animate-fade" style={{ padding: '32px', maxWidth: '600px', margin: '40px auto', textAlign: 'left' }}>
             <h2 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '16px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>

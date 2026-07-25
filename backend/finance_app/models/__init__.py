@@ -11,3 +11,4 @@ from .banking import BankReconciliation
 from .currency import Currency
 from .voucher_type import VoucherType
 from .gst_models import GSTRegistration, GSTClassification
+from .ledger_address import LedgerAddress

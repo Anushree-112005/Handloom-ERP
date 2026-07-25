@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Search, Plus, X, UploadCloud, ImageIcon, Image, Clock, CheckCircle } from 'lucide-react';
+import { Package, Search, Plus, X, UploadCloud, ImageIcon, Clock, CheckCircle } from 'lucide-react';
 import api from '../services/api'; // Use main api instance
 
 export default function WarehouseStock() {

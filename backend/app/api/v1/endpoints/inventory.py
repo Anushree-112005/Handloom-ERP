@@ -1,321 +1,112 @@
-"""Inventory Stock Summary and Stock Ledger endpoints."""
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from typing import List, Dict, Any
+from sqlalchemy.future import select
+from sqlalchemy import func
+from typing import List, Optional
+from datetime import date
+
 from app.core.database import get_db
-from app.models.yarn_inward import YarnInward, YarnInwardItem
-from app.models.grey_yarn_delivery import GreyYarnDelivery, GreyYarnDeliveryItem
-from app.models.dyed_yarn import DyedYarnReceived, DyedYarnReceivedItem, DyedYarnDelivery, DyedYarnDeliveryItem
-from app.models.cloth import ClothInward, ClothInwardItem, ClothDelivery, ClothDeliveryItem
-from app.models.finished_fabric import FinishedFabricInward, FinishedFabricItem
-from datetime import datetime, date
+from app.models.inventory import StockBalance, StockLedger, StockAudit, SurplusStock, SparesStock, LotReconciliation
+from finance_app.models.stock_item import StockItem
 
-router = APIRouter(prefix="/inventory", tags=["Inventory"])
+router = APIRouter()
 
-@router.get("/stock-summary", response_model=List[Dict[str, Any]])
-async def get_stock_summary(db: AsyncSession = Depends(get_db)):
-    try:
-        stock_items = []
-        
-        # 1. Fetch Yarn Inward Items
-        yarn_inw_res = await db.execute(
-            select(YarnInwardItem, YarnInward.inward_date, YarnInward.stock_godown)
-            .join(YarnInward)
-        )
-        yarn_inwards = yarn_inw_res.all()
-        
-        # Track yarn delivery totals by lot to subtract
-        grey_del_res = await db.execute(select(GreyYarnDeliveryItem.our_lot_no, GreyYarnDeliveryItem.total_kgs))
-        grey_del_map = {}
-        for lot, kgs in grey_del_res.all():
-            if lot:
-                grey_del_map[lot] = grey_del_map.get(lot, 0.0) + float(kgs or 0)
-                
-        dyed_del_res = await db.execute(select(DyedYarnDeliveryItem.lot_no, DyedYarnDeliveryItem.net_weight))
-        dyed_del_map = {}
-        for lot, kgs in dyed_del_res.all():
-            if lot:
-                dyed_del_map[lot] = dyed_del_map.get(lot, 0.0) + float(kgs or 0)
-
-        # Process Yarn Inward into Stock Summary
-        yarn_stock_map = {}
-        for item, inward_dt, godown in yarn_inwards:
-            lot = item.lot_no or ""
-            cnt = item.yarn_count or "Unknown Yarn"
-            gdn = godown or "Yarn Godown"
-            key = (cnt, lot, gdn)
-            
-            inward_qty = float(item.kgs or 0)
-            delivered_qty = grey_del_map.get(lot, 0.0) + dyed_del_map.get(lot, 0.0)
-            remaining_qty = max(0.0, inward_qty - delivered_qty)
-            
-            rate = float(item.rate or 0)
-            val = remaining_qty * rate
-            
-            date_str = inward_dt.strftime("%d/%m/%Y") if inward_dt else ""
-            
-            if key not in yarn_stock_map:
-                yarn_stock_map[key] = {
-                    "qty": remaining_qty,
-                    "value": val,
-                    "last_updated": date_str,
-                    "unit": "KGS",
-                    "category": "Yarn"
-                }
-            else:
-                yarn_stock_map[key]["qty"] += remaining_qty
-                yarn_stock_map[key]["value"] += val
-                if date_str:
-                    yarn_stock_map[key]["last_updated"] = date_str
-
-        idx = 1
-        for (cnt, lot, gdn), data in yarn_stock_map.items():
-            if data["qty"] > 0:
-                stock_items.append({
-                    "id": f"YARN-{idx:03d}",
-                    "category": "Yarn",
-                    "itemName": f"{cnt}".strip(),
-                    "qty": round(data["qty"], 2),
-                    "unit": "KGS",
-                    "value": round(data["value"], 2),
-                    "godown": gdn,
-                    "lastUpdated": data["last_updated"]
-                })
-                idx += 1
-
-        # 2. Fetch Cloth Inwards (Grey Fabrics)
-        cloth_inw_res = await db.execute(
-            select(ClothInwardItem, ClothInward.inw_date, ClothInward.shed_no)
-            .join(ClothInward)
-        )
-        cloth_inwards = cloth_inw_res.all()
-
-        # Track cloth delivery totals by lot_no to subtract
-        cloth_del_res = await db.execute(select(ClothDeliveryItem.lot_no, ClothDeliveryItem.meters))
-        cloth_del_map = {}
-        for lot, mtrs in cloth_del_res.all():
-            if lot:
-                cloth_del_map[lot] = cloth_del_map.get(lot, 0.0) + float(mtrs or 0)
-
-        cloth_stock_map = {}
-        for item, inw_dt, shed in cloth_inwards:
-            lot = item.lot_no or ""
-            design = item.design_no or "Unknown Design"
-            color = item.color or ""
-            gdn = f"Weaving Shed {shed}" if shed else "Grey Fabric Godown"
-            key = (design, color, lot, gdn)
-            
-            inward_qty = float(item.meters or 0)
-            delivered_qty = cloth_del_map.get(lot, 0.0)
-            remaining_qty = max(0.0, inward_qty - delivered_qty)
-            
-            rate = float(item.rate or 0)
-            val = remaining_qty * rate
-            date_str = inw_dt.strftime("%d/%m/%Y") if inw_dt else ""
-            
-            if key not in cloth_stock_map:
-                cloth_stock_map[key] = {
-                    "qty": remaining_qty,
-                    "value": val,
-                    "last_updated": date_str,
-                    "unit": "MTRS",
-                    "category": "Grey Fabric"
-                }
-            else:
-                cloth_stock_map[key]["qty"] += remaining_qty
-                cloth_stock_map[key]["value"] += val
-                if date_str:
-                    cloth_stock_map[key]["last_updated"] = date_str
-
-        idx = 1
-        for (design, color, lot, gdn), data in cloth_stock_map.items():
-            if data["qty"] > 0:
-                stock_items.append({
-                    "id": f"GREY-{idx:03d}",
-                    "category": "Grey Fabric",
-                    "itemName": f"Design {design} {color}".strip(),
-                    "qty": round(data["qty"], 2),
-                    "unit": "MTRS",
-                    "value": round(data["value"], 2),
-                    "godown": gdn,
-                    "lastUpdated": data["last_updated"]
-                })
-                idx += 1
-
-        # 3. Fetch Finished Fabrics
-        fin_inw_res = await db.execute(
-            select(FinishedFabricItem, FinishedFabricInward.inv_date)
-            .join(FinishedFabricInward)
-        )
-        fin_inwards = fin_inw_res.all()
-        
-        fin_stock_map = {}
-        for item, inv_dt in fin_inwards:
-            lot = item.lot_no or ""
-            design = item.design_no or "Unknown Design"
-            color = item.color or ""
-            gdn = "Finished Goods Warehouse"
-            key = (design, color, lot, gdn)
-            
-            qty = float(item.meters or 0)
-            rate = 85.0 # default valuation rate
-            val = qty * rate
-            date_str = inv_dt.strftime("%d/%m/%Y") if inv_dt else ""
-            
-            if key not in fin_stock_map:
-                fin_stock_map[key] = {
-                    "qty": qty,
-                    "value": val,
-                    "last_updated": date_str,
-                    "unit": "MTRS",
-                    "category": "Finished Fabric"
-                }
-            else:
-                fin_stock_map[key]["qty"] += qty
-                fin_stock_map[key]["value"] += val
-                if date_str:
-                    fin_stock_map[key]["last_updated"] = date_str
-
-        idx = 1
-        for (design, color, lot, gdn), data in fin_stock_map.items():
-            if data["qty"] > 0:
-                stock_items.append({
-                    "id": f"FIN-{idx:03d}",
-                    "category": "Finished Fabric",
-                    "itemName": f"Design {design} {color}".strip(),
-                    "qty": round(data["qty"], 2),
-                    "unit": "MTRS",
-                    "value": round(data["value"], 2),
-                    "godown": gdn,
-                    "lastUpdated": data["last_updated"]
-                })
-                idx += 1
-
-    except Exception as e:
-        stock_items = []
-
-    # 4. Fallback high-quality real-time data if database is empty
-    if not stock_items:
-        stock_items = []
-        
-    return stock_items
-
-
-
-@router.get("/stock-ledger", response_model=List[Dict[str, Any]])
-async def get_stock_ledger(db: AsyncSession = Depends(get_db)):
-    all_txns = []
+@router.get("/stock-dashboard")
+async def get_stock_dashboard(db: AsyncSession = Depends(get_db)):
+    # Calculate KPIs
+    # Note: For SQLite compatibility in this demo, using basic sum.
+    # In a real app with proper async setup, we'd use select(func.sum(StockBalance.closing_qty))...
+    balances_result = await db.execute(select(StockBalance, StockItem).join(StockItem, StockItem.id == StockBalance.stock_item_id))
+    balances = balances_result.all()
     
-    try:
-        # 1. Fetch Yarn Inward Items
-        yarn_inw_res = await db.execute(
-            select(YarnInwardItem, YarnInward.inward_date, YarnInward.ref_no, YarnInward.stock_godown)
-            .join(YarnInward)
-        )
-        for item, inward_dt, ref_no, godown in yarn_inw_res.all():
-            dt = inward_dt if inward_dt else date.today()
-            all_txns.append({
-                "raw_date": dt,
-                "date": dt.strftime("%d/%m/%Y"),
-                "sku": f"{item.yarn_count or 'Yarn'}".strip(),
-                "type": "Inward",
-                "ref": ref_no or f"INW-{item.id}",
-                "qtyIn": float(item.kgs or 0),
-                "qtyOut": 0.0,
-                "godown": godown or "Yarn Godown",
-                "operator": "Admin"
-            })
-
-        # 2. Fetch Grey Yarn Delivery Items
-        grey_del_res = await db.execute(
-            select(GreyYarnDeliveryItem, GreyYarnDelivery.dc_date, GreyYarnDelivery.dc_no, GreyYarnDelivery.stock_godown)
-            .join(GreyYarnDelivery)
-        )
-        for item, dc_dt, dc_no, godown in grey_del_res.all():
-            dt = dc_dt if dc_dt else date.today()
-            all_txns.append({
-                "raw_date": dt,
-                "date": dt.strftime("%d/%m/%Y"),
-                "sku": f"{item.count or 'Yarn'}".strip(),
-                "type": "Outward",
-                "ref": dc_no or f"DEL-{item.id}",
-                "qtyIn": 0.0,
-                "qtyOut": float(item.total_kgs or 0),
-                "godown": godown or "Yarn Godown",
-                "operator": "Supervisor"
-            })
-
-        # 3. Fetch Cloth Inwards (Grey Fabrics)
-        cloth_inw_res = await db.execute(
-            select(ClothInwardItem, ClothInward.inw_date, ClothInward.ref_no, ClothInward.shed_no)
-            .join(ClothInward)
-        )
-        for item, inw_dt, ref_no, shed in cloth_inw_res.all():
-            dt = inw_dt if inw_dt else date.today()
-            gdn = f"Weaving Shed {shed}" if shed else "Grey Fabric Godown"
-            all_txns.append({
-                "raw_date": dt,
-                "date": dt.strftime("%d/%m/%Y"),
-                "sku": f"Design {item.design_no or ''} {item.color or ''}".strip(),
-                "type": "Inward",
-                "ref": ref_no or f"INW-{item.id}",
-                "qtyIn": float(item.meters or 0),
-                "qtyOut": 0.0,
-                "godown": gdn,
-                "operator": "Admin"
-            })
-
-        # 4. Fetch Cloth Deliveries
-        cloth_del_res = await db.execute(
-            select(ClothDeliveryItem, ClothDelivery.dc_date, ClothDelivery.dc_no)
-            .join(ClothDelivery)
-        )
-        for item, dc_dt, dc_no in cloth_del_res.all():
-            dt = dc_dt if dc_dt else date.today()
-            all_txns.append({
-                "raw_date": dt,
-                "date": dt.strftime("%d/%m/%Y"),
-                "sku": f"Design {item.design_no or ''} {item.color or ''}".strip(),
-                "type": "Outward",
-                "ref": dc_no or f"DEL-{item.id}",
-                "qtyIn": 0.0,
-                "qtyOut": float(item.meters or 0),
-                "godown": "Grey Fabric Godown",
-                "operator": "Supervisor"
-            })
-
-        # Calculate running balances per SKU
-        by_sku = {}
-        for item in all_txns:
-            sku = item["sku"]
-            if sku not in by_sku:
-                by_sku[sku] = []
-            by_sku[sku].append(item)
+    kpis = {
+        "yarn_qty": 0, "yarn_val": 0,
+        "greige_qty": 0, "greige_val": 0,
+        "finished_qty": 0, "finished_val": 0,
+        "at_job_work_qty": 0, "at_job_work_val": 0
+    }
+    
+    for bal, item in balances:
+        if bal.status == 'AT_JOB_WORK':
+            kpis["at_job_work_qty"] += bal.closing_qty
+            kpis["at_job_work_val"] += bal.closing_value
             
-        final_list = []
-        txn_counter = 1000
-        for sku, txns in by_sku.items():
-            txns.sort(key=lambda t: t["raw_date"])
-            running_bal = 0.0
-            for t in txns:
-                running_bal += t["qtyIn"] - t["qtyOut"]
-                t["balance"] = round(running_bal, 2)
-                t["id"] = f"TXN-{txn_counter}"
-                txn_counter += 1
-                final_list.append(t)
-                
-        # Sort by date descending
-        final_list.sort(key=lambda t: t["raw_date"], reverse=True)
+        elif bal.status == 'AVAILABLE':
+            if item.item_category == 'YARN':
+                kpis["yarn_qty"] += bal.closing_qty
+                kpis["yarn_val"] += bal.closing_value
+            elif item.item_category == 'GREIGE_FABRIC':
+                kpis["greige_qty"] += bal.closing_qty
+                kpis["greige_val"] += bal.closing_value
+            elif item.item_category == 'FINISHED_FABRIC':
+                kpis["finished_qty"] += bal.closing_qty
+                kpis["finished_val"] += bal.closing_value
+
+    # Low stock alerts count
+    low_stock_count = sum(1 for bal, item in balances if bal.closing_qty <= item.reorder_level)
+    
+    return {
+        "kpis": kpis,
+        "low_stock_count": low_stock_count,
+        "pending_audits": 0
+    }
+
+@router.get("/stock-summary")
+async def get_stock_summary(category: Optional[str] = None, db: AsyncSession = Depends(get_db)):
+    stmt = select(StockBalance, StockItem).join(StockItem, StockItem.id == StockBalance.stock_item_id)
+    if category:
+        stmt = stmt.where(StockItem.item_category == category)
         
-        # Remove raw date object before returning
-        for t in final_list:
-            t.pop("raw_date", None)
-            
-    except Exception as e:
-        final_list = []
-        
-    if not final_list:
-        final_list = []
-        
-    return final_list
+    result = await db.execute(stmt)
+    records = result.all()
+    
+    summary = []
+    for bal, item in records:
+        summary.append({
+            "id": bal.id,
+            "item_name": item.name,
+            "item_code": item.item_code,
+            "godown_id": bal.godown_id,
+            "status": bal.status,
+            "closing_qty": float(bal.closing_qty),
+            "closing_value": float(bal.closing_value),
+            "unit": item.unit
+        })
+    return summary
+
+@router.get("/stock-ledger")
+async def get_stock_ledger(db: AsyncSession = Depends(get_db)):
+    stmt = select(StockLedger, StockItem).join(StockItem, StockItem.id == StockLedger.stock_item_id).order_by(StockLedger.txn_date.desc(), StockLedger.id.desc()).limit(100)
+    result = await db.execute(stmt)
+    records = result.all()
+    
+    ledger = []
+    for leg, item in records:
+        ledger.append({
+            "id": leg.id,
+            "txn_date": leg.txn_date,
+            "item_name": item.name,
+            "lot_no": leg.lot_no,
+            "movement_type": leg.movement_type,
+            "qty": float(leg.qty),
+            "status": leg.status,
+            "ref_voucher_type": leg.ref_voucher_type
+        })
+    return ledger
+
+@router.get("/alerts/low-stock")
+async def get_low_stock_alerts(db: AsyncSession = Depends(get_db)):
+    stmt = select(StockBalance, StockItem).join(StockItem, StockItem.id == StockBalance.stock_item_id)
+    result = await db.execute(stmt)
+    records = result.all()
+    
+    alerts = []
+    for bal, item in records:
+        if bal.closing_qty <= item.reorder_level:
+            alerts.append({
+                "item_name": item.name,
+                "current_qty": float(bal.closing_qty),
+                "reorder_level": float(item.reorder_level),
+                "status": bal.status
+            })
+    return alerts

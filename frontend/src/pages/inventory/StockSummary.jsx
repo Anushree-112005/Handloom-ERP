@@ -1,153 +1,218 @@
-import { useState, useMemo, useEffect } from 'react';
-import { Layers, PieChart, Search, Download, Database, MapPin, IndianRupee, ShieldCheck } from 'lucide-react';
-import * as XLSX from 'xlsx';
-import api from '../../services/api';
+import React, { useState, useEffect } from 'react';
+import api, { erpStockAPI } from '../../services/api';
+import { Search, Filter, Download, Box, BarChart2, Package, IndianRupee, FileText } from 'lucide-react';
 
 export default function StockSummary() {
+  const [summary, setSummary] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('All Categories');
-  const [stockData, setStockData] = useState([]);
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   useEffect(() => {
-    // Fetch real stock data from backend API
-    api.get('/inventory/stock-summary')
-      .then(res => setStockData(res.data || []))
-      .catch(() => setStockData([]));
-  }, []);
+    fetchSummary();
+  }, [categoryFilter]);
 
-  const categories = useMemo(() => {
-    return ['All Categories', ...new Set(stockData.map(item => item.category))];
-  }, [stockData]);
-
-  const filteredStock = useMemo(() => {
-    return stockData.filter(item => {
-      const matchesSearch = (item.itemName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            (item.godown || '').toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = categoryFilter === 'All Categories' || item.category === categoryFilter;
-      return matchesSearch && matchesCategory;
-    });
-  }, [searchTerm, categoryFilter, stockData]);
-
-  const totals = useMemo(() => {
-    const totalItems = filteredStock.length;
-    const totalValuation = filteredStock.reduce((acc, item) => acc + (item.value || 0), 0);
-    return { totalItems, totalValuation };
-  }, [filteredStock]);
-
-  const exportExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(filteredStock);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Stock Summary');
-    XLSX.writeFile(wb, `Stock_Summary_${new Date().toISOString().split('T')[0]}.xlsx`);
+  const fetchSummary = async () => {
+    try {
+      setLoading(true);
+      const urlParams = categoryFilter ? `?category=${categoryFilter}` : '';
+      const res = await erpStockAPI.getCurrentStock(urlParams);
+      
+      // Map CurrentStock Schema to StockSummary format
+      const formattedSummary = res.data.map(item => ({
+        id: item.id,
+        item_code: item.item_id,
+        item_name: item.item_id, // We use item_id as name if not joined
+        godown_id: item.location_type || 'MAIN',
+        status: item.status,
+        closing_qty: item.quantity,
+        closing_value: item.quantity * 100, // Dummy value multiplier for demo since price isn't in CurrentStock
+        unit: 'Units'
+      }));
+      setSummary(formattedSummary);
+    } catch (error) {
+      console.error('Failed to fetch stock summary:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const filteredData = summary.filter(item => 
+    item.item_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.item_code?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totalItems = filteredData.length;
+  const totalValue = filteredData.reduce((acc, curr) => acc + (curr.closing_value || 0), 0);
+  const availableItems = filteredData.filter(i => i.status === 'AVAILABLE').length;
+  const otherItems = totalItems - availableItems;
+
   return (
-    <div className="animate-fade" style={{ paddingBottom: '40px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+    <div className="animate-fade">
+      {/* HEADER */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
           <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <PieChart size={24} color="var(--primary)" /> Enterprise Stock Summary
+            <Box size={24} color="var(--primary)" /> Stock Summary
           </h2>
-          <p style={{ color: 'var(--text-muted)' }}>Consolidated inventory status across raw materials, process stock, and finished goods.</p>
+          <p style={{ color: 'var(--text-muted)' }}>Current stock balances and valuation across all locations.</p>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button className="btn btn-primary" onClick={exportExcel} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Download size={16} /> Export Excel
-          </button>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          {/* Export Dropdown */}
+          <div style={{ position: 'relative' }}>
+            <button
+              className="btn btn-secondary"
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <Download size={16} /> Export
+            </button>
+            {showExportMenu && (
+              <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', zIndex: 10, width: 140, overflow: 'hidden' }}>
+                <button
+                  onClick={() => setShowExportMenu(false)}
+                  style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)' }}
+                >
+                  <FileText size={16} color="#ef4444" /> PDF Report
+                </button>
+                <button
+                  onClick={() => setShowExportMenu(false)}
+                  style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }}
+                >
+                  <Download size={16} color="#10b981" /> Excel Sheet
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginBottom: 24 }}>
-        <div className="card stat-card" style={{ '--stat-color': 'var(--primary)' }}>
-          <div className="stat-icon" style={{ background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)' }}><Database size={24} /></div>
+      {/* STAT CARDS */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
+        <div className="card stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
+            <BarChart2 size={24} />
+          </div>
           <div className="stat-details">
-            <h3>{totals.totalItems} Items</h3>
-            <p style={{ color: 'var(--text-muted)' }}>Unique inventory SKUs</p>
+            <h3>Total Items</h3>
+            <div className="value">{totalItems}</div>
           </div>
         </div>
-        <div className="card stat-card" style={{ '--stat-color': 'var(--success)' }}>
-          <div className="stat-icon" style={{ background: 'rgba(5, 150, 105, 0.1)', color: 'var(--success)' }}><IndianRupee size={24} /></div>
+
+        <div className="card stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
+            <IndianRupee size={24} />
+          </div>
           <div className="stat-details">
-            <h3>₹{totals.totalValuation.toLocaleString()}</h3>
-            <p style={{ color: 'var(--text-muted)' }}>Total Stock valuation</p>
+            <h3>Total Stock Value</h3>
+            <div className="value">₹{totalValue.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</div>
           </div>
         </div>
-        <div className="card stat-card" style={{ '--stat-color': 'var(--secondary)' }}>
-          <div className="stat-icon" style={{ background: 'rgba(8, 145, 178, 0.1)', color: 'var(--secondary)' }}><ShieldCheck size={24} /></div>
+
+        <div className="card stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>
+            <Package size={24} />
+          </div>
           <div className="stat-details">
-            <h3>Godowns</h3>
-            <p style={{ color: 'var(--text-muted)' }}>Active storage facilities</p>
+            <h3>Available Items</h3>
+            <div className="value">{availableItems}</div>
+          </div>
+        </div>
+
+        <div className="card stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>
+            <Filter size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Other Status</h3>
+            <div className="value">{otherItems}</div>
           </div>
         </div>
       </div>
 
-      {/* Controls */}
-      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', gap: 16, alignItems: 'center', background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
-        <div style={{ position: 'relative', flex: 1 }}>
+      {/* FILTER BAR */}
+      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: 250, maxWidth: 350 }}>
           <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-          <input 
-            type="text" 
-            className="form-control" 
-            placeholder="Search by SKU Name, Godown..." 
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Search by Item Code or Name..."
+            style={{ paddingLeft: 38, width: '100%', margin: 0 }}
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            style={{ paddingLeft: 38, width: '100%', margin: 0 }}
           />
         </div>
-        <select className="form-control" style={{ width: 220, margin: 0 }} value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
-          {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-        </select>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
+            <Filter size={16} />
+            <span style={{ fontSize: 13, fontWeight: 600 }}>Filter Category:</span>
+          </div>
+
+          <select className="form-control" style={{ width: 150, margin: 0 }} value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
+            <option value="">All Categories</option>
+            <option value="YARN">Yarn</option>
+            <option value="GREIGE_FABRIC">Greige Fabric</option>
+            <option value="FINISHED_FABRIC">Finished Fabric</option>
+            <option value="SPARE">Spares</option>
+            <option value="CONSUMABLE">Consumables</option>
+          </select>
+        </div>
       </div>
 
-      {/* Grid Directory */}
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>SKU ID</th>
-              <th>Category</th>
-              <th>SKU / Item Name</th>
-              <th style={{ textAlign: 'right' }}>Stock Quantity</th>
-              <th>Unit</th>
-              <th style={{ textAlign: 'right' }}>Avg Valuation Rate</th>
-              <th style={{ textAlign: 'right' }}>Total Value</th>
-              <th>Godown Location</th>
-              <th>Last Transaction</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredStock.map(item => (
-              <tr key={item.id}>
-                <td style={{ fontWeight: 700 }}>{item.id}</td>
-                <td>
-                  <span className="badge badge-active" style={{ fontSize: '11px', padding: '2px 8px' }}>
-                    {item.category}
-                  </span>
-                </td>
-                <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{item.itemName}</td>
-                <td style={{ textAlign: 'right', fontWeight: 650 }}>{(item.qty || 0).toLocaleString()}</td>
-                <td>{item.unit}</td>
-                <td style={{ textAlign: 'right' }}>₹{item.qty ? ((item.value || 0) / item.qty).toFixed(2) : '0.00'}</td>
-                <td style={{ textAlign: 'right', fontWeight: 700 }}>₹{(item.value || 0).toLocaleString()}</td>
-                <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <MapPin size={14} color="var(--text-muted)" />
-                    {item.godown}
-                  </div>
-                </td>
-                <td>{item.lastUpdated}</td>
-              </tr>
-            ))}
-            {filteredStock.length === 0 && (
+      {/* TABLE */}
+      <div className="card" style={{ padding: 0 }}>
+        <div style={{ overflowX: 'auto' }}>
+          <table className="data-table">
+            <thead>
               <tr>
-                <td colSpan={9} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                  No stock records matching the filter.
-                </td>
+                <th>Item Code</th>
+                <th>Item Name</th>
+                <th>Godown ID</th>
+                <th>Status</th>
+                <th style={{ textAlign: 'right' }}>Closing Qty</th>
+                <th>Unit</th>
+                <th style={{ textAlign: 'right' }}>Closing Value</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan="7" style={{ textAlign: 'center', padding: 20, color: 'var(--text-muted)' }}>Loading stock summary...</td>
+                </tr>
+              ) : filteredData.length === 0 ? (
+                <tr>
+                  <td colSpan="7" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
+                    <Box size={40} style={{ margin: '0 auto 12px auto', opacity: 0.5 }} />
+                    <p>No records found matching your criteria.</p>
+                  </td>
+                </tr>
+              ) : (
+                filteredData.map(item => (
+                  <tr key={item.id}>
+                    <td style={{ fontWeight: 600 }}>{item.item_code || '-'}</td>
+                    <td style={{ color: 'var(--text-primary)' }}>{item.item_name}</td>
+                    <td style={{ color: 'var(--text-muted)' }}>{item.godown_id || 'MAIN'}</td>
+                    <td>
+                      <span className={`badge ${
+                        item.status === 'AVAILABLE' ? 'badge-success' : 
+                        item.status === 'RESERVED' ? 'badge-warning' : 
+                        'badge-secondary'
+                      }`}>
+                        {item.status}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'right', fontWeight: 600 }}>{(item.closing_qty || 0).toFixed(2)}</td>
+                    <td style={{ color: 'var(--text-muted)' }}>{item.unit || 'Kgs'}</td>
+                    <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--primary)' }}>₹{(item.closing_value || 0).toFixed(2)}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

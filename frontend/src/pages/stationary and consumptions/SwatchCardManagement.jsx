@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
-import { Plus, Save, Trash2, X, FileText, Image, Search, Filter, Upload, Download } from 'lucide-react';
+import { Plus, Save, Trash2, X, FileText, ImageIcon, Search, Filter, Upload, Download } from 'lucide-react';
 
 export default function SwatchCardManagement() {
   const [view, setView] = useState('list'); // 'list' or 'form'
@@ -386,7 +386,7 @@ export default function SwatchCardManagement() {
               <div style={{ border: '1px dashed var(--border)', padding: '24px', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
                 {formData.attachment_path ? (
                   <div style={{ textAlign: 'center' }}>
-                    <Image size={32} style={{ color: '#6366f1', marginBottom: 12 }} />
+                    <ImageIcon size={32} style={{ color: '#6366f1', marginBottom: 12 }} />
                     <p style={{ fontWeight: 600, fontSize: 14, margin: '0 0 4px 0' }}>Attachment Linked Successfully</p>
                     <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'monospace' }}>{formData.attachment_path}</span>
                     <div style={{ marginTop: 16, display: 'flex', gap: 8, justifyContent: 'center' }}>

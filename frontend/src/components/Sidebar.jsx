@@ -9,7 +9,7 @@ import {
   CreditCard, DollarSign, Target, Percent, BookOpen, Building, Hash, Sparkles, Plus,
   Award, RefreshCw, Clock3, FolderOpen, Calendar, AlertTriangle, LayoutGrid, Menu,
   Clock, TrendingUp, TrendingDown, Grid, Bell, ArrowRight, Map as MapIcon, Eye,
-  Brain, PlayCircle, BarChart2, Printer, BarChart3
+  Brain, PlayCircle, BarChart2, Printer, BarChart3, ImageIcon
 } from 'lucide-react';
 import { companySettingAPI } from '../services/api';
 import defaultLogo from '../assets/logo.svg';
@@ -93,14 +93,6 @@ const modules = [
       { path: '/cloth/checking', label: 'Grey Inspection', icon: CheckSquare },
       { path: '/fabric/transaction/checking', label: 'Final Inspection', icon: CheckSquare },
 
-      { section: 'Warehouse & Inventory' },
-      { path: '/yarn/inward', label: 'Yarn Inward', icon: ArrowRightLeft },
-      { path: '/yarn/stock', label: 'Yarn Stock', icon: Box },
-      { path: '/warehouse-stock', label: 'Warehouse Stock Photos', icon: Box },
-      { path: '/inventory/stock-summary', label: 'Stock Summary', icon: PieChart },
-      { path: '/inventory/stock-ledger', label: 'Stock Ledger', icon: FileText },
-      { path: '/inventory/stock-sheet', label: 'Stock Sheet', icon: FileText },
-
       { section: 'Packing' },
       { path: '/packing', label: 'Packing Slip', icon: Box },
 
@@ -122,6 +114,66 @@ const modules = [
   },
 
 
+
+  { section: 'INVENTORY MANAGEMENT' },
+  {
+    label: 'Inventory Management',
+    icon: Box,
+    children: [
+       { path: '/inventory/dashboard', label: 'Stock Dashboard', icon: LayoutDashboard },
+       
+       { section: 'RAW MATERIAL' },
+       { path: '/inventory/raw/yarn', label: 'Yarn Stock', icon: Layers },
+       { path: '/inventory/raw/consumables', label: 'Chemicals & Consumables', icon: Package },
+       
+       { section: 'WIP STOCK' },
+       { path: '/inventory/wip/warping', label: 'At Warping Unit', icon: Factory },
+       { path: '/inventory/wip/sizing', label: 'At Sizing Unit', icon: Factory },
+       { path: '/inventory/wip/weaving', label: 'At Weaving Unit', icon: Factory },
+       { path: '/inventory/wip/finishing', label: 'At Finishing Unit', icon: Factory },
+       
+       { section: 'FINISHED GOODS' },
+       { path: '/inventory/finished/grey', label: 'Grey Fabric', icon: CheckSquare },
+       { path: '/inventory/finished/fabric', label: 'Finished Fabric', icon: CheckSquare },
+       
+       { section: 'SURPLUS & SPARES' },
+       { path: '/inventory/surplus-stock', label: 'Surplus Stock', icon: PieChart },
+       { path: '/inventory/spares-stock', label: 'Spares Stock', icon: Package },
+       
+       { section: 'LEDGER & REPORTS' },
+       { path: '/inventory/summary', label: 'Stock Summary', icon: FileText },
+       { path: '/inventory/ledger', label: 'Stock Ledger', icon: FileText },
+       { path: '/inventory/lot-reconciliation', label: 'Lot Reconciliation', icon: BookOpen },
+       { path: '/inventory/audit', label: 'Physical Verification', icon: ClipboardList },
+       
+       { section: 'TRACKING & ALERTS' },
+       { path: '/inventory/godown-transfer', label: 'Godown Transfer', icon: MapPin },
+       { path: '/inventory/alerts', label: 'Low Stock Alerts', icon: AlertTriangle },
+    ]
+  },
+
+  { section: 'WAREHOUSE MANAGEMENT' },
+  {
+    label: 'Warehouse Operations',
+    icon: Package,
+    children: [
+       { path: '/warehouse/dashboard', label: 'Warehouse Dashboard', icon: LayoutDashboard },
+       
+       { section: 'MASTER SETUP' },
+       { path: '/warehouse/godown-master', label: 'Godown / Bin Master', icon: Box },
+       { path: '/warehouse-stock', label: 'Warehouse Stock & Photos', icon: Package },
+       
+       { section: 'INWARD (RECEIVING)' },
+       { path: '/warehouse/goods-receipt-dock', label: 'Goods Receipt Dock', icon: ArrowDownLeft },
+       { path: '/warehouse/putaway-entry', label: 'Put-Away Entry', icon: CheckSquare },
+       
+       { section: 'OUTWARD (DISPATCH)' },
+       { path: '/warehouse/pick-list', label: 'Pick List (Staging)', icon: ArrowUpRight },
+       
+       { section: 'STORES' },
+       { path: '/stores/dashboard', label: 'Stores Dashboard', icon: LayoutGrid },
+    ]
+  },
 
   { section: 'Accounts & Finance' },
   {
@@ -493,6 +545,10 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
                     navigate('/stores-consumables/dashboard');
                   } else if (item.label === 'Production Management') {
                     navigate('/ppc/tracking/live-dashboard');
+                  } else if (item.label === 'Inventory Management') {
+                    navigate('/inventory/dashboard');
+                  } else if (item.label === 'Warehouse Operations') {
+                    navigate('/warehouse/dashboard');
                   }
                 }}
                 style={{ width: 'calc(100% - 16px)', justifyContent: 'space-between', cursor: 'pointer' }}
