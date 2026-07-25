@@ -1110,8 +1110,8 @@ export default function DesignEntry() {
     const reedOl = Math.max(0, reed - 8);
     const grayWidthVal = parseFloat(form.gray_width) || (reedOl + 4 > 0 ? (totalEnds / (reedOl + 4)) : 0);
     const pickOl = Math.max(0, (parseFloat(form.pick_ot) || 0) - 4);
-    const noD = warpRepeatSize > 0 ? Math.floor(totalEnds / warpRepeatSize) : 0;
-    const repeatEnds = warpRepeatSize * noD;
+    const calculatedNoD = (warpRepeatSize > 0 && totalEnds > 0) ? Math.floor(totalEnds / warpRepeatSize) : 0;
+    const repeatEnds = warpRepeatSize * calculatedNoD;
     const balance = totalEnds - repeatEnds - selvage;
 
     const extraEnds = warpRows.map(() => 0);
@@ -1148,11 +1148,14 @@ export default function DesignEntry() {
         ? parseFloat(matchingSpec.act_count)
         : parseEqCount(yc);
 
+      const rowTimes = parseInt(item.times) || 0;
+      const rowNoD = rowTimes > 0 ? rowTimes : (calculatedNoD > 0 ? calculatedNoD : 1);
+
       const beamLabel = item.type || matchingSpec?.type || 'Warp beam1';
       const key = `${beamLabel}_${yc}_${cname}`;
       const itemEnds = parseInt(item.threads) || 0;
       const itemExtra = extraEnds[index] || 0;
-      const itemTotalEnds = (itemEnds * noD) + itemExtra;
+      const itemTotalEnds = (itemEnds * rowNoD) + itemExtra;
 
       if (warpColorAgg[key]) {
         warpColorAgg[key].ends += itemEnds;
@@ -1167,7 +1170,7 @@ export default function DesignEntry() {
           color: cname,
           hex: colorCode,
           ends: itemEnds,
-          noD: noD,
+          noD: rowNoD,
           extra: itemExtra,
           total_ends: itemTotalEnds
         };
@@ -1385,7 +1388,11 @@ export default function DesignEntry() {
             return !yTypeLower.includes('weft');
           }
         });
-        const finalCount = (row.yarn_count && row.yarn_count !== '40S CTN') ? row.yarn_count : (matchingSpec ? matchingSpec.yarn_count : '20S CTN');
+        
+        const userSpecCount = matchingSpec && matchingSpec.yarn_count && matchingSpec.yarn_count.trim();
+        const aiExtractedCount = row.yarn_count && row.yarn_count.trim();
+        const finalCount = userSpecCount || aiExtractedCount || '20S CTN';
+
         return {
           ...row,
           type: matchingSpec ? matchingSpec.type : row.type,
@@ -1394,26 +1401,12 @@ export default function DesignEntry() {
         };
       });
 
-      // Update yarnRows if extracted count is 20S CTN
-      const firstWarpExtracted = extractedRows.find(r => !r.type?.toLowerCase().includes('weft'));
-      if (firstWarpExtracted && firstWarpExtracted.yarn_count) {
-        setYarnRows(prev => prev.map(y => {
-          if (!y.type?.toLowerCase().includes('weft')) {
-            return {
-              ...y,
-              yarn_count: firstWarpExtracted.yarn_count,
-              act_count: parseEqCount(firstWarpExtracted.yarn_count)
-            };
-          }
-          return y;
-        }));
-      }
-
-      setFabricDesignRows([...fabricDesignRows, ...extractedRows]);
+      setFabricDesignRows(extractedRows);
       alert(`Successfully extracted ${extractedRows.length} design lines from the image(s)!`);
     } catch (err) {
-      console.error(err);
-      alert("Failed to extract design from image(s). Please make sure the Groq API key is valid.");
+      console.error("AI Extraction Error:", err);
+      const backendMsg = err.response?.data?.detail;
+      alert(backendMsg ? `AI Extraction Error:\n\n${backendMsg}` : "Failed to extract design from image(s). Please check backend logs or network connection.");
     } finally {
       setIsExtracting(false);
     }

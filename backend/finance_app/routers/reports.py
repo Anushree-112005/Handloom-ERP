@@ -40,11 +40,13 @@ def _ledger_net(ledger: Ledger, entries) -> tuple[float, str]:
 @router.get("/day-book")
 def day_book(
     company_id:   int,
-    from_date:    date,
-    to_date:      date,
+    from_date:    Optional[date] = None,
+    to_date:      Optional[date] = None,
     voucher_type: Optional[str] = None,
     db: Session = Depends(get_db),
 ):
+    if not to_date: to_date = date.today()
+    if not from_date: from_date = to_date.replace(month=1, day=1)
     q = db.query(Voucher).filter(
         Voucher.company_id == company_id,
         Voucher.date >= from_date,
@@ -88,10 +90,12 @@ def day_book(
 def ledger_statement(
     company_id: int,
     ledger_id:  int,
-    from_date:  date,
-    to_date:    date,
+    from_date:  Optional[date] = None,
+    to_date:    Optional[date] = None,
     db: Session = Depends(get_db),
 ):
+    if not to_date: to_date = date.today()
+    if not from_date: from_date = to_date.replace(month=1, day=1)
     ledger = db.query(Ledger).filter(Ledger.id == ledger_id, Ledger.company_id == company_id).first()
     if not ledger:
         return {"error": "Ledger not found"}
@@ -154,7 +158,8 @@ def ledger_statement(
 
 # ── GROUP SUMMARY ─────────────────────────────────────────────────────────────
 @router.get("/group-summary")
-def group_summary(company_id: int, as_of: date, db: Session = Depends(get_db)):
+def group_summary(company_id: int, as_of: Optional[date] = None, db: Session = Depends(get_db)):
+    if not as_of: as_of = date.today()
     groups = db.query(LedgerGroup).filter(LedgerGroup.company_id == company_id).all()
     result = []
     for g in groups:
@@ -185,7 +190,8 @@ def group_summary(company_id: int, as_of: date, db: Session = Depends(get_db)):
 
 # ── TRIAL BALANCE ────────────────────────────────────────────────────────────
 @router.get("/trial-balance")
-def trial_balance(company_id: int, as_of: date, db: Session = Depends(get_db)):
+def trial_balance(company_id: int, as_of: Optional[date] = None, db: Session = Depends(get_db)):
+    if not as_of: as_of = date.today()
     ledgers = db.query(Ledger).filter(
         Ledger.company_id == company_id, Ledger.is_active == True
     ).all()
@@ -246,7 +252,9 @@ def trial_balance(company_id: int, as_of: date, db: Session = Depends(get_db)):
 
 # ── PROFIT & LOSS ─────────────────────────────────────────────────────────────
 @router.get("/profit-loss")
-def profit_loss(company_id: int, from_date: date, to_date: date, db: Session = Depends(get_db)):
+def profit_loss(company_id: int, from_date: Optional[date] = None, to_date: Optional[date] = None, db: Session = Depends(get_db)):
+    if not to_date: to_date = date.today()
+    if not from_date: from_date = to_date.replace(month=1, day=1)
     def _group_data(group_names):
         rows = []
         total = 0.0
@@ -288,7 +296,8 @@ def profit_loss(company_id: int, from_date: date, to_date: date, db: Session = D
 
 # ── BALANCE SHEET ────────────────────────────────────────────────────────────
 @router.get("/balance-sheet")
-def balance_sheet(company_id: int, as_of: date, db: Session = Depends(get_db)):
+def balance_sheet(company_id: int, as_of: Optional[date] = None, db: Session = Depends(get_db)):
+    if not as_of: as_of = date.today()
     def _compute(group_names):
         grouped = defaultdict(list)
         total = 0.0
@@ -356,7 +365,9 @@ def balance_sheet(company_id: int, as_of: date, db: Session = Depends(get_db)):
 
 # ── CASH BOOK ─────────────────────────────────────────────────────────────────
 @router.get("/cash-book")
-def cash_book(company_id: int, from_date: date, to_date: date, db: Session = Depends(get_db)):
+def cash_book(company_id: int, from_date: Optional[date] = None, to_date: Optional[date] = None, db: Session = Depends(get_db)):
+    if not to_date: to_date = date.today()
+    if not from_date: from_date = to_date.replace(month=1, day=1)
     cash_ledgers = db.query(Ledger).filter(
         Ledger.company_id == company_id, Ledger.group.in_(CASH_GROUPS)
     ).all()
@@ -413,11 +424,13 @@ def cash_book(company_id: int, from_date: date, to_date: date, db: Session = Dep
 @router.get("/bank-book")
 def bank_book(
     company_id: int,
-    from_date:  date,
-    to_date:    date,
+    from_date:  Optional[date] = None,
+    to_date:    Optional[date] = None,
     ledger_id:  Optional[int] = None,
     db: Session = Depends(get_db),
 ):
+    if not to_date: to_date = date.today()
+    if not from_date: from_date = to_date.replace(month=1, day=1)
     q = db.query(Ledger).filter(Ledger.company_id == company_id, Ledger.group.in_(BANK_GROUPS))
     if ledger_id:
         q = q.filter(Ledger.id == ledger_id)
@@ -467,10 +480,11 @@ def bank_book(
 @router.get("/outstanding")
 def outstanding(
     company_id: int,
-    as_of:      date,
+    as_of:      Optional[date] = None,
     party_type: Optional[str] = None,   # "debtor" | "creditor"
     db: Session = Depends(get_db),
 ):
+    if not as_of: as_of = date.today()
     DEBTOR_GROUPS   = ["Sundry Debtors"]
     CREDITOR_GROUPS = ["Sundry Creditors"]
 
@@ -516,7 +530,9 @@ def outstanding(
 
 # ── SALES REGISTER ────────────────────────────────────────────────────────────
 @router.get("/sales-register")
-def sales_register(company_id: int, from_date: date, to_date: date, db: Session = Depends(get_db)):
+def sales_register(company_id: int, from_date: Optional[date] = None, to_date: Optional[date] = None, db: Session = Depends(get_db)):
+    if not to_date: to_date = date.today()
+    if not from_date: from_date = to_date.replace(month=1, day=1)
     vouchers = (
         db.query(Voucher).filter(
             Voucher.company_id == company_id,
@@ -548,7 +564,9 @@ def sales_register(company_id: int, from_date: date, to_date: date, db: Session 
 
 # ── PURCHASE REGISTER ─────────────────────────────────────────────────────────
 @router.get("/purchase-register")
-def purchase_register(company_id: int, from_date: date, to_date: date, db: Session = Depends(get_db)):
+def purchase_register(company_id: int, from_date: Optional[date] = None, to_date: Optional[date] = None, db: Session = Depends(get_db)):
+    if not to_date: to_date = date.today()
+    if not from_date: from_date = to_date.replace(month=1, day=1)
     vouchers = (
         db.query(Voucher).filter(
             Voucher.company_id == company_id,
@@ -580,7 +598,9 @@ def purchase_register(company_id: int, from_date: date, to_date: date, db: Sessi
 
 # ── GST SUMMARY ───────────────────────────────────────────────────────────────
 @router.get("/gst-summary")
-def gst_summary(company_id: int, from_date: date, to_date: date, db: Session = Depends(get_db)):
+def gst_summary(company_id: int, from_date: Optional[date] = None, to_date: Optional[date] = None, db: Session = Depends(get_db)):
+    if not to_date: to_date = date.today()
+    if not from_date: from_date = to_date.replace(month=1, day=1)
     gst_entries = (
         db.query(VoucherEntry).filter(VoucherEntry.is_gst_entry == True)
         .join(Voucher).filter(
@@ -622,7 +642,8 @@ def gst_summary(company_id: int, from_date: date, to_date: date, db: Session = D
 
 # ── LEDGER SUMMARY (quick lookup) ────────────────────────────────────────────
 @router.get("/ledger-summary")
-def ledger_summary(company_id: int, as_of: date, db: Session = Depends(get_db)):
+def ledger_summary(company_id: int, as_of: Optional[date] = None, db: Session = Depends(get_db)):
+    if not as_of: as_of = date.today()
     ledger_list = db.query(Ledger).filter(
         Ledger.company_id == company_id, Ledger.is_active == True
     ).order_by(Ledger.group, Ledger.name).all()
@@ -639,7 +660,10 @@ def ledger_summary(company_id: int, as_of: date, db: Session = Depends(get_db)):
 
 # ── RATIO ANALYSIS ────────────────────────────────────────────────────────────
 @router.get("/ratio-analysis")
-def ratio_analysis(company_id: int, as_of: date, from_date: date, to_date: date, db: Session = Depends(get_db)):
+def ratio_analysis(company_id: int, as_of: Optional[date] = None, from_date: Optional[date] = None, to_date: Optional[date] = None, db: Session = Depends(get_db)):
+    if not as_of: as_of = date.today()
+    if not to_date: to_date = date.today()
+    if not from_date: from_date = to_date.replace(month=1, day=1)
     def _sum_groups(groups, mode="net"):
         total = 0.0
         for l in db.query(Ledger).filter(Ledger.company_id == company_id, Ledger.group.in_(groups)).all():
@@ -683,11 +707,13 @@ def ratio_analysis(company_id: int, as_of: date, from_date: date, to_date: date,
 @router.get("/stock-movement")
 def stock_movement(
     company_id: int,
-    from_date: date,
-    to_date: date,
+    from_date: Optional[date] = None,
+    to_date: Optional[date] = None,
     stock_item_id: Optional[int] = None,
     db: Session = Depends(get_db),
 ):
+    if not to_date: to_date = date.today()
+    if not from_date: from_date = to_date.replace(month=1, day=1)
     from finance_app.models.stock_item import StockItem
     from finance_app.models.inventory import Location
 
