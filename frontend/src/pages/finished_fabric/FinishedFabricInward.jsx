@@ -788,7 +788,7 @@ export default function FinishedFabricInward() {
         <div
           className="card stat-card"
           onClick={() => handleCardClick('Total')}
-          style={{ cursor: 'pointer', border: statusFilter === 'All Status' ? '2px solid var(--primary)' : '1px solid transparent', transition: 'all 0.2s' }}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
             <ClipboardList size={24} />
@@ -802,7 +802,7 @@ export default function FinishedFabricInward() {
         <div
           className="card stat-card"
           onClick={() => handleCardClick('Received')}
-          style={{ cursor: 'pointer', border: statusFilter === 'Received' ? '2px solid #3b82f6' : '1px solid transparent', transition: 'all 0.2s' }}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
             <RefreshCw size={24} />
@@ -816,7 +816,7 @@ export default function FinishedFabricInward() {
         <div
           className="card stat-card"
           onClick={() => handleCardClick('Inspected')}
-          style={{ cursor: 'pointer', border: statusFilter === 'Inspected' ? '2px solid #10b981' : '1px solid transparent', transition: 'all 0.2s' }}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
             <CheckCircle size={24} />
@@ -829,7 +829,6 @@ export default function FinishedFabricInward() {
 
         <div
           className="card stat-card"
-          style={{ border: '1px solid transparent' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>
             <FileSpreadsheet size={24} />

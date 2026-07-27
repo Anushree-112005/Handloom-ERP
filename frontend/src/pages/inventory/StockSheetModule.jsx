@@ -203,36 +203,73 @@ export default function StockSheetModule() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '20px', marginBottom: '24px' }}>
-        <div className="card" style={{ padding: '20px', borderLeft: '4px solid var(--primary)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <h4 style={{ color: 'var(--text-muted)', margin: 0 }}>Total Items</h4><Package size={20} color="var(--primary)" />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 24, marginBottom: 24 }}>
+        <div
+          className="card stat-card"
+          onClick={() => setFilterStatus('')}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+        >
+          <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
+            <Package size={24} />
           </div>
-          <h2 style={{ margin: '12px 0 0 0' }}>{items.length}</h2>
+          <div className="stat-details">
+            <h3>Total Items</h3>
+            <div className="value">{items.length}</div>
+          </div>
         </div>
-        <div className="card" style={{ padding: '20px', borderLeft: '4px solid green' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <h4 style={{ color: 'var(--text-muted)', margin: 0 }}>Stock Value</h4><DollarSign size={20} color="green" />
+
+        <div
+          className="card stat-card"
+          style={{ transition: 'all 0.2s' }}
+        >
+          <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
+            <DollarSign size={24} />
           </div>
-          <h2 style={{ margin: '12px 0 0 0' }}>₹ {(totalValue / 1000).toFixed(1)}k</h2>
+          <div className="stat-details">
+            <h3>Stock Value</h3>
+            <div className="value">₹ {(totalValue / 1000).toFixed(1)}k</div>
+          </div>
         </div>
-        <div className="card" style={{ padding: '20px', borderLeft: '4px solid orange' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <h4 style={{ color: 'var(--text-muted)', margin: 0 }}>Low Stock</h4><AlertTriangle size={20} color="orange" />
+
+        <div
+          className="card stat-card"
+          onClick={() => setFilterStatus('Low Stock')}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+        >
+          <div className="stat-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>
+            <AlertTriangle size={24} />
           </div>
-          <h2 style={{ margin: '12px 0 0 0' }}>{lowStockCount}</h2>
+          <div className="stat-details">
+            <h3>Low Stock</h3>
+            <div className="value">{lowStockCount}</div>
+          </div>
         </div>
-        <div className="card" style={{ padding: '20px', borderLeft: '4px solid red' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <h4 style={{ color: 'var(--text-muted)', margin: 0 }}>Out of Stock</h4><XCircle size={20} color="red" />
+
+        <div
+          className="card stat-card"
+          onClick={() => setFilterStatus('Out of Stock')}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+        >
+          <div className="stat-icon" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>
+            <XCircle size={24} />
           </div>
-          <h2 style={{ margin: '12px 0 0 0' }}>{outOfStockCount}</h2>
+          <div className="stat-details">
+            <h3>Out of Stock</h3>
+            <div className="value">{outOfStockCount}</div>
+          </div>
         </div>
-        <div className="card" style={{ padding: '20px', borderLeft: '4px solid purple' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <h4 style={{ color: 'var(--text-muted)', margin: 0 }}>Warehouses</h4><Box size={20} color="purple" />
+
+        <div
+          className="card stat-card"
+          style={{ transition: 'all 0.2s' }}
+        >
+          <div className="stat-icon" style={{ background: 'rgba(139,92,246,0.1)', color: '#8b5cf6' }}>
+            <Box size={24} />
           </div>
-          <h2 style={{ margin: '12px 0 0 0' }}>{new Set(items.map(i=>i.warehouse)).size}</h2>
+          <div className="stat-details">
+            <h3>Warehouses</h3>
+            <div className="value">{new Set(items.map(i=>i.warehouse)).size}</div>
+          </div>
         </div>
       </div>
 

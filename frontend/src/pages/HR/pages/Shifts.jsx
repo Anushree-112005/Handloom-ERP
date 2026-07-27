@@ -155,7 +155,7 @@ export default function Shifts() {
   const StatCard = ({ icon: Icon, label, value, theme, onClick, active }) => (
     <div
       onClick={onClick}
-      className={`card transition-all hover:-translate-y-1 hover:shadow-md cursor-pointer ${active ? 'ring-2 ring-offset-2 ring-indigo-500' : ''}`}
+      className="card transition-all hover:-translate-y-1 hover:shadow-md cursor-pointer"
       style={{
         padding: '24px 20px',
         display: 'flex',

@@ -762,15 +762,15 @@ export default function YarnInward() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginBottom: 24 }}>
-            <div className="card stat-card" onClick={() => handleCardClick('Total')} style={{ cursor: 'pointer', border: typeFilter === 'All Types' ? '2px solid var(--primary)' : '1px solid transparent' }}>
+            <div className="card stat-card" onClick={() => handleCardClick('Total')} style={{ cursor: 'pointer', transition: 'all 0.2s' }}>
               <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}><Activity size={24} /></div>
               <div className="stat-details"><h3>Total Receipts</h3><div className="value">{totalInwards}</div></div>
             </div>
-            <div className="card stat-card" onClick={() => handleCardClick('Direct')} style={{ cursor: 'pointer', border: typeFilter === 'Direct' ? '2px solid #10b981' : '1px solid transparent' }}>
+            <div className="card stat-card" onClick={() => handleCardClick('Direct')} style={{ cursor: 'pointer', transition: 'all 0.2s' }}>
               <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}><CheckCircle size={24} /></div>
               <div className="stat-details"><h3>Direct Receipts</h3><div className="value">{directInwards}</div></div>
             </div>
-            <div className="card stat-card" onClick={() => handleCardClick('AgainstPO')} style={{ cursor: 'pointer', border: typeFilter === 'Against PO' ? '2px solid #f59e0b' : '1px solid transparent' }}>
+            <div className="card stat-card" onClick={() => handleCardClick('AgainstPO')} style={{ cursor: 'pointer', transition: 'all 0.2s' }}>
               <div className="stat-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}><FileText size={24} /></div>
               <div className="stat-details"><h3>Against PO Receipts</h3><div className="value">{poInwards}</div></div>
             </div>

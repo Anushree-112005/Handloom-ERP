@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { mockDb } from './mockDb';
-import { Search } from 'lucide-react';
+import { Search, FileText, ArrowDownLeft, ArrowUpRight, Package } from 'lucide-react';
 
 export default function StockLedger() {
   const [ledger, setLedger] = useState([]);
@@ -23,6 +23,49 @@ export default function StockLedger() {
       <div className="card">
         <h1 style={{ fontSize: 24, fontWeight: 700 }}>Stock Ledger</h1>
         <p style={{ color: "var(--text-muted)", fontSize: 14 }}>Audit trail of stock inward receipts, department issues, and manual adjustments</p>
+      </div>
+
+      {/* Summary Stat Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24 }}>
+        <div className="card stat-card" style={{ transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
+            <FileText size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Total Transactions</h3>
+            <div className="value">{filteredLedger.length}</div>
+          </div>
+        </div>
+
+        <div className="card stat-card" style={{ transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
+            <ArrowDownLeft size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Receipts (Inward)</h3>
+            <div className="value">{filteredLedger.filter(x => x.in > 0).length}</div>
+          </div>
+        </div>
+
+        <div className="card stat-card" style={{ transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>
+            <ArrowUpRight size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Issues (Outward)</h3>
+            <div className="value">{filteredLedger.filter(x => x.out > 0).length}</div>
+          </div>
+        </div>
+
+        <div className="card stat-card" style={{ transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(139,92,246,0.1)', color: '#8b5cf6' }}>
+            <Package size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Tracked Items</h3>
+            <div className="value">{items.length}</div>
+          </div>
+        </div>
       </div>
 
       <div className="card">

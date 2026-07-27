@@ -782,7 +782,7 @@ export default function ClothDelivery() {
         <div
           className="card stat-card"
           onClick={() => handleCardClick('Total')}
-          style={{ cursor: 'pointer', border: typeFilter === 'All Types' ? '2px solid var(--primary)' : '1px solid transparent', transition: 'all 0.2s' }}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
             <Truck size={24} />
@@ -796,7 +796,7 @@ export default function ClothDelivery() {
         <div
           className="card stat-card"
           onClick={() => handleCardClick('Job Work')}
-          style={{ cursor: 'pointer', border: typeFilter === 'Job Work' ? '2px solid #10b981' : '1px solid transparent', transition: 'all 0.2s' }}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
             <Truck size={24} />
@@ -810,7 +810,7 @@ export default function ClothDelivery() {
         <div
           className="card stat-card"
           onClick={() => handleCardClick('Return')}
-          style={{ cursor: 'pointer', border: typeFilter === 'Return' ? '2px solid #f59e0b' : '1px solid transparent', transition: 'all 0.2s' }}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>
             <Truck size={24} />
@@ -823,7 +823,6 @@ export default function ClothDelivery() {
 
         <div
           className="card stat-card"
-          style={{ border: '1px solid transparent' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(139,92,246,0.1)', color: '#8b5cf6' }}>
             <Truck size={24} />
