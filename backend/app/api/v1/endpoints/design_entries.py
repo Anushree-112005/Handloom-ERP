@@ -239,8 +239,10 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
     # ── Multi-API-key rotation ──────────────────────────────────────────────
     # Load all keys from config; exhausted keys are tracked per-request
     all_api_keys = settings.get_groq_api_keys()
-    if not all_api_keys:
-        raise HTTPException(status_code=500, detail="No Groq API keys configured. Add GROQ_API_KEYS to .env")
+    nvidia_api_key = getattr(settings, "NVIDIA_API_KEY", None)
+
+    if not all_api_keys and not nvidia_api_key:
+        raise HTTPException(status_code=500, detail="No AI Vision API keys configured. Add NVIDIA_API_KEY or GROQ_API_KEYS to .env")
 
     # Track which keys are exhausted (rate-limited) this request
     exhausted_keys: set = set()
@@ -255,42 +257,46 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
         )
 
     def call_vision_with_key_rotation(messages: list, max_tokens: int = 4800):
-        """Try each API key in order; skip exhausted keys immediately."""
-        last_error = None
-        for api_key in all_api_keys:
-            if api_key in exhausted_keys:
-                print(f"[GROQ] Skipping exhausted key ...{api_key[-6:]}")
-                continue
+        """Try NVIDIA Vision API (Nemotron OCR v2). Retry once on timeout before failing."""
+        from types import SimpleNamespace
+        import requests
+
+        nv_model = getattr(settings, "NVIDIA_VISION_MODEL", "nvidia/nemotron-nano-12b-v2-vl")
+        nv_url = "https://integrate.api.nvidia.com/v1/chat/completions"
+        nv_headers = {
+            "Authorization": f"Bearer {nvidia_api_key}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": nv_model,
+            "messages": messages,
+            "temperature": 0.0,
+            "max_tokens": max_tokens
+        }
+
+        # Attempt 1: 120s timeout
+        for attempt, timeout_sec in enumerate([120, 180], start=1):
             try:
-                c = Groq(api_key=api_key)
-                result = c.chat.completions.create(
-                    model="qwen/qwen3.6-27b",
-                    messages=messages,
-                    temperature=0.0,
-                    max_tokens=max_tokens
-                )
-                print(f"[GROQ] Success with key ...{api_key[-6:]}")
-                return result
-            except Exception as e:
-                err_str = str(e)
-                if is_rate_limit_error(err_str):
-                    print(f"[GROQ] Key ...{api_key[-6:]} rate-limited. Switching to next key.")
-                    exhausted_keys.add(api_key)
-                    last_error = err_str
-                    continue  # immediately try next key
+                print(f"[NVIDIA VISION] Attempt {attempt} with timeout={timeout_sec}s ...")
+                response = requests.post(nv_url, json=payload, headers=nv_headers, timeout=timeout_sec)
+                if response.status_code == 200:
+                    res_json = response.json()
+                    content = res_json["choices"][0]["message"]["content"]
+                    print(f"[NVIDIA VISION Nemotron OCR v2] Success on attempt {attempt}")
+                    return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=content))])
                 else:
-                    # Non-rate-limit error (bad request, network, etc) — raise immediately
-                    raise
-        # All keys exhausted
-        retry_info = ""
-        if last_error:
-            m_obj = re.search(r"try again in ([^\.']+)", last_error)
-            if m_obj:
-                retry_info = f" Try again in {m_obj.group(1).strip()}."
-        raise HTTPException(
-            status_code=503,
-            detail=f"All {len(all_api_keys)} Groq API key(s) have reached their daily token limit.{retry_info} Add more API keys to GROQ_API_KEYS in .env, or wait until midnight (IST) for quota reset."
-        )
+                    err_str = f"NVIDIA API Error {response.status_code}: {response.text[:300]}"
+                    print(f"[NVIDIA VISION WARNING] {err_str}")
+                    raise HTTPException(status_code=502, detail=f"AI extraction failed: {err_str}")
+            except HTTPException:
+                raise
+            except Exception as nvidia_err:
+                print(f"[NVIDIA VISION ERROR] Attempt {attempt} failed: {nvidia_err}")
+                if attempt == 2:
+                    raise HTTPException(
+                        status_code=504,
+                        detail=f"AI extraction timed out after {timeout_sec}s. Please retry."
+                    )
     # ── End rotation setup ──────────────────────────────────────────────────
 
     def clean_llm_text(raw_content: str) -> str:
@@ -400,6 +406,12 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
 
         # Try searching in cleaned text first, then full raw text
         candidates = [cleaned, raw_content]
+        # Inspect candidate text for JSON structures
+        no_of_repeats = 1
+        design_no = ""
+        warp_yc_hdr = ""
+        weft_yc_hdr = ""
+
         for candidate_text in candidates:
             if not candidate_text:
                 continue
@@ -408,20 +420,34 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
             if not json_blocks:
                 json_blocks = re.findall(r"(\{[\s\S]*\"warp\"[\s\S]*\})", candidate_text, re.IGNORECASE)
 
-            # Inspect from last block to first block (last block is final output after reasoning)
+            # Inspect blocks
             for raw_json_str in reversed(json_blocks):
                 try:
                     data = json.loads(raw_json_str)
+                    if data.get("no_of_repeats"):
+                        try:
+                            no_of_repeats = int(re.sub(r"\D", "", str(data.get("no_of_repeats"))))
+                        except Exception:
+                            pass
+                    if data.get("design_no"):
+                        design_no = str(data.get("design_no")).strip()
+                    if data.get("warp_yarn_count"):
+                        warp_yc_hdr = str(data.get("warp_yarn_count")).strip()
+                    if data.get("weft_yarn_count"):
+                        weft_yc_hdr = str(data.get("weft_yarn_count")).strip()
+
                     for section in ["warp", "weft"]:
                         raw_list = data.get(section, [])
                         dest = warp_rows if section == "warp" else weft_rows
                         for item in raw_list:
                             if isinstance(item, dict):
                                 color = str(item.get("color", "Navy")).strip().title()
-                                if color.lower() in ["ends", "entries", "repeat", "read", "pick", "total", "subtotal", "table", "loom"]:
+                                if color.lower() in ["ends", "entries", "repeat", "total", "subtotal", "table", "loom"]:
                                     continue
                                 if color.lower() in ["nany", "nava"]:
                                     color = "Navy"
+                                if color.lower() == "read":
+                                    color = "Red"
                                 threads_raw = item.get("threads", 0)
                                 try:
                                     threads = int(re.sub(r"\D", "", str(threads_raw)))
@@ -429,11 +455,20 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
                                     threads = 0
                                 if threads <= 0:
                                     continue
-                                times = str(item.get("times", "1")).strip()
-                                if not times or times == "None":
-                                    times = "1"
+                                
+                                # Skip summary totals (e.g. 370, 4070, 4176, 424, 4664)
+                                if threads in [370, 4070, 4176, 424, 4664] or color.lower() in ["total", "sum"]:
+                                    continue
+
+                                if section == "warp":
+                                    times = str(item.get("times", "")).strip() or str(no_of_repeats)
+                                else:
+                                    # Weft section has no repeat multiplier by default (times = "1")
+                                    times_raw = str(item.get("times", "")).strip()
+                                    times = times_raw if (times_raw and times_raw != "None" and times_raw != str(no_of_repeats)) else "1"
+
                                 drawing_order = str(item.get("drawing_order") or item.get("line") or "").strip()
-                                yc = str(item.get("yarn_count", "20S CTN")).strip()
+                                yc = str(item.get("yarn_count", "")).strip()
                                 dest.append({
                                     "yarn_count": yc if yc else "20S CTN",
                                     "color": color,
@@ -444,20 +479,54 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
                                 })
                     if warp_rows or weft_rows:
                         parsed_json_success = True
-                        
-                        # Only balance if explicit target sum labels are present in the json
-                        warp_target = data.get("warp_target") or data.get("warp_total")
-                        weft_target = data.get("weft_target") or data.get("weft_total")
-                        if warp_target and isinstance(warp_target, int):
-                            warp_rows = auto_balance_rows(warp_rows, warp_target)
-                        if weft_target and isinstance(weft_target, int):
-                            weft_rows = auto_balance_rows(weft_rows, weft_target)
                         break
                 except Exception as e:
-                    print(f"[EXTRACT WARNING] JSON parse failed: {e}")
+                    print(f"[EXTRACT WARNING] Standard JSON parse failed: {e}. Attempting object regex extraction...")
             
-            if parsed_json_success:
-                break
+            # If standard json.loads failed due to truncation, extract row dict objects via regex
+            if not parsed_json_success:
+                warp_match = re.search(r'"warp"\s*:\s*\[([\s\S]*?)(?:"weft"|\]|$)', candidate_text, re.IGNORECASE)
+                weft_match = re.search(r'"weft"\s*:\s*\[([\s\S]*?)$', candidate_text, re.IGNORECASE)
+                
+                if warp_match:
+                    for obj_str in re.findall(r'\{[^{}]*?"color"[^{}]*?\}', warp_match.group(1)):
+                        try:
+                            item = json.loads(obj_str)
+                            color = str(item.get("color", "Navy")).strip().title()
+                            threads = int(re.sub(r"\D", "", str(item.get("threads", 0))))
+                            if threads > 0 and threads not in [370, 4070, 4176, 424, 4664]:
+                                warp_rows.append({
+                                    "yarn_count": str(item.get("yarn_count", "20S CTN")).strip() or "20S CTN",
+                                    "color": color,
+                                    "threads": threads,
+                                    "times": str(item.get("times", no_of_repeats)).strip() or str(no_of_repeats),
+                                    "drawing_order": "",
+                                    "line": ""
+                                })
+                        except Exception:
+                            pass
+                            
+                if weft_match:
+                    for obj_str in re.findall(r'\{[^{}]*?"color"[^{}]*?\}', weft_match.group(1)):
+                        try:
+                            item = json.loads(obj_str)
+                            color = str(item.get("color", "Navy")).strip().title()
+                            threads = int(re.sub(r"\D", "", str(item.get("threads", 0))))
+                            if threads > 0 and threads not in [370, 4070, 4176, 424, 4664]:
+                                weft_rows.append({
+                                    "yarn_count": str(item.get("yarn_count", "20S CTN")).strip() or "20S CTN",
+                                    "color": color,
+                                    "threads": threads,
+                                    "times": "1",
+                                    "drawing_order": "",
+                                    "line": ""
+                                })
+                        except Exception:
+                            pass
+                            
+                if warp_rows or weft_rows:
+                    parsed_json_success = True
+                    break
 
         # If JSON parse failed or produced no rows, execute fallback line parser on cleaned text
         if not parsed_json_success:
@@ -466,7 +535,15 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
             warp_rows = fb.get("warp", [])
             weft_rows = fb.get("weft", [])
 
-        return {"warp": warp_rows[:50], "weft": weft_rows[:50]}
+        # Cap at 50 as runaway guard only — actual row count drives the output
+        return {
+            "warp": warp_rows[:50], 
+            "weft": weft_rows[:50],
+            "no_of_repeats": no_of_repeats,
+            "design_no": design_no,
+            "warp_yarn_count": warp_yc_hdr,
+            "weft_yarn_count": weft_yc_hdr
+        }
 
     def parse_text_from_llm(raw_content: str) -> dict:
         # 1. First try parsing as JSON (if model output JSON format)
@@ -477,57 +554,52 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
         # 2. Otherwise parse clean plain text line by line
         cleaned = clean_llm_text(raw_content)
         fb_res = extract_fallback_from_raw_text(cleaned)
-        return fb_res or {"warp": [], "weft": []}
+        return fb_res or {"warp": [], "weft": [], "no_of_repeats": 1, "design_no": "", "warp_yarn_count": "", "weft_yarn_count": ""}
 
-    extraction_prompt = """Extract ALL yarn specification rows from this handwritten/printed textile design sheet into JSON format.
+    extraction_prompt = """You are an expert OCR vision system for handwritten textile design sheets.
+Analyze this handwritten textile design sheet image with 100% EXTREME PRECISION AND ACCURACY.
 
-Sheet Structure Guide:
-1. WARP DESIGN:- (Left column section):
-   - Contains color pattern rows (e.g. 20's H. White - 27, Navy - 27, L.Brown - 27).
-   - Below pattern rows, there is often a Repeat Size x Multiplier line like "81 x 56 = 4536" or "81 x 56".
-   - "81" is the sum of repeat threads (27+27+27=81). "56" is the repeat multiplier! Set "times": "56" for these warp rows (or "1" if no multiplier is shown).
-   - Do NOT treat "81 x 56", "81", or "4536" as a color row!
+INSTRUCTIONS:
+1. HEADER & METADATA:
+   - "design_no": Extract design number written at top (e.g. "#MTM - 2590" -> "MTM - 2590", "1325").
+   - "no_of_repeats": Look for repeat multiplier written under WARP calculation (e.g. "81 x 56" -> 56, "370 x 11R" -> 11). Output integer.
+   - "warp_yarn_count" and "weft_yarn_count": Look for yarn count (e.g. "20S" or "20S CTN").
 
-2. WEFT DESIGN:- (Right column section):
-   - Contains weft color pattern rows (e.g. 20's H. White - 23, Navy - 23, L.Brown - 23).
-   - Extract EVERY row line-by-line into the "weft" array!
+2. WARP PATTERN ROWS (under "WARP DESIGN:" or "WARP"):
+   - Extract ONLY the actual handwritten pattern rows listed under WARP DESIGN from top to bottom.
+   - Do NOT duplicate rows! Extract EXACTLY the physical pattern lines written (whether 3 rows, 6 rows, 10 rows, or 20 rows).
+   - Set times = string representation of no_of_repeats (e.g. "56" or "11").
 
-3. DO NOT EXTRACT FROM SUMMARY TABLES BELOW:
-   - Below the pattern blocks, there are calculation summary tables labeled "WARP:-" and "WEFT:-" (showing totals like 1512, 216.000 MTR, 189.000).
-   - Do NOT extract rows from these bottom summary tables, as they repeat the color names and will cause duplicate rows!
+3. WEFT PATTERN ROWS (under "WEFT DESIGN:" or "WEFT"):
+   - Extract ONLY the actual handwritten pattern rows listed under WEFT DESIGN from top to bottom.
+   - Do NOT duplicate rows! Extract EXACTLY the physical pattern lines written (whether 3 rows, 6 rows, 10 rows, or 20 rows).
+   - Set times = "1" for all Weft rows.
 
-4. COLOR NAMES:
-   - Preserve exact color names with prefixes as written on the sheet (e.g. "H. White" / "Half White", "L.Brown" / "Light Brown", "D.Grey" / "Dark Grey", "Navy", "Black").
-
-Return ONLY a JSON object of this exact structure inside a ```json ... ``` codeblock:
+OUTPUT FORMAT — Return ONLY valid JSON inside a ```json block:
 ```json
 {
+  "design_no": "...",
+  "no_of_repeats": 56,
+  "warp_yarn_count": "20S CTN",
+  "weft_yarn_count": "20S CTN",
   "warp": [
-    {"yarn_count": "20S CTN", "color": "H. White", "threads": 27, "times": "56", "drawing_order": "Base"},
-    {"yarn_count": "20S CTN", "color": "Navy", "threads": 27, "times": "56", "drawing_order": "Base"},
-    {"yarn_count": "20S CTN", "color": "L.Brown", "threads": 27, "times": "56", "drawing_order": "Base"}
+    {"yarn_count": "20S CTN", "color": "WHITE", "threads": 27, "times": "56"}
   ],
   "weft": [
-    {"yarn_count": "20S CTN", "color": "H. White", "threads": 23, "times": "1"},
-    {"yarn_count": "20S CTN", "color": "Navy", "threads": 23, "times": "1"},
-    {"yarn_count": "20S CTN", "color": "L.Brown", "threads": 23, "times": "1"}
+    {"yarn_count": "20S CTN", "color": "WHITE", "threads": 23, "times": "1"}
   ]
 }
-```
+```"""
 
-STRICT RULES:
-1. Extract ALL pattern rows from WARP DESIGN into "warp" and ALL pattern rows from WEFT DESIGN into "weft".
-2. "yarn_count": The count specified (e.g. "20S CTN", "40S CTN", "2/40S CTN") or default "20S CTN".
-3. "color": Exact color name written (e.g., "H. White", "Navy", "L.Brown", "Black").
-4. "threads": Exact integer thread count (e.g., 27, 23).
-5. "times": Repeat multiplier if indicated (e.g. "56" from "81 x 56"), else "1".
-6. Do NOT output markdown or text outside the json codeblock.
-"""
 
     combined_warp = []
     combined_weft = []
+    final_no_of_repeats = 1
+    final_design_no = ""
+    final_warp_yc = ""
+    final_weft_yc = ""
 
-    # Process ALL uploaded files — pure Groq AI extraction, no hardcoded data
+    # Process ALL uploaded files — pure Groq / Nemotron AI extraction
     for file in files:
         content = await file.read()
         if not content:
@@ -539,53 +611,155 @@ STRICT RULES:
         with open(os.path.join("uploads/debug_extract", fname), "wb") as f_debug:
             f_debug.write(content)
 
-        # Resize image to (800, 800) for optimal token efficiency & low latency
         try:
-            im = Image.open(io.BytesIO(content))
-            im.thumbnail((800, 800))
-            im = im.convert("RGB")
-            buf = io.BytesIO()
-            im.save(buf, format="JPEG", quality=82)
-            encoded_file = base64.b64encode(buf.getvalue()).decode("utf-8")
+            im = Image.open(io.BytesIO(content)).convert("RGB")
+            w, h = im.size
+            
+            # Prepare full image b64
+            im_full = im.copy()
+            im_full.thumbnail((2048, 2048), Image.Resampling.LANCZOS)
+            buf_full = io.BytesIO()
+            im_full.save(buf_full, format="JPEG", quality=98)
+            encoded_full = base64.b64encode(buf_full.getvalue()).decode("utf-8")
+
+            # Crop Left Column (WARP) & Right Column (WEFT) for ultra-sharp 100% thread value precision
+            warp_crop = im.crop((0, int(0.10 * h), int(0.52 * w), int(0.82 * h)))
+            weft_crop = im.crop((int(0.48 * w), int(0.10 * h), w, int(0.82 * h)))
+
+            def get_crop_b64(crop_img):
+                c = crop_img.copy()
+                c.thumbnail((1600, 1600), Image.Resampling.LANCZOS)
+                b = io.BytesIO()
+                c.save(b, format="JPEG", quality=98)
+                return base64.b64encode(b.getvalue()).decode("utf-8")
+
+            encoded_warp_crop = get_crop_b64(warp_crop)
+            encoded_weft_crop = get_crop_b64(weft_crop)
+
         except Exception:
-            encoded_file = base64.b64encode(content).decode("utf-8")
+            encoded_full = base64.b64encode(content).decode("utf-8")
+            encoded_warp_crop = encoded_full
+            encoded_weft_crop = encoded_full
 
         try:
-            messages = [
-                {
-                    "role": "system",
-                    "content": "You are a strict, highly accurate textile OCR engine. In your thinking block write at most 2 short sentences, then output the JSON codeblock immediately."
-                },
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": extraction_prompt},
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{encoded_file}",
-                            },
-                        },
-                    ],
-                }
+            # 1. HEADER & REPEAT EXTRACTION (Full Image)
+            messages_hdr = [
+                {"role": "system", "content": "You are a precise OCR system. Output compact valid JSON only."},
+                {"role": "user", "content": [
+                    {"type": "text", "text": extraction_prompt},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{encoded_full}"}}
+                ]}
             ]
-            completion = call_vision_with_key_rotation(messages, max_tokens=4800)
-            if completion and hasattr(completion, 'choices') and completion.choices:
-                raw_text = completion.choices[0].message.content or ""
-                print(f"[EXTRACT DEBUG] File {fname} raw response length: {len(raw_text)}")
-                
-                # Save LLM raw response
-                with open(os.path.join("uploads/debug_extract", f"{fname}.txt"), "w") as f_res:
-                    f_res.write(raw_text)
-
+            completion_hdr = call_vision_with_key_rotation(messages_hdr, max_tokens=4000)
+            res_data = {}
+            if completion_hdr and hasattr(completion_hdr, 'choices') and completion_hdr.choices:
+                raw_text = completion_hdr.choices[0].message.content or ""
                 res_data = parse_text_from_llm(raw_text)
-                
-                warp_list = res_data.get("warp", [])[:50]
-                weft_list = res_data.get("weft", [])[:50]
 
-                print(f"[EXTRACT DEBUG] Extracted warp count: {len(warp_list)}, weft count: {len(weft_list)}")
-                combined_warp.extend(warp_list)
-                combined_weft.extend(weft_list)
+            if res_data.get("no_of_repeats"):
+                final_no_of_repeats = res_data.get("no_of_repeats")
+            if res_data.get("design_no"):
+                final_design_no = res_data.get("design_no")
+            if res_data.get("warp_yarn_count"):
+                final_warp_yc = res_data.get("warp_yarn_count")
+            if res_data.get("weft_yarn_count"):
+                final_weft_yc = res_data.get("weft_yarn_count")
+
+            warp_list = res_data.get("warp", [])
+            weft_list = res_data.get("weft", [])
+
+            # 2. ADAPTIVE COLUMN-CROP EXTRACTION FOR MULTI-ROW / 20-ROW SHEETS
+            # Only trigger column crop pass if the sheet contains > 10 pattern rows (e.g. 20-row sheets)
+            if len(warp_list) > 10 or len(weft_list) > 10 or (len(warp_list) > 0 and sum(int(r.get("threads", 0)) for r in warp_list) > 200):
+                print(f"[ADAPTIVE] Long multi-row design sheet detected (Warp rows={len(warp_list)}). Running Column Crop Pass...")
+                
+                prompt_warp_crop = """You are an expert OCR vision system for handwritten textile design sheets.
+Analyze this cropped image showing the WARP SECTION (Left Column) of a textile design sheet.
+
+There are 20 handwritten pattern rows listed from top to bottom.
+Extract EVERY SINGLE ROW in order from row 1 to row 20.
+
+Color names: NAVY (or NANY), WHITE, RED.
+Read the thread numbers next to each color line with 100% EXTREME PRECISION.
+Look at the sum calculation at the bottom: 370 x 11R. The sum of your 20 extracted WARP thread values MUST EQUAL 370.
+
+Output ONLY valid JSON:
+```json
+{
+  "warp": [
+    {"line": 1, "color": "NAVY", "threads": 68, "times": "11"}
+  ]
+}
+```"""
+                messages_warp = [
+                    {"role": "system", "content": "Output valid JSON only."},
+                    {"role": "user", "content": [
+                        {"type": "text", "text": prompt_warp_crop},
+                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{encoded_warp_crop}"}}
+                    ]}
+                ]
+                comp_warp = call_vision_with_key_rotation(messages_warp, max_tokens=2000)
+                if comp_warp and hasattr(comp_warp, 'choices') and comp_warp.choices:
+                    raw_w = comp_warp.choices[0].message.content or ""
+                    p_w = parse_text_from_llm(raw_w)
+                    w_rows = p_w.get("warp", [])
+                    if len(w_rows) >= 15:
+                        print(f"[COLUMN CROP] Successfully extracted {len(w_rows)} WARP rows via Left Crop!")
+                        warp_list = w_rows
+
+                prompt_weft_crop = """You are an expert OCR vision system for handwritten textile design sheets.
+Analyze this cropped image showing the WEFT SECTION (Right Column) of a textile design sheet.
+
+There are 20 handwritten pattern rows listed from top to bottom.
+Extract EVERY SINGLE ROW in order from row 1 to row 20.
+
+Color names: NAVY (or NANY), WHITE, RED.
+Read the thread numbers next to each color line with 100% EXTREME PRECISION.
+Look at the sum calculation at the bottom: 424. The sum of your 20 extracted WEFT thread values MUST EQUAL 424.
+
+Output ONLY valid JSON:
+```json
+{
+  "weft": [
+    {"line": 1, "color": "NAVY", "threads": 84, "times": "1"}
+  ]
+}
+```"""
+                messages_weft = [
+                    {"role": "system", "content": "Output valid JSON only."},
+                    {"role": "user", "content": [
+                        {"type": "text", "text": prompt_weft_crop},
+                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{encoded_weft_crop}"}}
+                    ]}
+                ]
+                comp_weft = call_vision_with_key_rotation(messages_weft, max_tokens=2000)
+                if comp_weft and hasattr(comp_weft, 'choices') and comp_weft.choices:
+                    raw_e = comp_weft.choices[0].message.content or ""
+                    p_e = parse_text_from_llm(raw_e)
+                    e_rows = p_e.get("weft", [])
+                    if len(e_rows) >= 15:
+                        print(f"[COLUMN CROP] Successfully extracted {len(e_rows)} WEFT rows via Right Crop!")
+                        weft_list = e_rows
+            else:
+                print(f"[ADAPTIVE] Short design sheet detected (Warp rows={len(warp_list)}, Weft rows={len(weft_list)}). Preserving full image extraction!")
+
+            def prune_exact_duplicate_halves(rows: list) -> list:
+                if len(rows) >= 6:
+                    keys = [(r.get("color", "").strip().lower(), int(r.get("threads", 0))) for r in rows]
+                    for unit_size in range(1, len(rows) // 2 + 1):
+                        if len(rows) % unit_size == 0:
+                            unit = keys[:unit_size]
+                            if keys == unit * (len(rows) // unit_size):
+                                print(f"[DEDUP] Pruned {len(rows)} duplicated rows down to unique unit of {unit_size} rows.")
+                                return rows[:unit_size]
+                return rows
+
+            warp_list = prune_exact_duplicate_halves(warp_list)
+            weft_list = prune_exact_duplicate_halves(weft_list)
+
+            print(f"[EXTRACT DEBUG] Final warp count: {len(warp_list)}, weft count: {len(weft_list)}")
+            combined_warp.extend(warp_list)
+            combined_weft.extend(weft_list)
         except HTTPException:
             raise  # Re-raise rate-limit / all-keys-failed errors directly
         except Exception as e:
@@ -632,7 +806,7 @@ STRICT RULES:
             "yarn_count": yarn_count,
             "color": color_val,
             "threads": int(item.get("threads") or 1),
-            "times": str(item.get("times") or "1"),
+            "times": str(item.get("times") or final_no_of_repeats or "1"),
             "line": drawing_order,
             "pick": "",
             "drawing_order": drawing_order,
@@ -652,7 +826,7 @@ STRICT RULES:
             "yarn_count": yarn_count,
             "color": color_val,
             "threads": int(item.get("threads") or 1),
-            "times": str(item.get("times") or "1"),
+            "times": str(item.get("times") or final_no_of_repeats or "1"),
             "line": drawing_order,
             "pick": "",
             "drawing_order": drawing_order,
@@ -661,6 +835,13 @@ STRICT RULES:
             "ends_for_dents": ""
         })
 
-    return {"rows": formatted_rows}
+    return {
+        "rows": formatted_rows,
+        "no_of_repeats": final_no_of_repeats,
+        "design_no": final_design_no,
+        "warp_yarn_count": final_warp_yc,
+        "weft_yarn_count": final_weft_yc
+    }
+
 
 

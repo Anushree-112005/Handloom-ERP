@@ -1377,6 +1377,7 @@ export default function DesignEntry() {
     setIsExtracting(true);
     try {
       const res = await designEntryAPI.extractDesign(targetFiles);
+      const repeatCount = res.data.no_of_repeats || 1;
       const extractedRows = res.data.rows.map((row, idx) => {
         const isWeft = row.type && row.type.trim().toLowerCase() === 'weft';
         const matchingSpec = (yarnRows || []).find(y => {
@@ -1393,16 +1394,30 @@ export default function DesignEntry() {
         const aiExtractedCount = row.yarn_count && row.yarn_count.trim();
         const finalCount = userSpecCount || aiExtractedCount || '20S CTN';
 
+        const defaultTimes = isWeft ? "1" : String(repeatCount);
+
         return {
           ...row,
           type: matchingSpec ? matchingSpec.type : row.type,
           yarn_count: finalCount,
+          times: String(row.times || defaultTimes),
           id: Date.now() + idx
         };
       });
 
+      if (res.data.design_no) {
+        setForm(prev => ({
+          ...prev,
+          design_no: prev.design_no || res.data.design_no
+        }));
+      }
+
       setFabricDesignRows(extractedRows);
-      alert(`Successfully extracted ${extractedRows.length} design lines from the image(s)!`);
+      
+      const warpCount = extractedRows.filter(r => (r.type || '').toLowerCase().includes('warp')).length;
+      const weftCount = extractedRows.filter(r => (r.type || '').toLowerCase().includes('weft')).length;
+      
+      alert(`Successfully extracted ${extractedRows.length} design lines from image(s)!\n• Warp lines: ${warpCount}\n• Weft lines: ${weftCount}\n• No D (Repeats): ${repeatCount}`);
     } catch (err) {
       console.error("AI Extraction Error:", err);
       const backendMsg = err.response?.data?.detail;

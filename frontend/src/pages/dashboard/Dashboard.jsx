@@ -39,36 +39,24 @@ export default function Dashboard() {
   const [stats, setStats] = useState({});
 
   // Filters State
-  const [dateFilter, setDateFilter] = useState('This Month');
+  const [dateFilter, setDateFilter] = useState('All Time');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
 
   // Operations and Charts State
   const [operations, setOperations] = useState([]);
   
-  const [dailyProduction, setDailyProduction] = useState(baseDailyProductionData);
-  const [prodVsDispatch, setProdVsDispatch] = useState(baseProdVsDispatchData);
-  const [bottleneckData, setBottleneckData] = useState(baseBottleneckData);
-  const [buyerQty, setBuyerQty] = useState(baseBuyerQtyData);
-  const [qualityCompliance, setQualityCompliance] = useState(baseQualityCompliance);
-  const [dispatchByTransporter, setDispatchByTransporter] = useState(baseDispatchByTransporter);
+  const [dailyProduction, setDailyProduction] = useState([]);
+  const [prodVsDispatch, setProdVsDispatch] = useState([]);
+  const [bottleneckData, setBottleneckData] = useState([]);
+  const [buyerQty, setBuyerQty] = useState([]);
+  const [qualityCompliance, setQualityCompliance] = useState([]);
+  const [dispatchByTransporter, setDispatchByTransporter] = useState([]);
 
   // Dropdown UI state
   const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
 
-  useEffect(() => {
-    dashboardAPI.stats()
-      .then((r) => setStats(r.data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
-
-  const applyFilters = () => {
-    let factor = 1.0;
-    if (dateFilter === 'This Week') factor = 0.45;
-    else if (dateFilter === 'This Year') factor = 8.5;
-    else if (dateFilter === 'Custom Range') factor = 0.7;
-
+  const fetchDashboardStats = () => {
     let start_date = '';
     let end_date = '';
     const today = new Date();
@@ -94,16 +82,26 @@ export default function Dashboard() {
     }
 
     setLoading(true);
-    dashboardAPI.stats({ start_date, end_date })
-      .then((r) => setStats(r.data))
-      .catch(() => {})
+    const params = {};
+    if (start_date) params.start_date = start_date;
+    if (end_date) params.end_date = end_date;
+
+    dashboardAPI.stats(params)
+      .then((r) => {
+        if (r.data) {
+          setStats(r.data);
+        }
+      })
+      .catch((err) => console.error("Error fetching dashboard stats:", err))
       .finally(() => setLoading(false));
   };
+
   useEffect(() => {
-    let factor = 1.0;
-    if (dateFilter === 'This Week') factor = 0.45;
-    else if (dateFilter === 'This Year') factor = 8.5;
-    else if (dateFilter === 'Custom Range') factor = 0.7;
+    fetchDashboardStats();
+  }, [dateFilter, fromDate, toDate]);
+
+  useEffect(() => {
+    if (!stats) return;
 
     const vendorInward = stats?.vendor_inward_rolls ?? 0;
     const purchaseInward = stats?.purchase_inward_kgs ?? 0;
@@ -115,82 +113,27 @@ export default function Dashboard() {
     const totalDC = stats?.total_dc_challans ?? 0;
     const totalQty = stats?.total_qty_meters ?? 0;
 
-    // 1. Update Daily Operations Panel
+    // 1. Update Daily Operations Panel with real data
     setOperations([
-      { label: 'Vendor Inward', value: `${Math.round(vendorInward * factor)} Rolls`, path: '/cloth/inward', color: '#10b981', icon: Factory },
-      { label: 'Purchase Inward', value: `${Math.round(purchaseInward * factor).toLocaleString()} Kgs`, path: '/yarn/inward', color: '#22c55e', icon: Layers },
-      { label: 'Process Delivery', value: `${Math.round(processDelivery * factor)} Batches`, path: '/yarn/grey-delivery', color: '#64748b', icon: Clock },
-      { label: 'Process Inward', value: `${Math.round(processInward * factor)} Bags`, path: '/dyed-yarn/received', color: '#ec4899', icon: Layers },
-      { label: 'Sales Delivery', value: `${Math.round(salesDelivery * factor)} Deliveries`, path: '/despatch', color: '#3b82f6', icon: MapPin },
-      { label: 'IMPO', value: `${Math.round(impoVal * factor)} Orders`, path: '/yarn/inward', color: '#ea580c', icon: ShoppingCart },
-      { label: 'IMBO', value: `${Math.round(imboVal * factor)} Lots`, path: '/cloth/inward', color: '#a855f7', icon: Package },
-      { label: 'Total DC', value: `${Math.round(totalDC * factor)} Challans`, path: '/despatch', color: '#06b6d4', icon: Receipt },
-      { label: 'Total Qty', value: `${Math.round(totalQty * factor).toLocaleString()} Mtrs`, path: '/sales-invoice', color: '#10b981', icon: BarChart3 }
+      { label: 'Vendor Inward', value: `${vendorInward} Rolls`, path: '/cloth/inward', color: '#10b981', icon: Factory },
+      { label: 'Purchase Inward', value: `${purchaseInward.toLocaleString()} Kgs`, path: '/yarn/inward', color: '#22c55e', icon: Layers },
+      { label: 'Process Delivery', value: `${processDelivery} Batches`, path: '/yarn/grey-delivery', color: '#64748b', icon: Clock },
+      { label: 'Process Inward', value: `${processInward} Bags`, path: '/dyed-yarn/received', color: '#ec4899', icon: Layers },
+      { label: 'Sales Delivery', value: `${salesDelivery} Deliveries`, path: '/despatch', color: '#3b82f6', icon: MapPin },
+      { label: 'IMPO', value: `${impoVal} Orders`, path: '/yarn/inward', color: '#ea580c', icon: ShoppingCart },
+      { label: 'IMBO', value: `${imboVal} Lots`, path: '/cloth/inward', color: '#a855f7', icon: Package },
+      { label: 'Total DC', value: `${totalDC} Challans`, path: '/despatch', color: '#06b6d4', icon: Receipt },
+      { label: 'Total Qty', value: `${totalQty.toLocaleString()} Mtrs`, path: '/sales-invoice', color: '#10b981', icon: BarChart3 }
     ]);
 
-    // 2. Update Charts
-    if (stats?.daily_production) {
-      setDailyProduction(stats.daily_production.map(d => ({ ...d, Vendor: Math.round(d.Vendor * factor), Checking: Math.round(d.Checking * factor), GreyDelivery: Math.round(d.GreyDelivery * factor) })));
-    } else {
-      setDailyProduction(baseDailyProductionData.map(d => ({ ...d, Vendor: Math.round(d.Vendor * factor), Checking: Math.round(d.Checking * factor), GreyDelivery: Math.round(d.GreyDelivery * factor) })));
-    }
-
-    if (stats?.production_vs_dispatch) {
-      setProdVsDispatch(stats.production_vs_dispatch.map(d => ({ ...d, Production: Math.round(d.Production * factor), Dispatch: Math.round(d.Dispatch * factor) })));
-    } else {
-      setProdVsDispatch(baseProdVsDispatchData.map(d => ({ ...d, Production: Math.round(d.Production * factor), Dispatch: Math.round(d.Dispatch * factor) })));
-    }
-
-    if (stats?.process_bottlenecks) {
-      setBottleneckData(stats.process_bottlenecks.map(d => ({ ...d, value: Math.round(d.value * factor) })));
-    } else {
-      setBottleneckData(baseBottleneckData.map(d => ({ ...d, value: Math.round(d.value * factor) })));
-    }
-
-    if (stats?.buyer_order_volumes) {
-      setBuyerQty(stats.buyer_order_volumes.map(d => ({ ...d, value: Math.round(d.value * factor) })));
-    } else {
-      setBuyerQty(baseBuyerQtyData.map(d => ({ ...d, value: Math.round(d.value * factor) })));
-    }
-
-    if (stats?.quality_compliance) {
-      setQualityCompliance(stats.quality_compliance.map(d => ({ ...d, value: Math.min(100, Math.round(d.value * (factor > 1 ? 1 : factor))) })));
-    } else {
-      setQualityCompliance(baseQualityCompliance.map(d => ({ ...d, value: Math.min(100, Math.round(d.value * (factor > 1 ? 1 : factor))) })));
-    }
-
-    if (stats?.dispatch_by_transporter) {
-      setDispatchByTransporter(stats.dispatch_by_transporter.map(d => ({ ...d, value: Math.round(d.value * factor) })));
-    } else {
-      setDispatchByTransporter(baseDispatchByTransporter.map(d => ({ ...d, value: Math.round(d.value * factor) })));
-    }
-
-
-    // 2. Update Charts
-    if (stats?.daily_production) {
-      setDailyProduction(stats.daily_production.map(d => ({ ...d, Vendor: Math.round(d.Vendor * factor), Checking: Math.round(d.Checking * factor), GreyDelivery: Math.round(d.GreyDelivery * factor) })));
-    } else {
-      setDailyProduction(baseDailyProductionData.map(d => ({ ...d, Vendor: Math.round(d.Vendor * factor), Checking: Math.round(d.Checking * factor), GreyDelivery: Math.round(d.GreyDelivery * factor) })));
-    }
-
-    if (stats?.production_vs_dispatch) {
-      setProdVsDispatch(stats.production_vs_dispatch.map(d => ({ ...d, Production: Math.round(d.Production * factor), Dispatch: Math.round(d.Dispatch * factor) })));
-    } else {
-      setProdVsDispatch(baseProdVsDispatchData.map(d => ({ ...d, Production: Math.round(d.Production * factor), Dispatch: Math.round(d.Dispatch * factor) })));
-    }
-
-    if (stats?.process_bottlenecks) {
-      setBottleneckData(stats.process_bottlenecks.map(d => ({ ...d, value: Math.round(d.value * factor) })));
-    } else {
-      setBottleneckData(baseBottleneckData.map(d => ({ ...d, value: Math.round(d.value * factor) })));
-    }
-
-    if (stats?.buyer_order_volumes) {
-      setBuyerQty(stats.buyer_order_volumes.map(d => ({ ...d, value: Math.round(d.value * factor) })));
-    } else {
-      setBuyerQty(baseBuyerQtyData.map(d => ({ ...d, value: Math.round(d.value * factor) })));
-    }
-  }, [stats, dateFilter]);
+    // 2. Update Charts with real data
+    setDailyProduction(stats?.daily_production || []);
+    setProdVsDispatch(stats?.production_vs_dispatch || []);
+    setBottleneckData(stats?.process_bottlenecks || []);
+    setBuyerQty(stats?.buyer_order_volumes || []);
+    setQualityCompliance(stats?.quality_compliance || []);
+    setDispatchByTransporter(stats?.dispatch_by_transporter || []);
+  }, [stats]);
 
   const exportToExcel = () => {
     setExportDropdownOpen(false);
@@ -319,6 +262,7 @@ export default function Dashboard() {
           </div>
           
           <select className="form-control" style={{ width: 140, padding: '8px 12px' }} value={dateFilter} onChange={e => setDateFilter(e.target.value)}>
+            <option value="All Time">All Time</option>
             <option value="This Week">This Week</option>
             <option value="This Month">This Month</option>
             <option value="This Year">This Year</option>

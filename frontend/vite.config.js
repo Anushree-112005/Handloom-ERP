@@ -6,7 +6,14 @@ import tailwindcss from '@tailwindcss/vite';
 
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react({
+      babel: {
+        compact: false,
+      },
+    }),
+    tailwindcss(),
+  ],
   server: {
     port: 5173,
     proxy: {

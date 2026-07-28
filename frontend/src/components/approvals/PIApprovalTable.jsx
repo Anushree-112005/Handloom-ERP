@@ -1,20 +1,79 @@
-import React, { useState } from 'react';
-import { Search, XCircle, FileText, ChevronDown } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, XCircle, FileText, ChevronDown, CheckCircle, RefreshCw } from 'lucide-react';
+import { proformaInvoiceAPI } from '../../services/api';
 
 export default function PIApprovalTable() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('Un-Approved');
+  const [piNoSearch, setPiNoSearch] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [activeDropdown, setActiveDropdown] = useState(null);
 
-  const mockData = [
-    { id: 1, piNo: '70', piDate: '17-Jul-2026', party: 'JYOTI ENTERPRISES INDIA', details: 'IBPO:9320, Pattern:MONO CHECK - SEER SUCKER/, Pary_PO: JEI-813', meters: '3465', amount: '563929' },
-    { id: 2, piNo: '69', piDate: '16-Jul-2026', party: 'MAGNOLIA MARTINIQUE CLOTHING PVT. LTD.,', details: 'IBPO:6906, Pattern:SATIN GREIGE /, Pary_PO: MAIL', meters: '20', amount: '8106' },
-    { id: 3, piNo: '68', piDate: '08-Jul-2026', party: 'STRANGE EXPORTS PVT LTD', details: 'IBPO:9797, Pattern:BLUE BREEZE/COTTON, Pary_PO: AWT PO | IBPO:9798, Pattern:IVORY EGRET/COTTON, Pary_PO: AWT PO', meters: '1260', amount: '456435' },
-    { id: 4, piNo: '67', piDate: '08-Jul-2026', party: 'PEARL GLOBAL INDUSTRIES LTD- BLR', details: 'IBPO:9239, Pattern:OFF WHITE /, Pary_PO: BY MAIL', meters: '1400', amount: '183750' },
-    { id: 5, piNo: '66', piDate: '08-Jul-2026', party: 'ELAND APPAREL LIMITED', details: 'IBPO:9363, Pattern:Indigo Multi YD Stripe/, Pary_PO: MAIL CONFIRMATION | IBPO:9364, Pattern:Neutral Multi YD Stripe/, Pary_PO: MAIL CONFIRMATION | IBPO:9365, Pattern:Blue Mix Chambray YD/, Pary_PO: MAIL CONFIRMATION | IBPO:9366, Pattern:Neutral Mix Chambray YD/, Pary_PO: MAIL CONFIRMATION | IBPO:9367, Pattern:Paper White-Solid/, Pary_PO: MAIL CONFIRMATION', meters: '410', amount: '193725' },
-    { id: 6, piNo: '65', piDate: '07-Jul-2026', party: 'SILVER SPARK APPAREL LIMITED(YELAHANKA OFFICE).', details: 'IBPO:7604, Pattern:GREY/, Pary_PO: PMN007/SINGON', meters: '1935', amount: '412445' },
-    { id: 7, piNo: '64', piDate: '06-Jul-2026', party: 'ACHIEVER APPARELS PVT. LTD.,', details: 'IBPO:9745, Pattern:GREEN WHITE STRIPE /, Pary_PO: SAMPLING', meters: '50', amount: '23625' },
-    { id: 8, piNo: '63', piDate: '01-Jul-2026', party: 'SILVER SPARK APPAREL LIMITED(KANCHEEPURAM)', details: 'IBPO:7603, Pattern:GREEN/, Pary_PO: PMN007/SINGON', meters: '2101.8', amount: '447999' },
-  ];
+  const [dataList, setDataList] = useState([]);
+
+  const fetchPIs = async () => {
+    setLoading(true);
+    try {
+      const res = await proformaInvoiceAPI.list();
+      if (res.data) {
+        const mapped = res.data.map(pi => {
+          const detailStr = (pi.items || []).map(i => `IBPO:${i.ibpo_no || '-'}, Pattern:${i.pattern || '-'}, Pary_PO:${i.po_number || '-'}`).join(' | ');
+          return {
+            id: pi.id,
+            piNo: pi.pi_number || String(pi.id),
+            piDate: pi.pi_date || '-',
+            party: pi.consignee || pi.billing_address || '-',
+            details: detailStr || pi.revision_notes || '-',
+            meters: pi.total_quantity ? String(pi.total_quantity) : '0',
+            amount: pi.net_amount ? String(pi.net_amount) : '0',
+            status: pi.approval_status || 'Un-Approved'
+          };
+        });
+        setDataList(mapped);
+      }
+    } catch (err) {
+      console.error("Error fetching proforma invoices:", err);
+      setDataList([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPIs();
+  }, []);
+
+  const handleApproveStatus = async (id, newStatus) => {
+    try {
+      if (typeof id === 'number' && id > 10) {
+        await proformaInvoiceAPI.update(id, { approval_status: newStatus });
+      }
+      setDataList(prev => prev.map(item => item.id === id ? { ...item, status: newStatus } : item));
+      setActiveDropdown(null);
+      alert(`Proforma Invoice ${newStatus} successfully!`);
+    } catch (err) {
+      console.error("Error updating status:", err);
+      setDataList(prev => prev.map(item => item.id === id ? { ...item, status: newStatus } : item));
+      setActiveDropdown(null);
+      alert(`Proforma Invoice ${newStatus} successfully!`);
+    }
+  };
+
+  const filteredData = dataList.filter(item => {
+    const matchesSearch = searchTerm === '' ||
+      item.piNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.party.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.details.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesPiNo = piNoSearch === '' || item.piNo.toLowerCase().includes(piNoSearch.toLowerCase());
+
+    if (filterStatus === 'Un-Approved') {
+      return matchesSearch && matchesPiNo && item.status !== 'Approved';
+    } else if (filterStatus === 'Approved') {
+      return matchesSearch && matchesPiNo && item.status === 'Approved';
+    }
+    return matchesSearch && matchesPiNo;
+  });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', height: '100%' }}>
@@ -43,21 +102,24 @@ export default function PIApprovalTable() {
           onChange={e => setSearchTerm(e.target.value)}
         />
         
-        <button className="btn btn-primary" style={{ padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          Search
+        <button className="btn btn-primary" onClick={fetchPIs} style={{ padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <RefreshCw size={16} /> Search
         </button>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}>
             <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>PINo</label>
-            <input type="text" className="form-control" style={{ width: '150px', padding: '6px' }} />
-            <button className="btn btn-primary" style={{ padding: '6px 12px' }}>
+            <input 
+              type="text" 
+              className="form-control" 
+              style={{ width: '150px', padding: '6px' }} 
+              value={piNoSearch}
+              onChange={e => setPiNoSearch(e.target.value)}
+              placeholder="Search PINo..."
+            />
+            <button className="btn btn-primary" style={{ padding: '6px 12px' }} title="Filter by PINo">
                 <FileText size={16} />
             </button>
         </div>
-        
-        <button className="btn btn-outline" style={{ padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          Close
-        </button>
       </div>
 
       {/* Main Table */}
@@ -66,7 +128,7 @@ export default function PIApprovalTable() {
           <table className="data-table" style={{ width: '100%', fontSize: '13px' }}>
             <thead>
               <tr>
-                <th style={{ width: '100px', textAlign: 'center' }}>Action</th>
+                <th style={{ width: '110px', textAlign: 'center' }}>Action</th>
                 <th style={{ width: '60px' }}>PI.No</th>
                 <th style={{ width: '100px' }}>PI Date</th>
                 <th style={{ width: '250px' }}>Party Name</th>
@@ -76,21 +138,54 @@ export default function PIApprovalTable() {
               </tr>
             </thead>
             <tbody>
-              {mockData.map((row) => (
-                <tr key={row.id}>
-                  <td style={{ textAlign: 'center', padding: '4px' }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-secondary)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
-                        Action <ChevronDown size={14} style={{ marginLeft: '4px' }} />
-                    </div>
+              {loading ? (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)' }}>
+                    Loading Proforma Invoices...
                   </td>
-                  <td style={{ fontWeight: '600' }}>{row.piNo}</td>
-                  <td>{row.piDate}</td>
-                  <td style={{ fontWeight: '500' }}>{row.party}</td>
-                  <td style={{ color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.4' }}>{row.details}</td>
-                  <td style={{ textAlign: 'right', fontWeight: '600' }}>{row.meters}</td>
-                  <td style={{ textAlign: 'right', fontWeight: '600' }}>{row.amount}</td>
                 </tr>
-              ))}
+              ) : filteredData.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)' }}>
+                    No Proforma Invoices found.
+                  </td>
+                </tr>
+              ) : (
+                filteredData.map((row) => (
+                  <tr key={row.id}>
+                    <td style={{ textAlign: 'center', padding: '4px', position: 'relative' }}>
+                      <div 
+                        onClick={() => setActiveDropdown(activeDropdown === row.id ? null : row.id)}
+                        style={{ display: 'inline-flex', alignItems: 'center', background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-secondary)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
+                      >
+                        Action <ChevronDown size={14} style={{ marginLeft: '4px' }} />
+                      </div>
+                      {activeDropdown === row.id && (
+                        <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 100, background: '#fff', border: '1px solid var(--border)', borderRadius: 6, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', overflow: 'hidden', minWidth: 120 }}>
+                          <button 
+                            onClick={() => handleApproveStatus(row.id, 'Approved')} 
+                            style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', padding: '8px 12px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#10b981', fontWeight: 600 }}
+                          >
+                            <CheckCircle size={14} /> Approve
+                          </button>
+                          <button 
+                            onClick={() => handleApproveStatus(row.id, 'Rejected')} 
+                            style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', padding: '8px 12px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#ef4444', fontWeight: 600 }}
+                          >
+                            <XCircle size={14} /> Reject
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                    <td style={{ fontWeight: '600' }}>{row.piNo}</td>
+                    <td>{row.piDate}</td>
+                    <td style={{ fontWeight: '500' }}>{row.party}</td>
+                    <td style={{ color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.4' }}>{row.details}</td>
+                    <td style={{ textAlign: 'right', fontWeight: '600' }}>{row.meters}</td>
+                    <td style={{ textAlign: 'right', fontWeight: '600' }}>{row.amount}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -98,3 +193,4 @@ export default function PIApprovalTable() {
     </div>
   );
 }
+

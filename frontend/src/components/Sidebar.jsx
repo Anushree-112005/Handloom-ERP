@@ -39,7 +39,7 @@ const jobWorkRoutes = [
   { path: '/jobwork/finished-fabric-receipt', label: 'Finishing Receipt', icon: Box },
 
   { section: 'Job Work Services' },
-  { path: '/jobwork/bill', label: 'Job Work Bill Entry', icon: FileText },
+  // { path: '/jobwork/bill', label: 'Job Work Bill Entry', icon: FileText },
   { path: '/jobwork/status', label: 'Job Work Status', icon: Activity },
 ];
 

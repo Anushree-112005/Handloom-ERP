@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     # Groq LLM — multiple keys comma-separated for rotation
     GROQ_API_KEYS: Optional[str] = None
 
+    # NVIDIA Vision API
+    NVIDIA_API_KEY: Optional[str] = None
+    NVIDIA_VISION_MODEL: str = "nvidia/nemotron-nano-12b-v2-vl"
+
     def get_groq_api_keys(self) -> List[str]:
         """Return a deduplicated list of all configured Groq API keys."""
         keys = []

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, Download, FileText, FileSpreadsheet, ClipboardList, CheckCircle, RefreshCw } from 'lucide-react';
+import { Box, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, Download, FileText, FileSpreadsheet, ClipboardList, CheckCircle, RefreshCw, Layers } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
 import { finishedFabricAPI, dropdownAPI, clothDeliveryAPI } from '../../services/api';
 import jsPDF from 'jspdf';
@@ -646,10 +646,57 @@ export default function DyedFabricReceipt() {
         </div>
       </div>
 
-      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', gap: 16, alignItems: 'center', background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
-        <div style={{ position: 'relative', flex: 1 }}>
-          <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-          <input type="text" className="form-control" placeholder="Search by Receipt ID, Vendor or Design..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={{ paddingLeft: 38, width: '100%', margin: 0 }} />
+      {/* KPI Stat Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
+        <div className="card" style={{ padding: 20, background: '#fff', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(124, 58, 237, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7c3aed' }}>
+            <ClipboardList size={24} />
+          </div>
+          <div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Total Receipts</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', marginTop: 2 }}>{inwards.length}</div>
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: 20, background: '#fff', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}>
+            <FileText size={24} />
+          </div>
+          <div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Total Pieces</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', marginTop: 2 }}>
+              {inwards.reduce((sum, item) => sum + (Number(item.total_pieces) || 0), 0)}
+            </div>
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: 20, background: '#fff', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(245, 158, 11, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f59e0b' }}>
+            <Layers size={24} />
+          </div>
+          <div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Total Meters</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', marginTop: 2 }}>
+              {inwards.reduce((sum, item) => sum + (Number(item.total_meters) || 0), 0).toFixed(2)} Mtr
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filter & Search Bar */}
+      <div className="card" style={{ padding: '14px 20px', background: '#fff', borderRadius: 8, marginBottom: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+          <div style={{ position: 'relative', width: 300, maxWidth: '100%' }}>
+            <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <input
+              type="text"
+              className="form-control"
+              style={{ paddingLeft: 36, fontSize: 13 }}
+              placeholder="Search by Receipt ID, Vendor or Design..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
