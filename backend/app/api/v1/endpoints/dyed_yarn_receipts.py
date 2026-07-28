@@ -154,6 +154,52 @@ async def create_dyed_yarn_receipt(receipt_in: DyedYarnReceivedCreate, db: Async
         db.add(db_item)
     
     await db.commit()
+
+    # RULE 1 & 2: INVENTORY MODULE INTEGRATION (Receipt from Job Work + Loss Calc)
+    from app.services.inventory_service import post_stock_ledger
+    from finance_app.models.stock_item import StockItem
+    from app.models.inventory import StockLedger
+    
+    for item_in in receipt_in.items:
+        stmt_item = select(StockItem).where(StockItem.name == item_in.yarn_count)
+        res_item = await db.execute(stmt_item)
+        stock_item = res_item.scalars().first()
+        
+        if stock_item:
+            # Rule 2: Loss % Calc
+            sent_qty = item_in.delivery_qty or 0.0
+            recv_qty = item_in.received_qty or 0.0
+            loss_pct = 0.0
+            if sent_qty > 0:
+                loss_pct = ((sent_qty - recv_qty) / sent_qty) * 100
+                
+            remarks = f"Dyed Yarn Received. Loss: {loss_pct:.2f}%"
+            
+            # Decrease AT_JOB_WORK
+            await post_stock_ledger(
+                db=db,
+                stock_item_id=stock_item.id,
+                status="AT_JOB_WORK",
+                movement_type="TRANSFER_OUT",
+                qty=-sent_qty,
+                lot_no=item_in.lot_no,
+                ref_voucher_type="DYEING_RECEIPT",
+                ref_voucher_no=db_receipt.receipt_no,
+                remarks=remarks
+            )
+            # Increase AVAILABLE (only received qty)
+            await post_stock_ledger(
+                db=db,
+                stock_item_id=stock_item.id,
+                status="AVAILABLE",
+                movement_type="INWARD", # Treating receipt as inward for the new location
+                qty=recv_qty,
+                lot_no=item_in.lot_no,
+                godown_id=db_receipt.godown_id,
+                ref_voucher_type="DYEING_RECEIPT",
+                ref_voucher_no=db_receipt.receipt_no,
+                remarks=remarks
+            )
     return {"id": db_receipt.id, "message": "Dyed Yarn Receipt created successfully"}
 
 @router.get("")

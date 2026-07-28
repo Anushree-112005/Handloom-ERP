@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   FileText, Search, Filter, Download, ArrowLeft,
   Package, Boxes, AlertTriangle, XCircle, Box, Activity, DollarSign,
-  PieChart, RefreshCw, Printer
+  PieChart, RefreshCw, Printer, FileDown
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -17,6 +17,7 @@ export default function StockSheetModule() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [showExportMenu, setShowExportMenu] = useState(false);
   
   useEffect(() => {
     fetchItems();
@@ -43,6 +44,7 @@ export default function StockSheetModule() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "StockSheet");
     XLSX.writeFile(wb, "Stock_Sheet.xlsx");
+    setShowExportMenu(false);
   };
 
   const exportPDF = () => {
@@ -59,6 +61,7 @@ export default function StockSheetModule() {
       body: tableData
     });
     doc.save('Stock_Sheet.pdf');
+    setShowExportMenu(false);
   };
 
   const filteredItems = useMemo(() => {
@@ -76,11 +79,11 @@ export default function StockSheetModule() {
   const outOfStockCount = items.filter(i => i.status === 'Out of Stock').length;
 
   const renderStatusBadge = (status) => {
-    let bg = '#f1f5f9', color = '#475569';
-    if (status === 'In Stock') { bg = '#10b98120'; color = '#047857'; }
-    else if (status === 'Low Stock') { bg = '#f9731620'; color = '#c2410c'; }
-    else if (status === 'Out of Stock') { bg = '#ef444420'; color = '#b91c1c'; }
-    return <span style={{ padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 600, background: bg, color }}>{status}</span>;
+    let badgeClass = 'badge-secondary';
+    if (status === 'In Stock') { badgeClass = 'badge-success'; }
+    else if (status === 'Low Stock') { badgeClass = 'badge-warning'; }
+    else if (status === 'Out of Stock') { badgeClass = 'badge-error'; }
+    return <span className={`badge ${badgeClass}`}>{status}</span>;
   };
 
   if (view === 'detail' && selectedItem) {
@@ -92,24 +95,27 @@ export default function StockSheetModule() {
       { id: 'valuation', label: 'Valuation' }
     ];
     return (
-      <div style={{ padding: '24px', background: 'var(--bg-secondary)', minHeight: '100vh' }}>
-        <div className="page-header" style={{ display: 'flex', alignItems: 'center', marginBottom: '24px' }}>
-          <button className="btn" onClick={() => setView('list')} style={{ marginRight: '16px', padding: '8px' }}>
+      <div className="animate-fade">
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px' }}>
+          <button className="btn btn-secondary" onClick={() => setView('list')} style={{ marginRight: '16px', padding: '8px' }}>
             <ArrowLeft size={20} />
           </button>
-          <h2 style={{ margin: 0 }}>Stock Sheet: {selectedItem.item_code} - {selectedItem.item_name}</h2>
+          <div>
+            <h2 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>{selectedItem.item_code} - {selectedItem.item_name}</h2>
+            <p style={{ color: 'var(--text-muted)' }}>Detailed stock sheet for the item.</p>
+          </div>
           <div style={{ marginLeft: 'auto' }}>
             {renderStatusBadge(selectedItem.status)}
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', borderBottom: '1px solid var(--border)' }}>
+        <div className="card" style={{ padding: 0, marginBottom: 24, borderBottom: '1px solid var(--border)', display: 'flex' }}>
           {tbs.map(t => (
             <div 
               key={t.id} 
               onClick={() => setActiveTab(t.id)}
               style={{ 
-                padding: '12px 16px', cursor: 'pointer', fontWeight: 600,
+                padding: '16px 24px', cursor: 'pointer', fontWeight: 600,
                 color: activeTab === t.id ? 'var(--primary)' : 'var(--text-muted)',
                 borderBottom: activeTab === t.id ? '2px solid var(--primary)' : '2px solid transparent'
               }}
@@ -141,7 +147,7 @@ export default function StockSheetModule() {
             </div>
           )}
           {activeTab === 'movements' && (
-            <table className="table" style={{ width: '100%', textAlign: 'left' }}>
+            <table className="data-table">
               <thead>
                 <tr>
                   <th>Date</th><th>Type</th><th>Ref No</th><th>Module</th><th>In</th><th>Out</th><th>Balance</th><th>User</th>
@@ -151,7 +157,7 @@ export default function StockSheetModule() {
                 {(selectedItem.movements || []).map((m, i) => (
                   <tr key={i}>
                     <td>{m.date}</td><td>{m.type}</td><td>{m.ref_no}</td><td>{m.module}</td>
-                    <td style={{ color: 'green' }}>{m.in || '-'}</td><td style={{ color: 'red' }}>{m.out || '-'}</td>
+                    <td style={{ color: '#10b981', fontWeight: 600 }}>{m.in || '-'}</td><td style={{ color: '#ef4444', fontWeight: 600 }}>{m.out || '-'}</td>
                     <td style={{ fontWeight: 600 }}>{m.balance}</td><td>{m.user}</td>
                   </tr>
                 ))}
@@ -159,7 +165,7 @@ export default function StockSheetModule() {
             </table>
           )}
           {activeTab === 'batches' && (
-            <table className="table" style={{ width: '100%', textAlign: 'left' }}>
+            <table className="data-table">
               <thead><tr><th>Batch No</th><th>Mfg Date</th><th>Qty</th><th>Warehouse</th><th>Status</th></tr></thead>
               <tbody>
                 {(selectedItem.batches || []).map((b, i) => (
@@ -172,7 +178,7 @@ export default function StockSheetModule() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
               <div><label style={{ color: 'var(--text-muted)' }}>Average Cost</label><p>₹ {selectedItem.valuation?.average_cost}</p></div>
               <div><label style={{ color: 'var(--text-muted)' }}>Last Purchase Rate</label><p>₹ {selectedItem.valuation?.last_purchase_rate}</p></div>
-              <div><label style={{ color: 'var(--text-muted)' }}>Current Value</label><p style={{ fontWeight: 600, fontSize: 18 }}>₹ {selectedItem.valuation?.current_value}</p></div>
+              <div><label style={{ color: 'var(--text-muted)' }}>Current Value</label><p style={{ fontWeight: 600, fontSize: 18, color: 'var(--primary)' }}>₹ {selectedItem.valuation?.current_value}</p></div>
             </div>
           )}
         </div>
@@ -181,28 +187,52 @@ export default function StockSheetModule() {
   }
 
   return (
-    <div style={{ padding: '24px', background: 'var(--bg-secondary)', minHeight: '100vh' }}>
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h2 style={{ display: 'flex', alignItems: 'center', margin: 0 }}>
-          <FileText size={28} style={{ marginRight: 12, color: 'var(--primary)' }}/> 
-          Stock Sheet
-        </h2>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button className="btn btn-secondary" onClick={fetchItems}>
+    <div className="animate-fade">
+      {/* HEADER */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <FileText size={24} color="var(--primary)" /> Stock Sheet
+          </h2>
+          <p style={{ color: 'var(--text-muted)' }}>Comprehensive overview of all stock items, valuation, and statuses.</p>
+        </div>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <button className="btn btn-secondary" onClick={fetchItems} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <RefreshCw size={16} /> Refresh
           </button>
-          <button className="btn btn-secondary" onClick={exportPDF}>
-            <FileText size={16} /> Export PDF
-          </button>
-          <button className="btn btn-secondary" onClick={exportExcel}>
-            <Download size={16} /> Export Excel
-          </button>
-          <button className="btn btn-secondary" onClick={() => window.print()}>
+          {/* Export Dropdown */}
+          <div style={{ position: 'relative' }}>
+            <button
+              className="btn btn-secondary"
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <Download size={16} /> Export
+            </button>
+            {showExportMenu && (
+              <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', zIndex: 10, width: 140, overflow: 'hidden' }}>
+                <button
+                  onClick={exportPDF}
+                  style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)' }}
+                >
+                  <FileDown size={16} color="#ef4444" /> PDF Report
+                </button>
+                <button
+                  onClick={exportExcel}
+                  style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }}
+                >
+                  <Download size={16} color="#10b981" /> Excel Sheet
+                </button>
+              </div>
+            )}
+          </div>
+          <button className="btn btn-primary" onClick={() => window.print()} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <Printer size={16} /> Print
           </button>
         </div>
       </div>
 
+      {/* STAT CARDS */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 24, marginBottom: 24 }}>
         <div
           className="card stat-card"
@@ -273,60 +303,77 @@ export default function StockSheetModule() {
         </div>
       </div>
 
-      <div className="card" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Stock Items ({filteredItems.length})</h3>
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <div className="search-bar" style={{ position: 'relative', width: 300 }}>
-              <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input 
-                type="text" className="form-control" placeholder="Search by Code or Item Name..." 
-                style={{ paddingLeft: 36, width: '100%' }} value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <select className="form-control" style={{ width: '160px' }} value={filterType} onChange={e => setFilterType(e.target.value)}>
-              <option value="">All Material Types</option>
-              <option value="Yarn">Yarn</option>
-              <option value="Fabric">Fabric</option>
-              <option value="Chemical">Chemical</option>
-              <option value="Accessory">Accessory</option>
-            </select>
-            <select className="form-control" style={{ width: '160px' }} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-              <option value="">All Statuses</option>
-              <option value="In Stock">In Stock</option>
-              <option value="Low Stock">Low Stock</option>
-              <option value="Out of Stock">Out of Stock</option>
-            </select>
-          </div>
+
+      {/* FILTER BAR */}
+      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: 250, maxWidth: 350 }}>
+          <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Search by Code or Item Name..."
+            style={{ paddingLeft: 38, width: '100%', margin: 0 }}
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
         </div>
 
-        <div className="table-responsive" style={{ flex: 1 }}>
-          <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead style={{ background: 'var(--bg-secondary)' }}>
-              <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Item Code</th>
-                <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Item Name</th>
-                <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Type</th>
-                <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Warehouse</th>
-                <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Current Stock</th>
-                <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Stock Value</th>
-                <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Status</th>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
+            <Filter size={16} />
+            <span style={{ fontSize: 13, fontWeight: 600 }}>Filter:</span>
+          </div>
+
+          <select className="form-control" style={{ width: 160, margin: 0 }} value={filterType} onChange={e => setFilterType(e.target.value)}>
+            <option value="">All Material Types</option>
+            <option value="Yarn">Yarn</option>
+            <option value="Fabric">Fabric</option>
+            <option value="Chemical">Chemical</option>
+            <option value="Accessory">Accessory</option>
+          </select>
+          <select className="form-control" style={{ width: 160, margin: 0 }} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+            <option value="">All Statuses</option>
+            <option value="In Stock">In Stock</option>
+            <option value="Low Stock">Low Stock</option>
+            <option value="Out of Stock">Out of Stock</option>
+          </select>
+        </div>
+      </div>
+
+      {/* TABLE */}
+      <div className="card" style={{ padding: 0 }}>
+        <div style={{ overflowX: 'auto' }}>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Item Code</th>
+                <th>Item Name</th>
+                <th>Type</th>
+                <th>Warehouse</th>
+                <th>Current Stock</th>
+                <th>Stock Value</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>
               {filteredItems.map(item => (
-                <tr key={item.id} onClick={() => handleRowClick(item)} style={{ cursor: 'pointer', borderBottom: '1px solid #f8fafc' }}>
-                  <td style={{ padding: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>{item.item_code}</td>
-                  <td style={{ padding: '16px', color: 'var(--text-secondary)', fontWeight: 600 }}>{item.item_name}</td>
-                  <td style={{ padding: '16px', fontWeight: 600 }}>{item.material_type}</td>
-                  <td style={{ padding: '16px', fontWeight: 600 }}>{item.warehouse}</td>
-                  <td style={{ padding: '16px', fontWeight: 600 }}>{item.current_stock} {item.unit}</td>
-                  <td style={{ padding: '16px', fontWeight: 600 }}>₹ {item.stock_value?.toFixed(2)}</td>
-                  <td style={{ padding: '16px' }}>{renderStatusBadge(item.status)}</td>
+                <tr key={item.id} onClick={() => handleRowClick(item)} style={{ cursor: 'pointer' }}>
+                  <td style={{ fontWeight: 600 }}>{item.item_code}</td>
+                  <td style={{ color: 'var(--text-primary)' }}>{item.item_name}</td>
+                  <td style={{ color: 'var(--text-muted)' }}>{item.material_type}</td>
+                  <td style={{ color: 'var(--text-muted)' }}>{item.warehouse}</td>
+                  <td style={{ fontWeight: 600 }}>{item.current_stock} {item.unit}</td>
+                  <td style={{ fontWeight: 600, color: 'var(--primary)' }}>₹ {item.stock_value?.toFixed(2)}</td>
+                  <td>{renderStatusBadge(item.status)}</td>
                 </tr>
               ))}
               {filteredItems.length === 0 && (
-                <tr><td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>No stock items found.</td></tr>
+                <tr>
+                  <td colSpan="7" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
+                    <FileText size={40} style={{ margin: '0 auto 12px auto', opacity: 0.5 }} />
+                    <p>No stock items found.</p>
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { storesService } from '../../../services/storesService';
+import { erpStockAPI } from '../../../services/api';
 import { 
   Layers, Search, Download, RefreshCw, AlertTriangle, FileText, Activity, AlertCircle, CheckCircle2, Filter
 } from 'lucide-react';
@@ -30,12 +30,26 @@ export default function StockReport() {
     setLoading(true);
     setError(null);
     try {
-      const response = await storesService.getStockReport({
-        search: searchTerm,
-        category: categoryFilter,
-        status: statusFilter
-      });
-      setData(response || []);
+      const res = await erpStockAPI.getCurrentStock('?category=consumables');
+      
+      const mapped = (res.data || []).map(item => ({
+        item_code: item.item_id,
+        item_name: item.item_id,
+        category: 'Consumables',
+        uom: 'Units',
+        opening_stock: 0,
+        purchased_qty: 0,
+        issued_qty: 0,
+        returned_qty: 0,
+        closing_stock: item.quantity,
+        available_stock: item.quantity,
+        reserved_stock: item.reserved_quantity,
+        min_stock: 10,
+        max_stock: 100,
+        stock_value: item.quantity * 50,
+        stock_status: item.quantity > 10 ? 'Available' : (item.quantity > 0 ? 'Low Stock' : 'Out of Stock')
+      }));
+      setData(mapped);
     } catch (err) {
       console.error(err);
       setError('Failed to fetch Stock report.');

@@ -133,6 +133,43 @@ async def create_inward(data: YarnInwardCreate, db: AsyncSession = Depends(get_d
     await db.commit()
     await db.refresh(order)
 
+    # RULE 1: INVENTORY MODULE INTEGRATION
+    from app.services.inventory_service import post_stock_ledger
+    from finance_app.models.stock_item import StockItem
+    
+    for item in order.items:
+        # Find or create a matching StockItem for this yarn
+        stmt_item = select(StockItem).where(StockItem.name == item.yarn_count)
+        res_item = await db.execute(stmt_item)
+        stock_item = res_item.scalars().first()
+        
+        if not stock_item:
+            stock_item = StockItem(
+                name=item.yarn_count or "Unknown Yarn",
+                item_category="YARN",
+                yarn_form="CONE" if order.cone_type else "NA",
+                company_id=1,
+                unit="Kgs"
+            )
+            db.add(stock_item)
+            await db.commit()
+            await db.refresh(stock_item)
+            
+        await post_stock_ledger(
+            db=db,
+            stock_item_id=stock_item.id,
+            status="AVAILABLE",
+            movement_type="INWARD",
+            qty=item.kgs or 0.0,
+            rate=item.rate,
+            lot_no=item.lot_no,
+            godown_id=order.godown_id,
+            ref_voucher_type="YARN_INWARD",
+            ref_voucher_no=order.ref_no,
+            remarks=f"Yarn Inward from {order.received_from}"
+        )
+
+
     result = await db.execute(
         select(YarnInward).options(selectinload(YarnInward.items)).where(YarnInward.id == order.id)
     )

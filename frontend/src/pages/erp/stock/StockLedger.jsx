@@ -1,52 +1,52 @@
 import React, { useState, useEffect } from 'react';
-import api, { erpStockAPI } from '../../services/api';
-import { Search, Filter, Download, Box, BarChart2, Package, IndianRupee, FileText } from 'lucide-react';
+import { FileText, ArrowUpRight, ArrowDownLeft, RefreshCcw, Search, Filter, Download, BarChart2 } from 'lucide-react';
+import { erpStockAPI } from '../../../services/api';
 
-export default function StockSummary() {
-  const [summary, setSummary] = useState([]);
+const StockLedger = () => {
+  const [movements, setMovements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('ALL');
   const [showExportMenu, setShowExportMenu] = useState(false);
 
   useEffect(() => {
-    fetchSummary();
-  }, [categoryFilter]);
+    fetchMovements();
+  }, []);
 
-  const fetchSummary = async () => {
+  const fetchMovements = async () => {
     try {
-      setLoading(true);
-      const urlParams = categoryFilter ? `?category=${categoryFilter}` : '';
-      const res = await erpStockAPI.getCurrentStock(urlParams);
-      
-      // Map CurrentStock Schema to StockSummary format
-      const formattedSummary = res.data.map(item => ({
-        id: item.id,
-        item_code: item.item_id,
-        item_name: item.item_id, // We use item_id as name if not joined
-        godown_id: item.location_type || 'MAIN',
-        status: item.status,
-        closing_qty: item.quantity,
-        closing_value: item.quantity * 100, // Dummy value multiplier for demo since price isn't in CurrentStock
-        unit: 'Units'
-      }));
-      setSummary(formattedSummary);
+      const response = await erpStockAPI.getMovements();
+      setMovements(response.data);
+      setLoading(false);
     } catch (error) {
-      console.error('Failed to fetch stock summary:', error);
-    } finally {
+      console.error('Failed to load stock movements', error);
       setLoading(false);
     }
   };
 
-  const filteredData = summary.filter(item => 
-    item.item_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.item_code?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const getTransactionIcon = (type) => {
+    switch (type) {
+      case 'RECEIPT':
+        return <ArrowDownLeft size={16} color="#10b981" />;
+      case 'ISSUE':
+      case 'DISPATCH':
+        return <ArrowUpRight size={16} color="#f59e0b" />;
+      default:
+        return <RefreshCcw size={16} color="#3b82f6" />;
+    }
+  };
 
-  const totalItems = filteredData.length;
-  const totalValue = filteredData.reduce((acc, curr) => acc + (curr.closing_value || 0), 0);
-  const availableItems = filteredData.filter(i => i.status === 'AVAILABLE').length;
-  const otherItems = totalItems - availableItems;
+  const filteredMovements = movements.filter(m => {
+    const matchesSearch = m.item_id?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          (m.tracking_id && m.tracking_id.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesType = typeFilter === 'ALL' || m.transaction_type === typeFilter;
+    return matchesSearch && matchesType;
+  });
+
+  const totalMovements = movements.length;
+  const totalReceipts = movements.filter(m => m.transaction_type === 'RECEIPT').length;
+  const totalIssues = movements.filter(m => ['ISSUE', 'DISPATCH'].includes(m.transaction_type)).length;
+  const totalAdjustments = movements.filter(m => m.transaction_type === 'ADJUSTMENT').length;
 
   return (
     <div className="animate-fade">
@@ -54,12 +54,11 @@ export default function StockSummary() {
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
           <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Box size={24} color="var(--primary)" /> Stock Summary
+            <FileText size={24} color="var(--primary)" /> Stock Ledger
           </h2>
-          <p style={{ color: 'var(--text-muted)' }}>Current stock balances and valuation across all locations.</p>
+          <p style={{ color: 'var(--text-muted)' }}>Immutable transaction history of all stock movements.</p>
         </div>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          {/* Export Dropdown */}
           <div style={{ position: 'relative' }}>
             <button
               className="btn btn-secondary"
@@ -95,38 +94,38 @@ export default function StockSummary() {
             <BarChart2 size={24} />
           </div>
           <div className="stat-details">
-            <h3>Total Items</h3>
-            <div className="value">{totalItems}</div>
+            <h3>Total Movements</h3>
+            <div className="value">{totalMovements}</div>
           </div>
         </div>
 
         <div className="card stat-card">
           <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
-            <IndianRupee size={24} />
+            <ArrowDownLeft size={24} />
           </div>
           <div className="stat-details">
-            <h3>Total Stock Value</h3>
-            <div className="value">₹{totalValue.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</div>
+            <h3>Receipts</h3>
+            <div className="value">{totalReceipts}</div>
           </div>
         </div>
 
         <div className="card stat-card">
           <div className="stat-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>
-            <Package size={24} />
+            <ArrowUpRight size={24} />
           </div>
           <div className="stat-details">
-            <h3>Available Items</h3>
-            <div className="value">{availableItems}</div>
+            <h3>Issues & Dispatches</h3>
+            <div className="value">{totalIssues}</div>
           </div>
         </div>
 
         <div className="card stat-card">
-          <div className="stat-icon" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>
-            <Filter size={24} />
+          <div className="stat-icon" style={{ background: 'rgba(139,92,246,0.1)', color: '#8b5cf6' }}>
+            <RefreshCcw size={24} />
           </div>
           <div className="stat-details">
-            <h3>Other Status</h3>
-            <div className="value">{otherItems}</div>
+            <h3>Adjustments</h3>
+            <div className="value">{totalAdjustments}</div>
           </div>
         </div>
       </div>
@@ -138,7 +137,7 @@ export default function StockSummary() {
           <input
             type="text"
             className="form-control"
-            placeholder="Search by Item Code or Name..."
+            placeholder="Search Item ID or Batch..."
             style={{ paddingLeft: 38, width: '100%', margin: 0 }}
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
@@ -148,16 +147,15 @@ export default function StockSummary() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
             <Filter size={16} />
-            <span style={{ fontSize: 13, fontWeight: 600 }}>Filter Category:</span>
+            <span style={{ fontSize: 13, fontWeight: 600 }}>Filter:</span>
           </div>
 
-          <select className="form-control" style={{ width: 150, margin: 0 }} value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
-            <option value="">All Categories</option>
-            <option value="YARN">Yarn</option>
-            <option value="GREIGE_FABRIC">Greige Fabric</option>
-            <option value="FINISHED_FABRIC">Finished Fabric</option>
-            <option value="SPARE">Spares</option>
-            <option value="CONSUMABLE">Consumables</option>
+          <select className="form-control" style={{ width: 150, margin: 0 }} value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
+            <option value="ALL">All Types</option>
+            <option value="RECEIPT">Receipts</option>
+            <option value="ISSUE">Issues</option>
+            <option value="DISPATCH">Dispatches</option>
+            <option value="ADJUSTMENT">Adjustments</option>
           </select>
         </div>
       </div>
@@ -168,45 +166,54 @@ export default function StockSummary() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Item Code</th>
-                <th>Item Name</th>
-                <th>Godown ID</th>
+                <th>Date & Time</th>
+                <th>Item ID</th>
+                <th>Transaction Type</th>
+                <th>Quantity</th>
                 <th>Status</th>
-                <th style={{ textAlign: 'right' }}>Closing Qty</th>
-                <th>Unit</th>
-                <th style={{ textAlign: 'right' }}>Closing Value</th>
+                <th>Tracking (Batch/Lot)</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', padding: 20, color: 'var(--text-muted)' }}>Loading stock summary...</td>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: 20, color: 'var(--text-muted)' }}>Loading ledger data...</td>
                 </tr>
-              ) : filteredData.length === 0 ? (
+              ) : filteredMovements.length === 0 ? (
                 <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
-                    <Box size={40} style={{ margin: '0 auto 12px auto', opacity: 0.5 }} />
-                    <p>No records found matching your criteria.</p>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
+                    <FileText size={40} style={{ margin: '0 auto 12px auto', opacity: 0.5 }} />
+                    <p>No stock movements found.</p>
                   </td>
                 </tr>
               ) : (
-                filteredData.map(item => (
-                  <tr key={item.id}>
-                    <td style={{ fontWeight: 600 }}>{item.item_code || '-'}</td>
-                    <td style={{ color: 'var(--text-primary)' }}>{item.item_name}</td>
-                    <td style={{ color: 'var(--text-muted)' }}>{item.godown_id || 'MAIN'}</td>
+                filteredMovements.map((movement) => (
+                  <tr key={movement.id}>
+                    <td style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+                      {new Date(movement.timestamp).toLocaleString()}
+                    </td>
+                    <td style={{ fontWeight: 600 }}>{movement.item_id}</td>
                     <td>
-                      <span className={`badge ${
-                        item.status === 'AVAILABLE' ? 'badge-success' : 
-                        item.status === 'RESERVED' ? 'badge-warning' : 
-                        'badge-secondary'
-                      }`}>
-                        {item.status}
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {getTransactionIcon(movement.transaction_type)}
+                        {movement.transaction_type}
                       </span>
                     </td>
-                    <td style={{ textAlign: 'right', fontWeight: 600 }}>{(item.closing_qty || 0).toFixed(2)}</td>
-                    <td style={{ color: 'var(--text-muted)' }}>{item.unit || 'Kgs'}</td>
-                    <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--primary)' }}>₹{(item.closing_value || 0).toFixed(2)}</td>
+                    <td style={{ fontWeight: 600, color: movement.quantity > 0 ? '#10b981' : '#f59e0b' }}>
+                      {movement.quantity > 0 ? '+' : ''}{movement.quantity}
+                    </td>
+                    <td>
+                      <span className={`badge ${
+                        movement.status === 'AVAILABLE' ? 'badge-success' : 
+                        movement.status === 'IN_INSPECTION' ? 'badge-warning' : 
+                        'badge-secondary'
+                      }`}>
+                        {movement.status}
+                      </span>
+                    </td>
+                    <td style={{ color: 'var(--text-muted)' }}>
+                      {movement.tracking_id || '-'}
+                    </td>
                   </tr>
                 ))
               )}
@@ -216,4 +223,6 @@ export default function StockSummary() {
       </div>
     </div>
   );
-}
+};
+
+export default StockLedger;

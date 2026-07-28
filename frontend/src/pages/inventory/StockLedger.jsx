@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { FileText, Search, Download, ArrowUpRight, ArrowDownLeft, Filter, Calendar, Package } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import api from '../../services/api';
+import api, { erpStockAPI } from '../../services/api';
 
 export default function StockLedger() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -10,9 +10,27 @@ export default function StockLedger() {
 
   useEffect(() => {
     // Fetch real ledger data from backend API
-    api.get('/inventory/stock-ledger')
-      .then(res => setLedgerData(res.data || []))
-      .catch(() => setLedgerData([]));
+    erpStockAPI.getMovements()
+      .then(res => {
+        const data = res.data || [];
+        const mapped = data.map(mov => ({
+          id: mov.id,
+          date: new Date(mov.timestamp).toLocaleDateString(),
+          sku: mov.item_id,
+          type: ['RECEIPT', 'QC_UPDATE'].includes(mov.transaction_type) ? 'Inward' : 'Outward',
+          ref: mov.tracking_id || '-',
+          qtyIn: mov.quantity > 0 ? mov.quantity : 0,
+          qtyOut: mov.quantity < 0 ? Math.abs(mov.quantity) : 0,
+          balance: 0, // In a real app we compute running balance on backend, default 0 for UI demo
+          godown: mov.location_type || 'Main Warehouse',
+          operator: mov.user_id || 'System'
+        }));
+        setLedgerData(mapped);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLedgerData([]);
+      });
   }, []);
 
   const filteredLedger = useMemo(() => {

@@ -8,7 +8,7 @@ import uuid
 
 from app.core.database import get_db
 from app.modules.stationary.models import (
-    StationaryItem, MaterialCategory, UOMMaster, Warehouse, MaterialMaster,
+    StationaryItem, MaterialCategory, UOMMaster, StationaryWarehouse, MaterialMaster,
     SwatchCard, FabricInspectionRoll, ReturnableDC
 )
 from app.modules.stationary.schemas import (

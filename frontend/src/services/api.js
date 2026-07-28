@@ -409,6 +409,27 @@ export const subMasterAPI = {
   syncColors: (colors) => api.post('/sub-masters/color_master/sync-colors', { colors }),
 };
 
+export const warehouseAPI = {
+  getGodowns: () => api.get('/warehouse/godowns'),
+  createGodown: (data) => api.post('/warehouse/godowns', data),
+  updateGodown: (id, data) => api.put(`/warehouse/godowns/${id}`, data),
+  deleteGodown: (id) => api.delete(`/warehouse/godowns/${id}`)
+};
+
+export const warehouseInwardOutwardAPI = {
+  getStaging: () => api.get('/warehouse/staging'),
+  createStaging: (data) => api.post('/warehouse/staging', data),
+  getPutAway: () => api.get('/warehouse/put-away'),
+  createPutAway: (data) => api.post('/warehouse/put-away', data),
+  getPickList: () => api.get('/warehouse/pick-list'),
+  createPickList: (data) => api.post('/warehouse/pick-list', data)
+};
+
+export const storeDashboardAPI = {
+  getMetrics: () => api.get('/stores/dashboard-metrics')
+};
+
+
 // ---- PPC ----
 export const ppcAPI = {
   getLooms: () => api.get('/ppc/looms'),
@@ -476,8 +497,17 @@ export const getBackendURL = (path) => {
 };
 
 export default api;
+export const erpStockAPI = {
+  getCurrentStock: (query = '') => api.get(`/erp/stock/current${query}`),
+  getMovements: (query = '') => api.get(`/erp/stock/movements${query}`),
+  getLowStockAlerts: () => api.get('/erp/stock/alerts'),
+  submitAudit: (data) => api.post('/erp/stock/audit', data),
+};
 export const proformaInvoiceAPI = createAPI('/proforma-invoices');
 export const buyerOrderScheduleAPI = createAPI('/buyer-order-schedules');
 export const buyerOrderAmendmentAPI = createAPI('/buyer-order-amendments');
 export const buyerOrderCompletionAPI = createAPI('/buyer-order-completions');
 export const orderExpenseAPI = createAPI('/order-expenses');
+
+
+

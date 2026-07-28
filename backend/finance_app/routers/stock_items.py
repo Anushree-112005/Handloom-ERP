@@ -8,7 +8,9 @@ from finance_app.models.stock_item import StockItem
 router = APIRouter()
 
 class StockItemCreate(BaseModel):
+    item_code:     Optional[str] = None
     name:          str
+    item_category: str = "CONSUMABLE"
     unit:          Optional[str] = "Nos"
     hsn_code:      Optional[str] = None
     gst_rate:      float = 18.0
@@ -16,6 +18,8 @@ class StockItemCreate(BaseModel):
     selling_rate:  float = 0.0
     opening_qty:   float = 0.0
     opening_rate:  float = 0.0
+    yarn_form:     str = "NA"
+    reorder_level: float = 0.0
     company_id:    int
 
 @router.get("/")
@@ -70,9 +74,11 @@ def delete_stock_item(item_id: int, db: Session = Depends(get_db)):
 def _item_out(i: StockItem):
     return {
         "id": i.id, "name": i.name, "unit": i.unit,
+        "item_code": i.item_code, "item_category": i.item_category,
         "hsn_code": i.hsn_code, "gst_rate": i.gst_rate,
         "purchase_rate": i.purchase_rate, "selling_rate": i.selling_rate,
         "opening_qty": i.opening_qty, "opening_rate": i.opening_rate,
+        "yarn_form": i.yarn_form, "reorder_level": i.reorder_level,
         "opening_value": round(i.opening_qty * i.opening_rate, 2),  # pyrefly: ignore[bad-argument-type]
         "company_id": i.company_id,
     }

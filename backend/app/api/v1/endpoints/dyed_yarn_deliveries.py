@@ -154,6 +154,44 @@ async def create_dyed_yarn_delivery(data: DyedYarnDeliveryCreate, db: AsyncSessi
         db.add(db_item)
     
     await db.commit()
+
+    # RULE 1: INVENTORY MODULE INTEGRATION (Delivery to Job Work)
+    from app.services.inventory_service import post_stock_ledger
+    from finance_app.models.stock_item import StockItem
+    for item_in in data.items:
+        # 1. Decrease AVAILABLE stock
+        # 2. Increase AT_JOB_WORK stock
+        
+        stmt_item = select(StockItem).where(StockItem.name == item_in.yarn_count)
+        res_item = await db.execute(stmt_item)
+        stock_item = res_item.scalars().first()
+        
+        if stock_item:
+            # Outward from Godown
+            await post_stock_ledger(
+                db=db,
+                stock_item_id=stock_item.id,
+                status="AVAILABLE",
+                movement_type="TRANSFER_OUT",
+                qty=-(item_in.current_delivery_qty or 0.0),
+                lot_no=item_in.lot_no,
+                ref_voucher_type="DYEING_DELIVERY",
+                ref_voucher_no=db_delivery.delivery_no,
+                remarks="Sent for Dyeing"
+            )
+            # Inward to Job Work
+            await post_stock_ledger(
+                db=db,
+                stock_item_id=stock_item.id,
+                status="AT_JOB_WORK",
+                movement_type="TRANSFER_IN",
+                qty=(item_in.current_delivery_qty or 0.0),
+                lot_no=item_in.lot_no,
+                party_id=db_delivery.job_worker_id,
+                ref_voucher_type="DYEING_DELIVERY",
+                ref_voucher_no=db_delivery.delivery_no,
+                remarks="Received at Dyeing unit"
+            )
     return {"id": db_delivery.id, "delivery_no": db_delivery.delivery_no, "message": "Dyed Yarn Delivery created successfully"}
 
 @router.get("")

@@ -49,7 +49,7 @@ class UOMMaster(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, server_default=func.now())
 
-class Warehouse(Base):
+class StationaryWarehouse(Base):
     __tablename__ = "stationary_warehouses"
     
     id = Column(Integer, primary_key=True, index=True)
@@ -61,7 +61,7 @@ class Warehouse(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, server_default=func.now())
 
-class WarehouseRack(Base):
+class StationaryRack(Base):
     __tablename__ = "stationary_racks"
     
     id = Column(Integer, primary_key=True, index=True)
@@ -72,7 +72,7 @@ class WarehouseRack(Base):
     columns = Column(Integer, default=1)
     is_active = Column(Boolean, default=True)
 
-class WarehouseBin(Base):
+class StationaryBin(Base):
     __tablename__ = "stationary_bins"
     
     id = Column(Integer, primary_key=True, index=True)

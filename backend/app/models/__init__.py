@@ -35,7 +35,7 @@ from app.models.processing_po import ProcessingPO, ProcessingPOItem
 from app.models.cloth_purchase_po import ClothPurchasePO, ClothPurchasePOItem
 from app.modules.hr.models import HRItem
 from app.modules.vehicle_management.models import FleetItem
-from app.modules.stationary.models import StationaryItem, MaterialCategory, UOMMaster, Warehouse, WarehouseRack, WarehouseBin, MaterialMaster, MaterialStock, StockLedger, GoodsReceiptNote, GRNItem, StockIssue, StockIssueItem, SwatchCard, FabricInspectionRoll, ReturnableDC
+from app.modules.stationary.models import StationaryItem, MaterialCategory, UOMMaster, StationaryWarehouse, StationaryRack, StationaryBin, MaterialMaster, MaterialStock, StockLedger, GoodsReceiptNote, GRNItem, StockIssue, StockIssueItem, SwatchCard, FabricInspectionRoll, ReturnableDC
 from app.modules.stores_consumables.models import (
     StoresCategory, StoresUOM, StoresVendor, StoresDepartment, StoresItem,
     StoresMaterialRequest, StoresSubcategory, StoresWarehouse, StoresCostCenter,
@@ -59,6 +59,8 @@ from app.models.fleet_document import FleetDocument
 from app.models.route_trip import Route, Trip
 from app.models.calendar_event import CalendarEvent
 from app.models.stock_sheet import StockSheetItem
+from app.models.stock import StockMovement, CurrentStock, PhysicalAudit, PhysicalAuditItem
+from app.models.inventory import StockLedger, StockBalance, LotReconciliation, SurplusStock, SparesStock, StockAudit
 from app.models.costing_sheet import CostingSheet
 from app.models.notification import Notification
 from app.models.warehouse_waxing import WarehouseWaxing
@@ -69,3 +71,8 @@ from app.models.rbac import (
 )
 from app.models.rack import Rack
 from app.models.voucher import LedgerGroup, Ledger, VoucherType, Voucher, VoucherEntry, StockItem, VoucherItemEntry
+
+# New DDD Inventory Models
+from app.models.warehouse import Warehouse, WarehouseZone, WarehouseRack, WarehouseBin
+from app.models.store import Store
+from app.models.stock import StockMovement, CurrentStock

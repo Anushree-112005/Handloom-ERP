@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Box, Search, Download, Filter, Layers, Database, ArrowRightLeft, FileText, Eye } from 'lucide-react';
-import { yarnInwardAPI } from '../../services/api';
+import { erpStockAPI } from '../../services/api';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -16,40 +16,21 @@ export default function YarnStock() {
   useEffect(() => {
     const fetchStockData = async () => {
       try {
-        const { data: inwards } = await yarnInwardAPI.list();
-        const lotMap = {};
+        const { data } = await erpStockAPI.getCurrentStock('?category=yarn');
+        const formattedStock = data.map(item => ({
+          id: item.id,
+          count: item.item_id || 'N/A', 
+          mill: 'N/A', // Mill Name not natively in generic stock
+          lotNo: item.batch_id || item.lot_id || 'N/A',
+          bags: 0,
+          netWeight: item.quantity || 0,
+          rate: 0, 
+          godown: item.location_type || 'Main Warehouse',
+          status: item.status === 'AVAILABLE' ? 'Available' : 'Reserved',
+          colour: ''
+        }));
 
-        inwards.forEach(inward => {
-          if (inward.items && Array.isArray(inward.items)) {
-            inward.items.forEach(item => {
-              // Skip incomplete items (must have yarn_count)
-              if (!item.yarn_count) {
-                return;
-              }
-
-              const lot = item.lot_no || 'N/A';
-              const key = `${lot}-${item.yarn_count}-${item.colour || ''}`;
-              if (!lotMap[key]) {
-                lotMap[key] = {
-                  id: item.id,
-                  count: item.yarn_count || 'N/A',
-                  mill: item.mill_name || 'N/A',
-                  lotNo: item.lot_no || 'N/A',
-                  bags: 0,
-                  netWeight: 0,
-                  rate: item.rate || 0,
-                  godown: inward.stock_godown || 'Main Warehouse',
-                  status: inward.status === 'Received' ? 'Available' : 'Reserved',
-                  colour: item.colour || ''
-                };
-              }
-              lotMap[key].bags += item.bags || 0;
-              lotMap[key].netWeight += item.kgs || 0;
-            });
-          }
-        });
-
-        setStock(Object.values(lotMap));
+        setStock(formattedStock);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching stock data:', error);
