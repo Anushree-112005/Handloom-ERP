@@ -137,7 +137,7 @@ export default function StockReport() {
 
   return (
     <div className="animate-fade page-wrapper" style={{ paddingBottom: '60px' }}>
-      <div className="card" style={{ padding: '16px 24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(10px)', border: '1px solid var(--border)' }}>
+      <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '16px 24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(10px)', border: 'none', boxShadow: 'none' }}>
         <div>
           <h2 style={{ fontSize: '24px', fontWeight: '850', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
             <Layers size={26} style={{ color: '#6366f1' }} />
@@ -158,47 +158,47 @@ export default function StockReport() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '24px' }}>
-        <div className="card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '24px' }}>
+        <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
             <FileText size={24} />
           </div>
-          <div>
-            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>Total Inventory Value</p>
-            <h3 style={{ margin: '4px 0 0 0', fontSize: '24px', fontWeight: 'bold' }}>Rs. {totalValue.toLocaleString()}</h3>
+          <div className="stat-details">
+            <h3>Total Value</h3>
+            <div className="value">Rs. {totalValue.toLocaleString()}</div>
           </div>
         </div>
-        <div className="card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#16a34a' }}>
+        <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(22, 163, 74, 0.1)', color: '#16a34a' }}>
             <CheckCircle2 size={24} />
           </div>
-          <div>
-            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>Available Items</p>
-            <h3 style={{ margin: '4px 0 0 0', fontSize: '24px', fontWeight: 'bold' }}>{availableItems}</h3>
+          <div className="stat-details">
+            <h3>Available Items</h3>
+            <div className="value">{availableItems}</div>
           </div>
         </div>
-        <div className="card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d97706' }}>
+        <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(217, 119, 6, 0.1)', color: '#d97706' }}>
             <AlertTriangle size={24} />
           </div>
-          <div>
-            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>Low Stock Items</p>
-            <h3 style={{ margin: '4px 0 0 0', fontSize: '24px', fontWeight: 'bold' }}>{lowStockItems}</h3>
+          <div className="stat-details">
+            <h3>Low Stock</h3>
+            <div className="value">{lowStockItems}</div>
           </div>
         </div>
-        <div className="card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}>
+        <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
             <AlertCircle size={24} />
           </div>
-          <div>
-            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>Out of Stock Items</p>
-            <h3 style={{ margin: '4px 0 0 0', fontSize: '24px', fontWeight: 'bold' }}>{outOfStockItems}</h3>
+          <div className="stat-details">
+            <h3>Out of Stock</h3>
+            <div className="value">{outOfStockItems}</div>
           </div>
         </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px', marginBottom: '24px' }}>
-        <div className="card" style={{ padding: '20px' }}>
+        <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '20px', border: 'none', boxShadow: 'none' }}>
           <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '16px', color: 'var(--text-primary)' }}>Category-wise Inventory</h3>
           <div style={{ height: '250px' }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -215,7 +215,7 @@ export default function StockReport() {
           </div>
         </div>
 
-        <div className="card" style={{ padding: '20px' }}>
+        <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '20px', border: 'none', boxShadow: 'none' }}>
           <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '16px', color: 'var(--text-primary)' }}>Inventory Value by Category</h3>
           <div style={{ height: '250px' }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -231,7 +231,7 @@ export default function StockReport() {
         </div>
       </div>
 
-      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+      <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)', border: 'none', boxShadow: 'none' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: 250, maxWidth: 350 }}>
           <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input 
@@ -261,7 +261,7 @@ export default function StockReport() {
         </div>
       </div>
 
-      <div className="card" style={{ overflow: 'hidden' }}>
+      <div className="card" style={{ border: 'none', boxShadow: 'none', overflow: 'hidden', border: 'none', boxShadow: 'none' }}>
         {loading ? (
           <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading report data...</div>
         ) : error ? (

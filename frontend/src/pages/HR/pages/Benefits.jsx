@@ -147,6 +147,13 @@ export default function Benefits() {
   });
 
   const totalPages = Math.ceil(filteredBenefits.length / itemsPerPage);
+  
+  const stats = {
+    total: benefits.length,
+    active: benefits.filter(b => b.status === 'Active').length,
+    pending: benefits.filter(b => b.status === 'Pending').length,
+    totalCoverage: benefits.filter(b => b.status === 'Active').reduce((sum, b) => sum + (parseFloat(b.coverage_amount) || 0), 0)
+  };
   const paginatedBenefits = filteredBenefits.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const formatDate = (dateStr) => {
@@ -179,8 +186,48 @@ export default function Benefits() {
       {/* DATA AREA */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 24 }}>
 
+        {/* Stats */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
+          <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+            <div className="stat-icon" style={{ background: 'rgba(99, 102, 241, 0.1)', color: '#6366f1' }}>
+              <Heart size={24} />
+            </div>
+            <div className="stat-details">
+              <h3>Total Benefits</h3>
+              <div className="value">{stats.total}</div>
+            </div>
+          </div>
+          <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+            <div className="stat-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+              <CheckCircle size={24} />
+            </div>
+            <div className="stat-details">
+              <h3>Active Benefits</h3>
+              <div className="value">{stats.active}</div>
+            </div>
+          </div>
+          <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+            <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+              <Shield size={24} />
+            </div>
+            <div className="stat-details">
+              <h3>Pending</h3>
+              <div className="value">{stats.pending}</div>
+            </div>
+          </div>
+          <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+            <div className="stat-icon" style={{ background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)' }}>
+              <DollarSign size={24} />
+            </div>
+            <div className="stat-details">
+              <h3>Total Coverage</h3>
+              <div className="value">₹{(stats.totalCoverage / 100000).toFixed(1)}L</div>
+            </div>
+          </div>
+        </div>
+
         {/* Toolbar */}
-        <div className="card" style={{ padding: '16px 24px', display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div className="card" style={{ padding: '16px 24px', display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap', border: 'none' }}>
           <div className="flex-1" style={{ minWidth: 300, position: 'relative' }}>
             <Search className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
             <input
@@ -219,7 +266,7 @@ export default function Benefits() {
         </div>
 
         {/* Benefits List View */}
-        <div className="card" style={{ padding: 0 }}>
+        <div className="card" style={{ padding: 0, border: 'none' }}>
           <div className="overflow-x-auto">
             <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead className="bg-slate-50/80 border-b border-slate-200">
@@ -324,7 +371,7 @@ export default function Benefits() {
 
       {/* Form Inline */}
       {showForm && (
-        <form className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24 }} onSubmit={(e) => e.preventDefault()}>
+        <form className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24, border: 'none' }} onSubmit={(e) => e.preventDefault()}>
           {/* Form Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 20, borderBottom: '1px solid var(--border)' }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>

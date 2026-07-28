@@ -57,7 +57,7 @@ export default function RequestApproval() {
 
           <div className="stats-grid">
             {stats.map((s, i) => (
-              <div key={i} className="stat-card" style={{ '--stat-color': s.color }}>
+              <div key={i} className="stat-card" style={{ border: 'none', boxShadow: 'none' }}>
                 <div className="stat-icon" style={{ background: `${s.color}1a`, color: s.color }}>
                   {s.icon}
                 </div>
@@ -69,7 +69,7 @@ export default function RequestApproval() {
             ))}
           </div>
 
-          <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column', marginTop: '16px' }}>
+          <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 24, flex: 1, display: 'flex', flexDirection: 'column', marginTop: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Approval Queue ({filteredRequests.length})</h3>
             <div className="search-bar" style={{ position: 'relative', width: 250 }}>

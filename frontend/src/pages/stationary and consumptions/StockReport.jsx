@@ -35,7 +35,7 @@ export default function StockReport() {
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen space-y-6">
-      <div className="card" style={{ padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div className="card" style={{ border: 'none', boxShadow: 'none', padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 700 }}>Current Stock Inventory Report</h1>
           <p style={{ color: "var(--text-muted)", fontSize: 14 }}>Real-time inventory levels, reorder parameters and valuation metrics</p>
@@ -45,7 +45,7 @@ export default function StockReport() {
         </button>
       </div>
 
-      <div className="card">
+      <div className="card" style={{ border: 'none', boxShadow: 'none', boxShadow: 'none' }}>
         <div className="w-64">
           <label className="block text-xs font-semibold text-slate-500 mb-1">Filter by Category</label>
           <select
@@ -63,7 +63,7 @@ export default function StockReport() {
         </div>
       </div>
 
-      <div className="card" style={{ padding: 0 }}>
+      <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 0 }}>
         <table className="data-table">
           <thead>
             <tr>

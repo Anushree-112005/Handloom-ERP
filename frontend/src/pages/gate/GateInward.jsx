@@ -325,32 +325,52 @@ export default function GateInward() {
           </div>
 
           {/* KPI METRICS ROW */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '24px' }}>
             
-            <div className="card" style={{ padding: '20px', borderLeft: '4px solid #7c3aed', background: 'white' }}>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Total Packing Slips / Inwards</span>
-              <h3 style={{ fontSize: '24px', fontWeight: '900', color: 'var(--text-primary)', margin: '8px 0 0 0' }}>{totalInwards}</h3>
+            <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+              <div className="stat-icon" style={{ background: 'rgba(124, 58, 237, 0.1)', color: '#7c3aed' }}>
+                <ArrowDownLeft size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>Total Inwards</h3>
+                <div className="value">{totalInwards}</div>
+              </div>
             </div>
 
-            <div className="card" style={{ padding: '20px', borderLeft: '4px solid #10b981', background: 'white' }}>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Closed Inwards</span>
-              <h3 style={{ fontSize: '24px', fontWeight: '900', color: '#10b981', margin: '8px 0 0 0' }}>{closedInwards}</h3>
+            <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+              <div className="stat-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+                <CheckCircle size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>Closed Inwards</h3>
+                <div className="value">{closedInwards}</div>
+              </div>
             </div>
 
-            <div className="card" style={{ padding: '20px', borderLeft: '4px solid #f59e0b', background: 'white' }}>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Active In Yard (Open)</span>
-              <h3 style={{ fontSize: '24px', fontWeight: '900', color: '#f59e0b', margin: '8px 0 0 0' }}>{openInwards}</h3>
+            <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+              <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+                <Clock size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>Active In Yard</h3>
+                <div className="value">{openInwards}</div>
+              </div>
             </div>
 
-            <div className="card" style={{ padding: '20px', borderLeft: '4px solid #3b82f6', background: 'white' }}>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Total Packed (Packages)</span>
-              <h3 style={{ fontSize: '24px', fontWeight: '900', color: '#3b82f6', margin: '8px 0 0 0' }}>{totalPackages} <span style={{ fontSize: '14px', fontWeight: 500 }}>Nos</span></h3>
+            <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+              <div className="stat-icon" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
+                <Truck size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>Total Packages</h3>
+                <div className="value">{totalPackages}</div>
+              </div>
             </div>
 
           </div>
 
           {/* FILTER TOOLBAR BAR */}
-          <div className="card" style={{ padding: '16px 20px', marginBottom: '24px', background: 'white' }}>
+          <div className="card" style={{ padding: '16px 20px', marginBottom: '24px', background: 'var(--bg-secondary)', border: 'none', boxShadow: 'none' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '16px', alignItems: 'center' }}>
               
               <div style={{ position: 'relative' }}>
@@ -390,7 +410,7 @@ export default function GateInward() {
           </div>
 
           {/* DUAL TABLE REPORT LIST */}
-          <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'white' }}>
+          <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'white', border: 'none', boxShadow: 'none' }}>
             <div style={{ overflowX: 'auto' }}>
               <table className="data-table" style={{ width: '100%', margin: 0 }}>
                 <thead>

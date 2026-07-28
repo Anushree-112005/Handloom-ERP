@@ -141,7 +141,7 @@ export default function UOMMaster() {
 
           <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
             {stats.map((s, i) => (
-              <div key={i} className="stat-card" style={{ '--stat-color': s.color }}>
+              <div key={i} className="stat-card" style={{ border: 'none', boxShadow: 'none' }}>
                 <div className="stat-icon" style={{ background: `${s.color}1a`, color: s.color }}>
                   {s.icon}
                 </div>
@@ -154,7 +154,7 @@ export default function UOMMaster() {
           </div>
 
           {/* Search & Table Card */}
-          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 0, overflow: 'hidden' }}>
             <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 16, background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
               <div style={{ position: "relative", flex: 1, minWidth: 250, maxWidth: 350 }}>
                 <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} size={16} />
@@ -244,7 +244,7 @@ export default function UOMMaster() {
             </h2>
           </div>
 
-          <div className="card" style={{ padding: 0 }}>
+          <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 0 }}>
             <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
               <button
                 type="button"

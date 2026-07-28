@@ -105,7 +105,7 @@ export default function PhysicalVerification() {
             </button>
           </div>
 
-          <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>All Verifications ({filteredVerifications.length})</h3>
             <div className="search-bar" style={{ position: 'relative', width: 250 }}>

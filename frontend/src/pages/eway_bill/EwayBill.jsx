@@ -458,6 +458,11 @@ export default function EwayBill() {
     XLSX.writeFile(wb, "E_Way_Bills_Report.xlsx");
   };
 
+  const totalBills = bills.length;
+  const activeBills = bills.filter(b => b.status !== 'Cancelled').length;
+  const cancelledBills = bills.filter(b => b.status === 'Cancelled').length;
+  const totalValue = bills.reduce((sum, b) => sum + (Number(b.total_value) || 0), 0);
+
   return (
     <div className="animate-fade">
       {!(selectedBill || isNew) ? (
@@ -509,8 +514,48 @@ export default function EwayBill() {
             </div>
           </div>
 
+          {/* STAT CARDS */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
+            <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+              <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
+                <FileText size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>Total Bills</h3>
+                <div className="value">{totalBills}</div>
+              </div>
+            </div>
+            <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+              <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
+                <CheckCircle size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>Active Bills</h3>
+                <div className="value">{activeBills}</div>
+              </div>
+            </div>
+            <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+              <div className="stat-icon" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>
+                <X size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>Cancelled Bills</h3>
+                <div className="value">{cancelledBills}</div>
+              </div>
+            </div>
+            <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+              <div className="stat-icon" style={{ background: 'rgba(139,92,246,0.1)', color: '#8b5cf6' }}>
+                <Calculator size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>Total Value</h3>
+                <div className="value">₹{totalValue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</div>
+              </div>
+            </div>
+          </div>
+
           {/* LIST TABLE SECTION */}
-          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <div className="card" style={{ padding: 0, overflow: 'hidden', border: 'none', boxShadow: 'none' }}>
             <div style={{ padding: 16, borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
               <h3 style={{ fontSize: 16, fontWeight: 700 }}>E-Way Bills Registry</h3>
             </div>

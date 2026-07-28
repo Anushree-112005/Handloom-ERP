@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { 
   FileText, Search, Download, Printer, Filter, ChevronRight, 
-  Calendar, RefreshCw, BarChart2, Shield, AlertTriangle 
+  Calendar, RefreshCw, BarChart2, Shield, AlertTriangle, Clock, Truck, ArrowUpRight
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -22,10 +22,10 @@ export default function GateReports() {
     const returnablePending = passData.filter(p => p.passType === 'Returnable' && p.status === 'Open').length;
 
     return [
-      { label: "Today's Inwards", value: `${todayInwards} Vehicles`, change: `Total: ${inwardData.length}`, color: "#10b981" },
-      { label: "Active Inside Yard", value: `${activeInYard} Vehicles`, change: "Current open inwards", color: "#f59e0b" },
-      { label: "Open Gate Passes", value: `${openPasses} Passes`, change: `${returnablePending} Returnable pending`, color: "#4f46e5" },
-      { label: "Total Outwards", value: `${outwardData.length} Records`, change: "All dispatched outwards", color: "#ef4444" }
+      { label: "Today's Inwards", value: `${todayInwards} Vehicles`, change: `Total: ${inwardData.length}`, color: "#10b981", iconBg: "rgba(16,185,129,0.1)", icon: Truck },
+      { label: "Active Inside Yard", value: `${activeInYard} Vehicles`, change: "Current open inwards", color: "#f59e0b", iconBg: "rgba(245,158,11,0.1)", icon: Clock },
+      { label: "Open Gate Passes", value: `${openPasses} Passes`, change: `${returnablePending} Returnable pending`, color: "#4f46e5", iconBg: "rgba(79,70,229,0.1)", icon: FileText },
+      { label: "Total Outwards", value: `${outwardData.length} Records`, change: "All dispatched outwards", color: "#ef4444", iconBg: "rgba(239,68,68,0.1)", icon: ArrowUpRight }
     ];
   };
   const kpis = computeKpis();
@@ -214,7 +214,7 @@ export default function GateReports() {
     <div className="animate-fade page-wrapper" style={{ paddingBottom: '60px' }}>
       
       {/* HEADER BAR */}
-      <div className="card" style={{ padding: '16px 24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(10px)', border: '1px solid var(--border)' }}>
+      <div className="card" style={{ padding: '16px 24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(10px)', border: 'none', boxShadow: 'none' }}>
         <div>
           <h2 style={{ fontSize: '24px', fontWeight: '850', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
             <BarChart2 size={26} style={{ color: '#4f46e5' }} /> Gate & Security Reports Dashboard
@@ -234,14 +234,21 @@ export default function GateReports() {
       </div>
 
       {/* KPI METRIC CARDS GRID */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '24px' }}>
-        {kpis.map((kpi, idx) => (
-          <div key={idx} className="card animate-fade" style={{ borderLeft: `4px solid ${kpi.color}`, padding: '20px' }}>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>{kpi.label}</span>
-            <h3 style={{ fontSize: '24px', fontWeight: '900', color: 'var(--text-primary)', margin: '8px 0 4px 0' }}>{kpi.value}</h3>
-            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>{kpi.change}</span>
-          </div>
-        ))}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '24px' }}>
+        {kpis.map((kpi, idx) => {
+          const Icon = kpi.icon;
+          return (
+            <div key={idx} className="card stat-card animate-fade" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+              <div className="stat-icon" style={{ background: kpi.iconBg, color: kpi.color }}>
+                <Icon size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>{kpi.label}</h3>
+                <div className="value">{kpi.value}</div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* REPORT TYPE SELECTOR TABS */}
@@ -284,8 +291,8 @@ export default function GateReports() {
         })}
       </div>
 
-      {/* SEARCH AND FILTERS BAR */}
-      <div className="card" style={{ padding: '20px 24px', marginBottom: '24px' }}>
+      {/* FILTER CONTROLS */}
+      <div className="card" style={{ padding: '20px 24px', marginBottom: '24px', border: 'none', boxShadow: 'none' }}>
         <h4 style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
           <Filter size={14} /> Filter Settings for {activeTab}
         </h4>
@@ -350,8 +357,8 @@ export default function GateReports() {
         </div>
       </div>
 
-      {/* DYNAMIC REPORTS TABLE */}
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+      {/* MAIN DATA TABLE */}
+      <div className="card" style={{ padding: 0, overflow: 'hidden', border: 'none', boxShadow: 'none' }}>
         <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>

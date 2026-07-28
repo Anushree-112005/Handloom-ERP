@@ -228,7 +228,7 @@ export default function ItemMaster() {
 
           <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
             {stats.map((s, i) => (
-              <div key={i} className="stat-card" style={{ '--stat-color': s.color }}>
+              <div key={i} className="stat-card" style={{ border: 'none', boxShadow: 'none' }}>
                 <div className="stat-icon" style={{ background: `${s.color}1a`, color: s.color }}>
                   {s.icon}
                 </div>
@@ -239,7 +239,7 @@ export default function ItemMaster() {
               </div>
             ))}
           </div>
-        <div className="card" style={{ padding: 0, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 0, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px 20px', alignItems: 'center', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>All Items ({items.length})</h3>
             <div className="search-bar" style={{ position: 'relative', width: 280 }}>
@@ -352,7 +352,7 @@ export default function ItemMaster() {
             </h2>
           </div>
 
-          <div className="card" style={{ padding: 0 }}>
+          <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 0 }}>
             <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
               <button
                 type="button"

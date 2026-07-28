@@ -194,48 +194,48 @@ export default function Loans() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 24 }}>
 
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
-        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 44, height: 44, background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Wallet className="w-5 h-5" />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
+        <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(99, 102, 241, 0.1)', color: '#6366f1' }}>
+            <Wallet size={24} />
           </div>
-          <div>
-            <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{stats.total}</p>
-            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Total Loans</p>
-          </div>
-        </div>
-        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 44, height: 44, background: '#f59e0b18', color: '#b45309', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Clock className="w-5 h-5" />
-          </div>
-          <div>
-            <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{stats.pending}</p>
-            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Pending</p>
+          <div className="stat-details">
+            <h3>Total Loans</h3>
+            <div className="value">{stats.total}</div>
           </div>
         </div>
-        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 44, height: 44, background: '#10b98118', color: '#047857', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <CheckCircle className="w-5 h-5" />
+        <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+            <Clock size={24} />
           </div>
-          <div>
-            <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{stats.active}</p>
-            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Active Loans</p>
+          <div className="stat-details">
+            <h3>Pending</h3>
+            <div className="value">{stats.pending}</div>
           </div>
         </div>
-        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 44, height: 44, background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <DollarSign className="w-5 h-5" />
+        <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+            <CheckCircle size={24} />
           </div>
-          <div>
-            <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>₹{(stats.totalAmount / 100000).toFixed(1)}L</p>
-            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Outstanding</p>
+          <div className="stat-details">
+            <h3>Active Loans</h3>
+            <div className="value">{stats.active}</div>
+          </div>
+        </div>
+        <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)' }}>
+            <DollarSign size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Outstanding</h3>
+            <div className="value">₹{(stats.totalAmount / 100000).toFixed(1)}L</div>
           </div>
         </div>
       </div>
 
       {/* Loans Table - List View */}
       {viewMode === 'list' && (
-        <div className="card" style={{ padding: 0 }}>
+        <div className="card" style={{ padding: 0, border: 'none' }}>
           <div className="overflow-x-auto">
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
@@ -313,12 +313,12 @@ export default function Loans() {
       {viewMode === 'grid' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
           {filteredLoans.length === 0 ? (
-            <div className="card" style={{ padding: 40, textAlign: 'center', gridColumn: '1/-1' }}>
+            <div className="card" style={{ padding: 40, textAlign: 'center', gridColumn: '1/-1', border: 'none' }}>
               <Wallet className="w-12 h-12 text-slate-300 mx-auto mb-3" />
               <p className="text-slate-500" style={{ margin: 0 }}>No loans found</p>
             </div>
           ) : filteredLoans.map(loan => (
-            <div key={loan.id} className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div key={loan.id} className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', border: 'none' }}>
               <div>
                 <div style={{ display: 'flex', itemsStart: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
                   <div style={{ minWidth: 0 }}>
@@ -374,7 +374,7 @@ export default function Loans() {
 
       {/* Form Inline */}
       {showForm && (
-        <form className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24 }} onSubmit={(e) => e.preventDefault()}>
+        <form className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24, border: 'none' }} onSubmit={(e) => e.preventDefault()}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 20, borderBottom: '1px solid var(--border)' }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
               {editingId ? 'Edit Loan Request' : 'New Loan Request'}
@@ -484,7 +484,7 @@ export default function Loans() {
       {/* View Modal */}
       {viewingLoan && (
         <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50 animate-fade">
-          <div className="card" style={{ width: '100%', maxWidth: 500, padding: 0 }}>
+          <div className="card" style={{ width: '100%', maxWidth: 500, padding: 0, border: 'none' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
               <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Loan Details</h2>
               <button onClick={() => setViewingLoan(null)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }}>

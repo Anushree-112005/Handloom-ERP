@@ -38,7 +38,7 @@ export default function ReorderReport() {
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen space-y-6">
-      <div className="card" style={{ padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div className="card" style={{ border: 'none', boxShadow: 'none', padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <AlertTriangle className="text-amber-500" /> Low Stock & Reorder Alert Report
@@ -50,7 +50,7 @@ export default function ReorderReport() {
         </button>
       </div>
 
-      <div className="card" style={{ padding: 0 }}>
+      <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 0 }}>
         <table className="data-table">
               <thead>
             <tr>

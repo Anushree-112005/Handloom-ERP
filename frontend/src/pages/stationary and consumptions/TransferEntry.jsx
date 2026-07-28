@@ -202,7 +202,7 @@ export default function TransferEntry() {
         <>
           <div className="stats-grid">
             {stats.map((s, i) => (
-              <div key={i} className="stat-card" style={{ '--stat-color': s.color }}>
+              <div key={i} className="stat-card" style={{ border: 'none', boxShadow: 'none' }}>
                 <div className="stat-icon" style={{ background: `${s.color}1a`, color: s.color }}>
                   {s.icon}
                 </div>
@@ -289,7 +289,7 @@ export default function TransferEntry() {
             </h2>
           </div>
 
-          <div className="card" style={{ padding: 0 }}>
+          <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 0 }}>
             <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
               <button
                 type="button"

@@ -824,6 +824,46 @@ const Payroll = () => {
       {/* DATA AREA */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
 
+        {/* Stats */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
+          <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+            <div className="stat-icon" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
+              <Calculator size={24} />
+            </div>
+            <div className="stat-details">
+              <h3>Total Gross</h3>
+              <div className="value">₹{totals.gross.toLocaleString()}</div>
+            </div>
+          </div>
+          <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+            <div className="stat-icon" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
+              <AlertTriangle size={24} />
+            </div>
+            <div className="stat-details">
+              <h3>Total Deductions</h3>
+              <div className="value">₹{totals.deductions.toLocaleString()}</div>
+            </div>
+          </div>
+          <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+            <div className="stat-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+              <DollarSign size={24} />
+            </div>
+            <div className="stat-details">
+              <h3>Total Net Pay</h3>
+              <div className="value">₹{totals.net.toLocaleString()}</div>
+            </div>
+          </div>
+          <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+            <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+              <FileText size={24} />
+            </div>
+            <div className="stat-details">
+              <h3>Pending Approvals</h3>
+              <div className="value">{totals.pending}</div>
+            </div>
+          </div>
+        </div>
+
         {/* Messages */}
         {success && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', background: '#ecfdf5', border: '1px solid #10b98130', color: '#047857', borderRadius: 8, marginBottom: 16 }}>
@@ -1080,7 +1120,7 @@ const Payroll = () => {
         </div>
 
         {/* Data Table */}
-        <div className="card" style={{ padding: 0, overflowX: 'auto' }}>
+        <div className="card" style={{ padding: 0, overflowX: 'auto', border: 'none' }}>
           <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead className="bg-slate-50/80 border-b border-slate-200">
               <tr>
@@ -1201,7 +1241,7 @@ const Payroll = () => {
 
       {/* Add Entry Form Inline */}
       {showForm && (
-        <form className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24 }} onSubmit={handleSubmit}>
+        <form className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24, border: 'none' }} onSubmit={handleSubmit}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 20, borderBottom: '1px solid var(--border)' }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
               {editingId ? 'Edit Payroll Entry' : 'Add Payroll Entry'}

@@ -370,32 +370,52 @@ export default function GateOutward() {
           </div>
 
           {/* KPI METRICS ROW */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '24px' }}>
             
-            <div className="card" style={{ padding: '20px', borderLeft: '4px solid #7c3aed', background: 'white' }}>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Total Outwards Cleared</span>
-              <h3 style={{ fontSize: '24px', fontWeight: '900', color: 'var(--text-primary)', margin: '8px 0 0 0' }}>{totalOutwards}</h3>
+            <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+              <div className="stat-icon" style={{ background: 'rgba(124, 58, 237, 0.1)', color: '#7c3aed' }}>
+                <ArrowUpRight size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>Total Outwards</h3>
+                <div className="value">{totalOutwards}</div>
+              </div>
             </div>
 
-            <div className="card" style={{ padding: '20px', borderLeft: '4px solid #10b981', background: 'white' }}>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Cargo Weight Dispatched</span>
-              <h3 style={{ fontSize: '24px', fontWeight: '900', color: '#10b981', margin: '8px 0 0 0' }}>{totalWeightCleared.toLocaleString()} <span style={{ fontSize: '14px', fontWeight: 500 }}>Kg</span></h3>
+            <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+              <div className="stat-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+                <CheckCircle size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>Cargo Weight</h3>
+                <div className="value">{totalWeightCleared.toLocaleString()} Kg</div>
+              </div>
             </div>
 
-            <div className="card" style={{ padding: '20px', borderLeft: '4px solid #f59e0b', background: 'white' }}>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Total Packages Dispatched</span>
-              <h3 style={{ fontSize: '24px', fontWeight: '900', color: '#f59e0b', margin: '8px 0 0 0' }}>{totalPackagesDispatched} <span style={{ fontSize: '14px', fontWeight: 500 }}>Bales</span></h3>
+            <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+              <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+                <Truck size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>Total Packages</h3>
+                <div className="value">{totalPackagesDispatched} Bales</div>
+              </div>
             </div>
 
-            <div className="card" style={{ padding: '20px', borderLeft: '4px solid #ef4444', background: 'white' }}>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Material Returns Logged</span>
-              <h3 style={{ fontSize: '24px', fontWeight: '900', color: '#ef4444', margin: '8px 0 0 0' }}>{totalReturned}</h3>
+            <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+              <div className="stat-icon" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
+                <ArrowLeft size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>Returns Logged</h3>
+                <div className="value">{totalReturned}</div>
+              </div>
             </div>
 
           </div>
 
           {/* FILTER TOOLBAR BAR */}
-          <div className="card" style={{ padding: '16px 20px', marginBottom: '24px', background: 'white' }}>
+          <div className="card" style={{ padding: '16px 20px', marginBottom: '24px', background: 'var(--bg-secondary)', border: 'none', boxShadow: 'none' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '16px', alignItems: 'center' }}>
               
               <div style={{ position: 'relative' }}>
@@ -435,7 +455,7 @@ export default function GateOutward() {
           </div>
 
           {/* DUAL TABLE REPORT LIST */}
-          <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'white' }}>
+          <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'white', border: 'none', boxShadow: 'none' }}>
             <div style={{ overflowX: 'auto' }}>
               <table className="data-table" style={{ width: '100%', margin: 0 }}>
                 <thead>

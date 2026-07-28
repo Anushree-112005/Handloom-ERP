@@ -160,7 +160,7 @@ export default function SwatchCardManagement() {
             </button>
           </div>
 
-          <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 16 }}>
               <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
                 <button 

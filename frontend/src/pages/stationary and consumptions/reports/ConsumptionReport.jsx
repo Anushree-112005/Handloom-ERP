@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { storesService } from '../../../services/storesService';
-import { 
+import {
   BarChart3, Search, Download, RefreshCw, AlertTriangle, Layers, Users, Package, PieChart as PieIcon, FileText, Filter
 } from 'lucide-react';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell 
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell
 } from 'recharts';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -57,7 +57,7 @@ export default function ConsumptionReport() {
     doc.setFontSize(14);
     doc.text('Consumption Report', 14, 15);
     doc.setFontSize(10);
-    
+
     const headers = [['Issue No', 'Department', 'Item', 'Category', 'Issued', 'Returned', 'Net Consumption', 'Issue Date', 'Issued By']];
     const body = data.map(row => [
       row.issue_number,
@@ -70,26 +70,26 @@ export default function ConsumptionReport() {
       row.issue_date,
       row.issued_by
     ]);
-    
+
     autoTable(doc, {
       head: headers,
       body: body,
       startY: 20
     });
-    
-    doc.save(`Consumption_Report_${new Date().toISOString().slice(0,10)}.pdf`);
+
+    doc.save(`Consumption_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
   const handleExportExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Report');
-    XLSX.writeFile(workbook, `Consumption_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
+    XLSX.writeFile(workbook, `Consumption_Report_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
-  const filteredData = data.filter(item => 
-    !searchTerm || 
-    item.issue_number?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredData = data.filter(item =>
+    !searchTerm ||
+    item.issue_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.item_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.department?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -99,7 +99,7 @@ export default function ConsumptionReport() {
 
   // Summary Metrics
   const totalConsumption = filteredData.reduce((acc, curr) => acc + (parseFloat(curr.net_consumption) || 0), 0);
-  
+
   const deptMap = {};
   const itemMap = {};
   const catMap = {};
@@ -107,11 +107,11 @@ export default function ConsumptionReport() {
 
   filteredData.forEach(row => {
     const net = parseFloat(row.net_consumption) || 0;
-    
+
     deptMap[row.department] = (deptMap[row.department] || 0) + net;
     itemMap[row.item_name] = (itemMap[row.item_name] || 0) + net;
     catMap[row.category] = (catMap[row.category] || 0) + net;
-    
+
     // YYYY-MM
     const month = row.issue_date ? row.issue_date.substring(0, 7) : 'Unknown';
     monthMap[month] = (monthMap[month] || 0) + net;
@@ -126,7 +126,7 @@ export default function ConsumptionReport() {
 
   return (
     <div className="animate-fade page-wrapper" style={{ paddingBottom: '60px' }}>
-      <div className="card" style={{ padding: '16px 24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(10px)', border: '1px solid var(--border)' }}>
+      <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '16px 24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(10px)' }}>
         <div>
           <h2 style={{ fontSize: '24px', fontWeight: '850', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
             <BarChart3 size={26} style={{ color: '#6366f1' }} />
@@ -147,53 +147,51 @@ export default function ConsumptionReport() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '24px' }}>
-        <div className="card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6' }}>
+      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '24px' }}>
+        <div className="stat-card" style={{ border: 'none', boxShadow: 'none' }}>
+          <div className="stat-icon" style={{ background: '#eff6ff', color: '#3b82f6' }}>
             <Layers size={24} />
           </div>
-          <div>
-            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>Total Consumption</p>
-            <h3 style={{ margin: '4px 0 0 0', fontSize: '24px', fontWeight: 'bold' }}>{totalConsumption.toLocaleString()}</h3>
+          <div className="stat-info">
+            <h3>{totalConsumption.toLocaleString()}</h3>
+            <p>Total Consumption</p>
           </div>
         </div>
-        <div className="card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d97706' }}>
+        <div className="stat-card" style={{ border: 'none', boxShadow: 'none' }}>
+          <div className="stat-icon" style={{ background: '#fef3c7', color: '#d97706' }}>
             <Users size={24} />
           </div>
-          <div style={{ overflow: 'hidden' }}>
-            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>Highest Dept</p>
-            <h3 style={{ margin: '4px 0 0 0', fontSize: '18px', fontWeight: 'bold', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+          <div className="stat-info" style={{ overflow: 'hidden' }}>
+            <h3 style={{ whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', fontSize: '18px' }}>
               {highestDept}
             </h3>
+            <p>Highest Dept</p>
           </div>
         </div>
-        <div className="card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#16a34a' }}>
+        <div className="stat-card" style={{ border: 'none', boxShadow: 'none' }}>
+          <div className="stat-icon" style={{ background: '#dcfce7', color: '#16a34a' }}>
             <Package size={24} />
           </div>
-          <div style={{ overflow: 'hidden' }}>
-            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>Most Consumed Item</p>
-            <h3 style={{ margin: '4px 0 0 0', fontSize: '18px', fontWeight: 'bold', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+          <div className="stat-info" style={{ overflow: 'hidden' }}>
+            <h3 style={{ whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', fontSize: '18px' }}>
               {mostConsumedItem}
             </h3>
+            <p>Most Consumed Item</p>
           </div>
         </div>
-        <div className="card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#f3e8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9333ea' }}>
+        <div className="stat-card" style={{ border: 'none', boxShadow: 'none' }}>
+          <div className="stat-icon" style={{ background: '#f3e8ff', color: '#9333ea' }}>
             <BarChart3 size={24} />
           </div>
-          <div>
-            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>Current Month</p>
-            <h3 style={{ margin: '4px 0 0 0', fontSize: '24px', fontWeight: 'bold' }}>
-              {monthMap[new Date().toISOString().substring(0, 7)] || 0}
-            </h3>
+          <div className="stat-info">
+            <h3>{monthMap[new Date().toISOString().substring(0, 7)] || 0}</h3>
+            <p>Current Month</p>
           </div>
         </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', marginBottom: '24px' }}>
-        <div className="card" style={{ padding: '20px' }}>
+        <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '20px' }}>
           <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '16px', color: 'var(--text-primary)' }}>Monthly Consumption</h3>
           <div style={{ height: '250px' }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -208,7 +206,7 @@ export default function ConsumptionReport() {
           </div>
         </div>
 
-        <div className="card" style={{ padding: '20px' }}>
+        <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '20px' }}>
           <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '16px', color: 'var(--text-primary)' }}>Department-wise</h3>
           <div style={{ height: '250px' }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -225,7 +223,7 @@ export default function ConsumptionReport() {
           </div>
         </div>
 
-        <div className="card" style={{ padding: '20px' }}>
+        <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '20px' }}>
           <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '16px', color: 'var(--text-primary)' }}>Category-wise</h3>
           <div style={{ height: '250px' }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -241,7 +239,7 @@ export default function ConsumptionReport() {
         </div>
       </div>
 
-      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+      <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: 250, maxWidth: 350 }}>
           <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input 
@@ -276,7 +274,7 @@ export default function ConsumptionReport() {
         </div>
       </div>
 
-      <div className="card" style={{ overflow: 'hidden' }}>
+      <div className="card" style={{ border: 'none', boxShadow: 'none', overflow: 'hidden' }}>
         {loading ? (
           <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading report data...</div>
         ) : error ? (
@@ -347,6 +345,6 @@ export default function ConsumptionReport() {
           </>
         )}
       </div>
-    </div>
+    </div >
   );
 }

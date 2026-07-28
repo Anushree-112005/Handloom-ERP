@@ -515,7 +515,7 @@ export default function PurchaseOrder() {
           { label: 'Active Suppliers', value: vendors.length, icon: <Users size={24} />, color: '#8b5cf6' },
           { label: 'Total Ordered Value', value: `₹${pos.reduce((s, p) => s + (p.grand_total || 0), 0).toLocaleString('en-IN')}`, icon: <TrendingUp size={24} />, color: '#10b981' }
         ].map((s, i) => (
-          <div key={i} className="stat-card" style={{ '--stat-color': s.color }}>
+          <div key={i} className="stat-card" style={{ border: 'none', boxShadow: 'none' }}>
             <div className="stat-icon" style={{ background: `${s.color}1a`, color: s.color }}>
               {s.icon}
             </div>

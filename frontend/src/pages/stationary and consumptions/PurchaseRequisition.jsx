@@ -556,7 +556,7 @@ export default function PurchaseRequisition() {
       {/* Dashboard Summary Cards */}
       {activeTab === 'list' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
-          <div className="card stat-card" style={{ '--stat-color': '#3b82f6' }}>
+          <div className="card stat-card" style={{ border: 'none', boxShadow: 'none' }}>
             <div className="stat-icon" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
               <ClipboardList size={24} />
             </div>
@@ -566,7 +566,7 @@ export default function PurchaseRequisition() {
             </div>
           </div>
 
-          <div className="card stat-card" style={{ '--stat-color': '#f59e0b' }}>
+          <div className="card stat-card" style={{ border: 'none', boxShadow: 'none' }}>
             <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
               <Clock size={24} />
             </div>
@@ -576,7 +576,7 @@ export default function PurchaseRequisition() {
             </div>
           </div>
 
-          <div className="card stat-card" style={{ '--stat-color': '#ef4444' }}>
+          <div className="card stat-card" style={{ border: 'none', boxShadow: 'none' }}>
             <div className="stat-icon" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
               <AlertTriangle size={24} />
             </div>
@@ -586,7 +586,7 @@ export default function PurchaseRequisition() {
             </div>
           </div>
 
-          <div className="card stat-card" style={{ '--stat-color': '#10b981' }}>
+          <div className="card stat-card" style={{ border: 'none', boxShadow: 'none' }}>
             <div className="stat-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
               <TrendingUp size={24} />
             </div>
@@ -600,7 +600,7 @@ export default function PurchaseRequisition() {
 
       {/* ────────────────────────────────── TAB 1: LIST VIEW ────────────────────────────────── */}
       {activeTab === 'list' && (
-        <div className="card" style={{ padding: 0, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 0, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
           {/* Filters Bar */}
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', padding: '16px 20px', alignItems: 'center', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', gap: 16 }}>
@@ -783,7 +783,7 @@ export default function PurchaseRequisition() {
             </h2>
           </div>
 
-          <div className="card" style={{ padding: 0 }}>
+          <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 0 }}>
             <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
               <button
                 type="button"
@@ -1348,7 +1348,7 @@ export default function PurchaseRequisition() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, animation: 'fadeIn 0.3s ease' }}>
 
           {/* Dept wise purchase requisitions */}
-          <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
             <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
               Department Requisition Distribution
             </h3>
@@ -1372,7 +1372,7 @@ export default function PurchaseRequisition() {
           </div>
 
           {/* Category purchase distribution */}
-          <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
             <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
               Category Materials Distribution
             </h3>
@@ -1396,7 +1396,7 @@ export default function PurchaseRequisition() {
           </div>
 
           {/* Trend Analysis */}
-          <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20, gridColumn: '1 / -1' }}>
+          <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 24, display: 'flex', flexDirection: 'column', gap: 20, gridColumn: '1 / -1' }}>
             <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
               Monthly Purchase Requisitions Trend
             </h3>

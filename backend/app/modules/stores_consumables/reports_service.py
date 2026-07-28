@@ -97,17 +97,17 @@ class StoresReportsService:
         
         report_data = []
         for req in requests:
-            if search and search.lower() not in req.request_number.lower():
+            if search and search.lower() not in req.request_no.lower():
                 continue
-            if date_from and str(req.request_date)[:10] < date_from: continue
-            if date_to and str(req.request_date)[:10] > date_to: continue
+            if date_from and str(req.created_at)[:10] < date_from: continue
+            if date_to and str(req.created_at)[:10] > date_to: continue
             if status and status.lower() != req.status.lower(): continue
             
             report_data.append({
-                "request_number": req.request_number,
+                "request_number": req.request_no,
                 "po_number": "-", # Complex to join in quick implementation
                 "vendor_name": "-",
-                "request_date": str(req.request_date)[:10] if req.request_date else "-",
+                "request_date": str(req.created_at)[:10] if req.created_at else "-",
                 "approval_status": req.status,
                 "ordered_qty": 0,
                 "received_qty": 0,

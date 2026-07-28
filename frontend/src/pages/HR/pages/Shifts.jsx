@@ -155,27 +155,20 @@ export default function Shifts() {
   const StatCard = ({ icon: Icon, label, value, theme, onClick, active }) => (
     <div
       onClick={onClick}
-      className="card transition-all hover:-translate-y-1 hover:shadow-md cursor-pointer"
+      className="card stat-card"
       style={{
-        padding: '24px 20px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '16px',
-        borderTop: `4px solid ${theme.border}`,
-        backgroundColor: active ? theme.bg : '#fff',
-        borderRadius: '8px'
+        border: 'none',
+        backgroundColor: active ? theme.bg : 'var(--bg-card)',
+        cursor: 'pointer',
+        transition: 'all 0.2s'
       }}
     >
-      <div style={{ width: 56, height: 56, borderRadius: '12px', backgroundColor: theme.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <Icon size={28} color={theme.text} />
+      <div className="stat-icon" style={{ backgroundColor: theme.bg, color: theme.text }}>
+        <Icon size={24} />
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-          {value}
-        </div>
-        <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-muted)', marginTop: '4px' }}>
-          {label}
-        </div>
+      <div className="stat-details">
+        <h3>{label}</h3>
+        <div className="value">{value}</div>
       </div>
     </div>
   );
@@ -253,7 +246,7 @@ export default function Shifts() {
       {/* Shifts List/Grid */}
           {/* Shifts List */}
           {viewMode === 'list' && (
-            <div className="card" style={{ padding: 0, overflowX: 'auto' }}>
+            <div className="card" style={{ padding: 0, overflowX: 'auto', border: 'none' }}>
               <table className="data-table">
                 <thead>
                   <tr>
@@ -314,7 +307,7 @@ export default function Shifts() {
           {viewMode === 'grid' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 24 }}>
               {filteredShifts.map(shift => (
-                <div key={shift.id} className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                <div key={shift.id} className="card" style={{ padding: 0, overflow: 'hidden', border: 'none' }}>
                   <div style={{ height: 4, backgroundColor: shift.color }} />
                   
                   <div style={{ padding: 20 }}>
@@ -377,7 +370,7 @@ export default function Shifts() {
       {/* Form Inline */}
       {showForm && (
         <div className="flex-1 overflow-auto bg-slate-50/50 p-6">
-          <div className="card animate-fade" style={{ padding: 0 }}>
+          <div className="card animate-fade" style={{ padding: 0, border: 'none' }}>
             <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
               <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{editingId ? 'Edit' : 'Add'} Shift</h2>
               <div style={{ display: 'flex', gap: 12 }}>
@@ -500,7 +493,7 @@ export default function Shifts() {
       {/* View Inline Form */}
       {showViewModal && viewingShift && (
         <div className="flex-1 overflow-auto bg-slate-50/50 p-6">
-          <div className="card animate-fade" style={{ padding: 0 }}>
+          <div className="card animate-fade" style={{ padding: 0, border: 'none' }}>
             <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
               <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>View Shift</h2>
               <div style={{ display: 'flex', gap: 12 }}>

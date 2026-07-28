@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { storesService } from '../../../services/storesService';
-import { 
-  FileText, Search, Download, RefreshCw, AlertTriangle, Filter 
+import {
+  FileText, Search, Download, RefreshCw, AlertTriangle, Filter
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -52,7 +52,7 @@ export default function POStatusReport() {
     doc.setFontSize(14);
     doc.text('Purchase Order & Request Status Report', 14, 15);
     doc.setFontSize(10);
-    
+
     const headers = [['Request No', 'PO No', 'Vendor', 'Req Date', 'Ordered', 'Received', 'Pending', 'Status']];
     const body = data.map(row => [
       row.request_number,
@@ -64,26 +64,26 @@ export default function POStatusReport() {
       row.pending_qty,
       row.current_status
     ]);
-    
+
     autoTable(doc, {
       head: headers,
       body: body,
       startY: 20
     });
-    
-    doc.save(`PO_Status_Report_${new Date().toISOString().slice(0,10)}.pdf`);
+
+    doc.save(`PO_Status_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
   const handleExportExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Report');
-    XLSX.writeFile(workbook, `PO_Status_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
+    XLSX.writeFile(workbook, `PO_Status_Report_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
-  const filteredData = data.filter(item => 
-    !searchTerm || 
-    item.request_number?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredData = data.filter(item =>
+    !searchTerm ||
+    item.request_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.po_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.vendor_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -92,7 +92,7 @@ export default function POStatusReport() {
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
   const getStatusColor = (status) => {
-    switch(status?.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case 'completed': return '#10b981';
       case 'approved': return '#3b82f6';
       case 'ordered': return '#8b5cf6';
@@ -105,7 +105,7 @@ export default function POStatusReport() {
 
   return (
     <div className="animate-fade page-wrapper" style={{ paddingBottom: '60px' }}>
-      <div className="card" style={{ padding: '16px 24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(10px)', border: '1px solid var(--border)' }}>
+      <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '16px 24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(10px)' }}>
         <div>
           <h2 style={{ fontSize: '24px', fontWeight: '850', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
             <FileText size={26} style={{ color: '#6366f1' }} />
@@ -126,7 +126,7 @@ export default function POStatusReport() {
         </div>
       </div>
 
-      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+      <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: 250, maxWidth: 350 }}>
           <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input 
@@ -169,7 +169,7 @@ export default function POStatusReport() {
         </div>
       </div>
 
-      <div className="card" style={{ overflow: 'hidden' }}>
+      <div className="card" style={{ border: 'none', boxShadow: 'none', overflow: 'hidden' }}>
         {loading ? (
           <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading report data...</div>
         ) : error ? (
@@ -256,6 +256,6 @@ export default function POStatusReport() {
           </>
         )}
       </div>
-    </div>
+    </div >
   );
 }

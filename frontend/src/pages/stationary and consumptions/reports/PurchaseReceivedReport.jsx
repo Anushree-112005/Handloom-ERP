@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { storesService } from '../../../services/storesService';
-import { 
+import {
   Receipt, Search, Download, RefreshCw, AlertTriangle, Users, Package, DollarSign, FileText, Filter
 } from 'lucide-react';
 import jsPDF from 'jspdf';
@@ -52,7 +52,7 @@ export default function PurchaseReceivedReport() {
     doc.setFontSize(14);
     doc.text('Purchase & Received Report', 14, 15);
     doc.setFontSize(10);
-    
+
     const headers = [['Purchase No', 'Vendor', 'Item Code', 'Item Name', 'Category', 'Ordered Qty', 'Received Qty', 'Balance', 'Total Amount', 'Received Date']];
     const body = data.map(row => [
       row.purchase_number,
@@ -66,26 +66,26 @@ export default function PurchaseReceivedReport() {
       row.total_amount,
       row.received_date
     ]);
-    
+
     autoTable(doc, {
       head: headers,
       body: body,
       startY: 20
     });
-    
-    doc.save(`Purchase_Received_Report_${new Date().toISOString().slice(0,10)}.pdf`);
+
+    doc.save(`Purchase_Received_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
   const handleExportExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Report');
-    XLSX.writeFile(workbook, `Purchase_Received_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
+    XLSX.writeFile(workbook, `Purchase_Received_Report_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
-  const filteredData = data.filter(item => 
-    !searchTerm || 
-    item.purchase_number?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredData = data.filter(item =>
+    !searchTerm ||
+    item.purchase_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.item_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.vendor_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -101,7 +101,7 @@ export default function PurchaseReceivedReport() {
 
   return (
     <div className="animate-fade page-wrapper" style={{ paddingBottom: '60px' }}>
-      <div className="card" style={{ padding: '16px 24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(10px)', border: '1px solid var(--border)' }}>
+      <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '16px 24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(10px)', border: '1px solid var(--border)' }}>
         <div>
           <h2 style={{ fontSize: '24px', fontWeight: '850', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
             <Receipt size={26} style={{ color: '#6366f1' }} />
@@ -122,51 +122,51 @@ export default function PurchaseReceivedReport() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '24px' }}>
-        <div className="card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6' }}>
+      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '24px' }}>
+        <div className="stat-card" style={{ border: 'none', boxShadow: 'none' }}>
+          <div className="stat-icon" style={{ background: '#eff6ff', color: '#3b82f6' }}>
             <Receipt size={24} />
           </div>
-          <div>
-            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>Total Purchase Orders</p>
-            <h3 style={{ margin: '4px 0 0 0', fontSize: '24px', fontWeight: 'bold' }}>{uniquePOs}</h3>
+          <div className="stat-info">
+            <h3>{uniquePOs}</h3>
+            <p>Total Purchase Orders</p>
           </div>
         </div>
-        <div className="card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d97706' }}>
+        <div className="stat-card" style={{ border: 'none', boxShadow: 'none' }}>
+          <div className="stat-icon" style={{ background: '#fef3c7', color: '#d97706' }}>
             <Users size={24} />
           </div>
-          <div>
-            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>Total Vendors</p>
-            <h3 style={{ margin: '4px 0 0 0', fontSize: '24px', fontWeight: 'bold' }}>{uniqueVendors}</h3>
+          <div className="stat-info">
+            <h3>{uniqueVendors}</h3>
+            <p>Total Vendors</p>
           </div>
         </div>
-        <div className="card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#16a34a' }}>
+        <div className="stat-card" style={{ border: 'none', boxShadow: 'none' }}>
+          <div className="stat-icon" style={{ background: '#dcfce7', color: '#16a34a' }}>
             <DollarSign size={24} />
           </div>
-          <div>
-            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>Total Purchase Amount</p>
-            <h3 style={{ margin: '4px 0 0 0', fontSize: '24px', fontWeight: 'bold' }}>Rs. {totalAmount.toLocaleString()}</h3>
+          <div className="stat-info">
+            <h3>Rs. {totalAmount.toLocaleString()}</h3>
+            <p>Total Purchase Amount</p>
           </div>
         </div>
-        <div className="card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#f3e8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9333ea' }}>
+        <div className="stat-card" style={{ border: 'none', boxShadow: 'none' }}>
+          <div className="stat-icon" style={{ background: '#f3e8ff', color: '#9333ea' }}>
             <Package size={24} />
           </div>
-          <div>
-            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>Total Received Quantity</p>
-            <h3 style={{ margin: '4px 0 0 0', fontSize: '24px', fontWeight: 'bold' }}>{totalReceivedQty.toLocaleString()}</h3>
+          <div className="stat-info">
+            <h3>{totalReceivedQty.toLocaleString()}</h3>
+            <p>Total Received Quantity</p>
           </div>
         </div>
       </div>
 
-      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+      <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: 250, maxWidth: 350 }}>
           <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-          <input 
-            type="text" 
-            placeholder="Purchase No, Item, Vendor..." 
+          <input
+            type="text"
+            placeholder="Purchase No, Item, Vendor..."
             className="form-control"
             style={{ paddingLeft: 38, width: '100%', margin: 0 }}
             value={searchTerm}
@@ -191,12 +191,12 @@ export default function PurchaseReceivedReport() {
           </div>
 
           <input type="text" className="form-control" style={{ width: 130, margin: 0 }} placeholder="Vendor" value={vendorFilter} onChange={e => setVendorFilter(e.target.value)} />
-          
+
           <input type="text" className="form-control" style={{ width: 130, margin: 0 }} placeholder="Category" value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} />
         </div>
       </div>
 
-      <div className="card" style={{ overflow: 'hidden' }}>
+      <div className="card" style={{ border: 'none', boxShadow: 'none', overflow: 'hidden' }}>
         {loading ? (
           <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading report data...</div>
         ) : error ? (
@@ -246,22 +246,22 @@ export default function PurchaseReceivedReport() {
                 </tbody>
               </table>
             </div>
-            
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderTop: '1px solid var(--border-color)' }}>
               <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
                 Showing {(page - 1) * itemsPerPage + 1} to {Math.min(page * itemsPerPage, filteredData.length)} of {filteredData.length} entries
               </span>
               <div style={{ display: 'flex', gap: '4px' }}>
-                <button 
-                  className="btn-secondary" 
+                <button
+                  className="btn-secondary"
                   disabled={page === 1}
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   style={{ padding: '6px 12px' }}
                 >
                   Prev
                 </button>
-                <button 
-                  className="btn-secondary" 
+                <button
+                  className="btn-secondary"
                   disabled={page === totalPages || totalPages === 0}
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                   style={{ padding: '6px 12px' }}

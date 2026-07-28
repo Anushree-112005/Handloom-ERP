@@ -247,60 +247,56 @@ export default function Designations() {
             <div 
               className="card stat-card" 
               onClick={() => { setFilterStatus('All Status'); setDateFilter('All'); setCurrentPage(1); }}
-              style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, border: filterStatus === 'All Status' && dateFilter === 'All' ? '2px solid #6366f1' : '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', borderRadius: 12, cursor: 'pointer', transition: 'all 0.2s' }}
+              style={{ border: 'none', cursor: 'pointer', transition: 'all 0.2s' }}
             >
-              <div className="stat-icon" style={{ background: 'rgba(99, 102, 241, 0.1)', color: '#6366f1', width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div className="stat-icon" style={{ background: 'rgba(99, 102, 241, 0.1)', color: '#6366f1' }}>
                 <Briefcase size={24} />
               </div>
               <div className="stat-details">
-                <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', margin: '0 0 4px 0' }}>Total Designations</h3>
-                <div className="value" style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>{stats.total}</div>
-                <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>All Designations</div>
+                <h3>Total Designations</h3>
+                <div className="value">{stats.total}</div>
               </div>
             </div>
             
             <div 
               className="card stat-card" 
               onClick={() => { setFilterStatus('Active'); setDateFilter('All'); setCurrentPage(1); }}
-              style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, border: filterStatus === 'Active' && dateFilter === 'All' ? '2px solid #10B981' : '1px solid rgba(16,185,129,0.2)', boxShadow: '0 4px 12px rgba(16,185,129,0.05)', borderRadius: 12, cursor: 'pointer', transition: 'all 0.2s' }}
+              style={{ border: 'none', cursor: 'pointer', transition: 'all 0.2s' }}
             >
-              <div className="stat-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(16,185,129,0.2)' }}>
+              <div className="stat-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10B981' }}>
                 <ShieldCheck size={24} />
               </div>
               <div className="stat-details">
-                <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', margin: '0 0 4px 0' }}>Active Designations</h3>
-                <div className="value" style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>{stats.active}</div>
-                <div style={{ fontSize: 12, color: '#10B981', marginTop: 4, fontWeight: 500 }}>Currently Active</div>
+                <h3>Active Designations</h3>
+                <div className="value">{stats.active}</div>
               </div>
             </div>
 
             <div 
               className="card stat-card" 
               onClick={() => { setFilterStatus('Inactive'); setDateFilter('All'); setCurrentPage(1); }}
-              style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, border: filterStatus === 'Inactive' && dateFilter === 'All' ? '2px solid #ef4444' : '1px solid rgba(239,68,68,0.2)', boxShadow: '0 4px 12px rgba(239,68,68,0.05)', borderRadius: 12, cursor: 'pointer', transition: 'all 0.2s' }}
+              style={{ border: 'none', cursor: 'pointer', transition: 'all 0.2s' }}
             >
-              <div className="stat-icon" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(239,68,68,0.2)' }}>
+              <div className="stat-icon" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
                 <ShieldAlert size={24} />
               </div>
               <div className="stat-details">
-                <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', margin: '0 0 4px 0' }}>Inactive Designations</h3>
-                <div className="value" style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>{stats.inactive}</div>
-                <div style={{ fontSize: 12, color: '#ef4444', marginTop: 4, fontWeight: 500 }}>Currently Inactive</div>
+                <h3>Inactive Designations</h3>
+                <div className="value">{stats.inactive}</div>
               </div>
             </div>
 
             <div 
               className="card stat-card" 
               onClick={() => { setDateFilter('ThisMonth'); setFilterStatus('All Status'); setCurrentPage(1); }}
-              style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, border: dateFilter === 'ThisMonth' ? '2px solid #8b5cf6' : '1px solid rgba(139,92,246,0.2)', boxShadow: '0 4px 12px rgba(139,92,246,0.05)', borderRadius: 12, cursor: 'pointer', transition: 'all 0.2s' }}
+              style={{ border: 'none', cursor: 'pointer', transition: 'all 0.2s' }}
             >
-              <div className="stat-icon" style={{ background: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6', width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(139,92,246,0.2)' }}>
+              <div className="stat-icon" style={{ background: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' }}>
                 <Calendar size={24} />
               </div>
               <div className="stat-details">
-                <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', margin: '0 0 4px 0' }}>New This Month</h3>
-                <div className="value" style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>{stats.newThisMonth}</div>
-                <div style={{ fontSize: 12, color: '#8b5cf6', marginTop: 4 }}>Added This Month</div>
+                <h3>New This Month</h3>
+                <div className="value">{stats.newThisMonth}</div>
               </div>
             </div>
           </div>
@@ -379,7 +375,7 @@ export default function Designations() {
 
           {/* LIST VIEW - Table */}
           {viewMode === 'list' && (
-            <div className="card" style={{ padding: 0, overflowX: 'auto', borderRadius: 12 }}>
+            <div className="card" style={{ padding: 0, overflowX: 'auto', borderRadius: 12, border: 'none' }}>
               <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ backgroundColor: 'rgba(99, 102, 241, 0.04)', borderBottom: '1px solid #e2e8f0' }}>
@@ -471,7 +467,7 @@ export default function Designations() {
           {viewMode === 'grid' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 24 }}>
               {filteredDesignations.map(des => (
-                <div key={des.id} className="card" style={{ padding: 20 }}>
+                <div key={des.id} className="card" style={{ border: 'none' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
                     <div>
                       <h3 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 4px', color: 'var(--text-primary)' }}>{des.title}</h3>
@@ -514,7 +510,7 @@ export default function Designations() {
       {/* Form Inline */}
       {showForm && (
         <div className="flex-1 overflow-auto bg-slate-50/50 p-6">
-          <div className="card animate-fade" style={{ padding: 0 }}>
+          <div className="card animate-fade" style={{ padding: 0, border: 'none' }}>
             <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
               <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{editingId ? 'Edit' : 'Add'} Designation</h2>
               <div style={{ display: 'flex', gap: 12 }}>
@@ -605,7 +601,7 @@ export default function Designations() {
       {/* View Inline */}
       {showViewModal && viewingDesignation && (
         <div className="flex-1 overflow-auto bg-slate-50/50 p-6">
-          <div className="card animate-fade" style={{ padding: 0 }}>
+          <div className="card animate-fade" style={{ padding: 0, border: 'none' }}>
             <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
               <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>View Designation</h2>
               <div style={{ display: 'flex', gap: 12 }}>

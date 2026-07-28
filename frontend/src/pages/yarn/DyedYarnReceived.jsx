@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, Palette, Box, Download, CheckCircle, Printer, FileText, Package, ArrowLeft } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, Palette, Box, Download, CheckCircle, Printer, FileText, Package, ArrowLeft, Activity, Users } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
 import { dyedYarnReceiptAPI, partyAPI, dyedYarnDeliveryAPI, dropdownAPI, subMasterAPI } from '../../services/api';
 import jsPDF from 'jspdf';
@@ -466,6 +466,11 @@ export default function DyedYarnReceived() {
     XLSX.writeFile(wb, `Dyed_Yarn_Receipts_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
+  const totalReceipts = receipts.length;
+  const totalBags = receipts.reduce((sum, r) => sum + (parseFloat(r.total_bags) || 0), 0);
+  const totalKgs = receipts.reduce((sum, r) => sum + (parseFloat(r.total_received_qty) || 0), 0);
+  const uniqueParties = new Set(receipts.map(r => r.party_name).filter(Boolean)).size;
+
   return (
     <div className="animate-fade" style={{ width: '100%' }}>
       {!showForm ? (
@@ -490,7 +495,49 @@ export default function DyedYarnReceived() {
             </div>
           </div>
 
-          <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: '#fff', border: '1px solid var(--border)', width: '100%' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
+            <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+              <div className="stat-icon" style={{ background: 'rgba(79, 70, 229, 0.1)', color: '#4f46e5' }}>
+                <Palette size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>Total Receipts</h3>
+                <div className="value">{totalReceipts}</div>
+              </div>
+            </div>
+
+            <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+              <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+                <Package size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>Total Bags</h3>
+                <div className="value">{totalBags}</div>
+              </div>
+            </div>
+
+            <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+              <div className="stat-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+                <Activity size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>Total Weight (Kgs)</h3>
+                <div className="value">{totalKgs.toFixed(2)}</div>
+              </div>
+            </div>
+
+            <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+              <div className="stat-icon" style={{ background: 'rgba(14, 165, 233, 0.1)', color: '#0ea5e9' }}>
+                <Users size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>Active Parties</h3>
+                <div className="value">{uniqueParties}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)', border: 'none', width: '100%' }}>
             <div style={{ position: 'relative', flex: 1, minWidth: 250, maxWidth: 350 }}>
               <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <input type="text" className="form-control" placeholder="Search Inward No or Party..." style={{ paddingLeft: 38, width: '100%', margin: 0 }} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
@@ -505,7 +552,7 @@ export default function DyedYarnReceived() {
             </div>
           </div>
 
-          <div className="card" style={{ padding: 0, width: '100%', overflowX: 'auto' }}>
+          <div className="card" style={{ padding: 0, width: '100%', overflowX: 'auto', border: 'none' }}>
             <table className="data-table" style={{ width: '100%' }}>
               <thead>
                 <tr>
@@ -540,7 +587,7 @@ export default function DyedYarnReceived() {
           </div>
         </>
       ) : (
-        <div className="card" style={{ padding: 0, width: '100%', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', borderRadius: 12, overflow: 'hidden' }}>
+        <div className="card" style={{ padding: 0, width: '100%', borderRadius: 12, overflow: 'hidden', border: 'none' }}>
           
           {/* Header Actions Row */}
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg-secondary)' }}>

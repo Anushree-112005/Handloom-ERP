@@ -216,7 +216,7 @@ export default function MaterialRequest() {
         <>
           {/* KPI Dashboard Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24 }}>
-            <div className="card stat-card" style={{ '--stat-color': '#6366f1' }}>
+            <div className="card stat-card" style={{ border: 'none', boxShadow: 'none' }}>
               <div className="stat-icon" style={{ background: 'rgba(99, 102, 241, 0.1)', color: '#6366f1' }}>
                 <FileText size={24} />
               </div>
@@ -226,7 +226,7 @@ export default function MaterialRequest() {
               </div>
             </div>
 
-            <div className="card stat-card" style={{ '--stat-color': '#f59e0b' }}>
+            <div className="card stat-card" style={{ border: 'none', boxShadow: 'none' }}>
               <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
                 <Clock size={24} />
               </div>
@@ -236,7 +236,7 @@ export default function MaterialRequest() {
               </div>
             </div>
 
-            <div className="card stat-card" style={{ '--stat-color': '#10b981' }}>
+            <div className="card stat-card" style={{ border: 'none', boxShadow: 'none' }}>
               <div className="stat-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
                 <CheckCircle size={24} />
               </div>
@@ -246,7 +246,7 @@ export default function MaterialRequest() {
               </div>
             </div>
 
-            <div className="card stat-card" style={{ '--stat-color': '#ef4444' }}>
+            <div className="card stat-card" style={{ border: 'none', boxShadow: 'none' }}>
               <div className="stat-icon" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
                 <AlertTriangle size={24} />
               </div>
@@ -258,7 +258,7 @@ export default function MaterialRequest() {
           </div>
 
           {/* Table Container */}
-          <div className="card" style={{ padding: 0, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 0, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px 20px', alignItems: 'center', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
               <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>All Requests ({requests.length})</h3>
               <div className="search-bar" style={{ position: 'relative', width: 280 }}>
@@ -365,7 +365,7 @@ export default function MaterialRequest() {
             </h2>
           </div>
 
-          <div className="card" style={{ padding: 0 }}>
+          <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 0 }}>
             <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
               <button
                 type="button"

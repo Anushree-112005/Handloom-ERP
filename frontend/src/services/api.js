@@ -426,7 +426,7 @@ export const warehouseInwardOutwardAPI = {
 };
 
 export const storeDashboardAPI = {
-  getMetrics: () => api.get('/stores/dashboard-metrics')
+  getMetrics: () => api.get('/stores-consumables/dashboard/stats')
 };
 
 
