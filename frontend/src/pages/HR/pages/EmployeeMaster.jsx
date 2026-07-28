@@ -764,36 +764,6 @@ const EmployeeMaster = () => {
               </button>
             </div>
           </div>
-          {/* Form Tabs */}
-          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
-            {formTabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = formTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setFormTab(tab.id)}
-                  style={{
-                    padding: '16px 24px',
-                    background: isActive ? '#fff' : 'transparent',
-                    border: 'none',
-                    borderBottom: isActive ? '3px solid var(--primary)' : '3px solid transparent',
-                    fontWeight: 600,
-                    color: isActive ? 'var(--primary)' : 'var(--text-muted)',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8
-                  }}
-                >
-                  <Icon size={16} />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
 
           {/* Form Section */}
           <div style={{ padding: 24, background: '#fff' }}>

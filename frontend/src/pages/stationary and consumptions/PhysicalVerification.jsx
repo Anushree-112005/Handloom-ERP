@@ -82,35 +82,30 @@ export default function PhysicalVerification() {
 
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Clipboard style={{ color: '#6366f1' }} /> Physical Stock Verification
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Audit stock count, match physical inventories, and auto-correct ledger differences</p>
-        </div>
-        {view === 'list' ? (
-          <button onClick={() => {
-            setAuditor('');
-            // Reset actual quantities to current system quantities
-            const initial = {};
-            items.forEach(i => {
-              initial[i.id] = i.currentStock || 0;
-            });
-            setActualQtys(initial);
-            setView('form');
-          }} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Clipboard size={16} /> New Verification
-          </button>
-        ) : (
-          <button onClick={() => setView('list')} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            Back to List
-          </button>
-        )}
-      </div>
-
       {view === 'list' ? (
-        <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Clipboard style={{ color: '#6366f1' }} /> Physical Stock Verification
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Audit stock count, match physical inventories, and auto-correct ledger differences</p>
+            </div>
+            <button onClick={() => {
+              setAuditor('');
+              // Reset actual quantities to current system quantities
+              const initial = {};
+              items.forEach(i => {
+                initial[i.id] = i.currentStock || 0;
+              });
+              setActualQtys(initial);
+              setView('form');
+            }} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Clipboard size={16} /> New Verification
+            </button>
+          </div>
+
+          <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>All Verifications ({filteredVerifications.length})</h3>
             <div className="search-bar" style={{ position: 'relative', width: 250 }}>
@@ -164,6 +159,7 @@ export default function PhysicalVerification() {
             </table>
           </div>
         </div>
+        </>
       ) : (
         <div className="card animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: 16 }}>

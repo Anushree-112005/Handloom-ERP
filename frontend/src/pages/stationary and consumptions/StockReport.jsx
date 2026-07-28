@@ -48,9 +48,9 @@ export default function StockReport() {
       <div className="card">
         <div className="w-64">
           <label className="block text-xs font-semibold text-slate-500 mb-1">Filter by Category</label>
-          <select 
-            value={categoryFilter} 
-            onChange={(e) => setCategoryFilter(e.target.value)} 
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
             className="form-control"
           >
             <option value="">-- All Categories --</option>
@@ -65,7 +65,7 @@ export default function StockReport() {
 
       <div className="card" style={{ padding: 0 }}>
         <table className="data-table">
-              <thead>
+          <thead>
             <tr>
               <th >Item Code</th>
               <th >Item Name</th>

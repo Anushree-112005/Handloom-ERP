@@ -1161,19 +1161,19 @@ export default function BuyerOrder() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
-            <div className="card stat-card" onClick={() => handleCardClick('Total')} style={{ cursor: 'pointer', border: typeFilter === 'All Types' && statusFilter === 'All Status' ? '2px solid var(--primary)' : '1px solid transparent' }}>
+            <div className="card stat-card" onClick={() => handleCardClick('Total')} style={{ cursor: 'pointer', transition: 'all 0.2s' }}>
               <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}><ShoppingCart size={24} /></div>
               <div className="stat-details"><h3>Total Orders</h3><div className="value">{totalOrders}</div></div>
             </div>
-            <div className="card stat-card" onClick={() => handleCardClick('Regular')} style={{ cursor: 'pointer', border: typeFilter === 'Regular' ? '2px solid #10b981' : '1px solid transparent' }}>
+            <div className="card stat-card" onClick={() => handleCardClick('Regular')} style={{ cursor: 'pointer', transition: 'all 0.2s' }}>
               <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}><FileText size={24} /></div>
               <div className="stat-details"><h3>Regular Orders</h3><div className="value">{regularOrders}</div></div>
             </div>
-            <div className="card stat-card" onClick={() => handleCardClick('Special')} style={{ cursor: 'pointer', border: typeFilter === 'Special' ? '2px solid #f59e0b' : '1px solid transparent' }}>
+            <div className="card stat-card" onClick={() => handleCardClick('Special')} style={{ cursor: 'pointer', transition: 'all 0.2s' }}>
               <div className="stat-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}><Star size={24} /></div>
               <div className="stat-details"><h3>Special Orders</h3><div className="value">{specialOrders}</div></div>
             </div>
-            <div className="card stat-card" onClick={() => handleCardClick('Active')} style={{ cursor: 'pointer', border: statusFilter === 'Active' ? '2px solid #8b5cf6' : '1px solid transparent' }}>
+            <div className="card stat-card" onClick={() => handleCardClick('Active')} style={{ cursor: 'pointer', transition: 'all 0.2s' }}>
               <div className="stat-icon" style={{ background: 'rgba(139,92,246,0.1)', color: '#8b5cf6' }}><CheckCircle size={24} /></div>
               <div className="stat-details"><h3>Active Orders</h3><div className="value">{activeOrders}</div></div>
             </div>

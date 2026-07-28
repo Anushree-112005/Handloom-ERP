@@ -9,6 +9,7 @@ import {
   Cell, LineChart, Line, AreaChart, Area
 } from 'recharts';
 import api from '../../services/api';
+import MasterDropdown from '../../components/MasterDropdown';
 import { showError } from '../../utils/notifications';
 
 const DieselKmReport = () => {
@@ -140,14 +141,15 @@ const DieselKmReport = () => {
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
               <Truck size={14} className="text-orange-500" /> Selective Vehicle
             </label>
-            <select 
-              className="form-control"
+            <MasterDropdown
               value={filters.vehicleId}
-              onChange={(e) => setFilters({...filters, vehicleId: e.target.value})}
-            >
-              <option value="">All Fleet Vehicles</option>
-              {vehicles.map(v => <option key={v.id} value={v.id}>{v.vehicle_number} ({v.model})</option>)}
-            </select>
+              onChange={(val) => setFilters({...filters, vehicleId: val})}
+              options={[
+                { value: '', label: 'All Fleet Vehicles' },
+                ...vehicles.map(v => ({ value: v.id, label: `${v.vehicle_number} (${v.model || ''})` }))
+              ]}
+              placeholder="All Fleet Vehicles"
+            />
           </div>
 
           <div className="space-y-2">

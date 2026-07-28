@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { LogOut, Bell, Search, Box, CheckSquare, Truck, Wrench, ShoppingCart } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { companySettingAPI, partyAPI, salesInvoiceAPI, yarnInwardAPI, buyerOrderAPI, yarnPurchaseOrderAPI, designEntryAPI } from '../services/api';
+import { confirmDialog } from '../utils/dialogs';
 import defaultLogo from '../assets/logo.svg';
 
 const PAGES = [
@@ -223,7 +224,14 @@ export default function Header() {
     };
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const confirmed = await confirmDialog({
+      title: 'Logout Confirmation',
+      message: 'Are you sure you want to log out of DINESH EXPORTS ERP?',
+      type: 'logout',
+      confirmText: 'Logout'
+    });
+    if (!confirmed) return;
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     navigate('/login');

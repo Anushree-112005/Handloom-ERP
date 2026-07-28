@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import storesService from '../../services/storesService';
-import { 
-  ClipboardList, Plus, Trash2, Calendar, AlertTriangle, FileText, CheckCircle2, XCircle, 
-  Clock, TrendingUp, Search, Eye, Edit2, ShieldAlert, Award, FileSpreadsheet, ArrowLeftRight, 
+import {
+  ClipboardList, Plus, Trash2, Calendar, AlertTriangle, FileText, CheckCircle2, XCircle,
+  Clock, TrendingUp, Search, Eye, Edit2, ShieldAlert, Award, FileSpreadsheet, ArrowLeftRight,
   MapPin, Printer, Download, Sparkles, Building, Box, Users, ChevronRight, Check, X, Shield, RefreshCw,
   Save, Loader, ArrowLeft
 } from 'lucide-react';
+import MasterDropdown from '../../components/MasterDropdown';
 
 export default function PurchaseRequisition() {
   // Navigation tabs: 'list', 'new', 'view', 'analytics'
@@ -60,18 +61,17 @@ export default function PurchaseRequisition() {
     comments: ''
   });
 
-  // Form State
   const [form, setForm] = useState({
     required_date: '',
-    request_type: 'Normal',
-    priority: 'Medium',
+    request_type: '',
+    priority: '',
     description: '',
     requester_id: '',
     department_id: '',
     cost_center_id: '',
-    branch_factory: 'Coimbatore Main Plant',
+    branch_factory: '',
     delivery_warehouse_id: '',
-    delivery_plant: 'Shed C',
+    delivery_plant: '',
     delivery_department_id: '',
     delivery_address: '',
     expected_delivery_date: '',
@@ -84,20 +84,20 @@ export default function PurchaseRequisition() {
         uom_id: '',
         vendor_id: '',
         warehouse_id: '',
-        quantity: 1,
-        estimated_unit_price: 0,
-        gst: 18,
-        currency: 'INR',
+        quantity: '',
+        estimated_unit_price: '',
+        gst: '',
+        currency: '',
         rack_bin: '',
         brand: '',
         specification: '',
         remarks: '',
         // Smart indicators
-        current_stock: 0,
-        reserved_stock: 0,
-        available_stock: 0,
-        reorder_level: 0,
-        suggested_qty: 0,
+        current_stock: '',
+        reserved_stock: '',
+        available_stock: '',
+        reorder_level: '',
+        suggested_qty: '',
         history: null,
         recs: []
       }
@@ -165,7 +165,7 @@ export default function PurchaseRequisition() {
       if (employees && employees.length > 0) {
         const adminEmp = employees.find(e => e.employee_code === 'admin') || employees[0];
         const deptObj = depts.find(d => d.department_name === adminEmp.department);
-        
+
         setForm(prev => ({
           ...prev,
           requester_id: adminEmp.id,
@@ -185,13 +185,18 @@ export default function PurchaseRequisition() {
 
   // Handle requester employee selection -> auto fill department details
   const handleEmployeeChange = (empId) => {
-    const emp = masters.employees.find(e => e.id === parseInt(empId));
+    const emp = masters.employees.find(e => e.id === parseInt(empId) || e.id.toString() === empId.toString());
     if (emp) {
       const deptObj = masters.departments.find(d => d.department_name === emp.department);
       setForm(prev => ({
         ...prev,
         requester_id: empId,
         department_id: deptObj ? deptObj.id : prev.department_id
+      }));
+    } else {
+      setForm(prev => ({
+        ...prev,
+        requester_id: empId
       }));
     }
   };
@@ -214,7 +219,7 @@ export default function PurchaseRequisition() {
         updatedItems[index].reorder_level = selectedItem.reorder_level || 0;
         updatedItems[index].reserved_stock = Math.max(0, Math.floor(selectedItem.minimum_stock * 0.5));
         updatedItems[index].available_stock = selectedItem.current_stock - updatedItems[index].reserved_stock;
-        
+
         // Auto Reorder Suggestion logic
         if (updatedItems[index].available_stock < selectedItem.reorder_level) {
           updatedItems[index].suggested_qty = Math.max(1, selectedItem.reorder_level - updatedItems[index].available_stock);
@@ -257,19 +262,19 @@ export default function PurchaseRequisition() {
           uom_id: '',
           vendor_id: '',
           warehouse_id: '',
-          quantity: 1,
-          estimated_unit_price: 0,
-          gst: 18,
-          currency: 'INR',
+          quantity: '',
+          estimated_unit_price: '',
+          gst: '',
+          currency: '',
           rack_bin: '',
           brand: '',
           specification: '',
           remarks: '',
-          current_stock: 0,
-          reserved_stock: 0,
-          available_stock: 0,
-          reorder_level: 0,
-          suggested_qty: 0,
+          current_stock: '',
+          reserved_stock: '',
+          available_stock: '',
+          reorder_level: '',
+          suggested_qty: '',
           history: null,
           recs: []
         }
@@ -359,18 +364,18 @@ export default function PurchaseRequisition() {
         request_type: form.request_type || "Normal",
         priority: form.priority || "Medium",
         description: form.description || null,
-        
+
         requester_id: parseInt(form.requester_id),
         department_id: parseInt(form.department_id),
         cost_center_id: parseInt(form.cost_center_id),
         branch_factory: form.branch_factory,
-        
+
         delivery_warehouse_id: parseInt(form.delivery_warehouse_id),
         delivery_plant: form.delivery_plant || null,
         delivery_department_id: form.delivery_department_id ? parseInt(form.delivery_department_id) : null,
         delivery_address: form.delivery_address || null,
         expected_delivery_date: form.expected_delivery_date ? new Date(form.expected_delivery_date).toISOString() : null,
-        
+
         budget_id: parseInt(form.budget_id),
         items: form.items.map(item => ({
           item_id: parseInt(item.item_id),
@@ -398,7 +403,19 @@ export default function PurchaseRequisition() {
       setForm(prev => ({
         ...prev,
         required_date: '',
+        request_type: '',
+        priority: '',
         description: '',
+        requester_id: '',
+        department_id: '',
+        cost_center_id: '',
+        branch_factory: '',
+        delivery_warehouse_id: '',
+        delivery_plant: '',
+        delivery_department_id: '',
+        delivery_address: '',
+        expected_delivery_date: '',
+        budget_id: '',
         items: [{
           item_id: '',
           category_id: '',
@@ -406,19 +423,19 @@ export default function PurchaseRequisition() {
           uom_id: '',
           vendor_id: '',
           warehouse_id: '',
-          quantity: 1,
-          estimated_unit_price: 0,
-          gst: 18,
-          currency: 'INR',
+          quantity: '',
+          estimated_unit_price: '',
+          gst: '',
+          currency: '',
           rack_bin: '',
           brand: '',
           specification: '',
           remarks: '',
-          current_stock: 0,
-          reserved_stock: 0,
-          available_stock: 0,
-          reorder_level: 0,
-          suggested_qty: 0,
+          current_stock: '',
+          reserved_stock: '',
+          available_stock: '',
+          reorder_level: '',
+          suggested_qty: '',
           history: null,
           recs: []
         }]
@@ -460,8 +477,8 @@ export default function PurchaseRequisition() {
 
   // Filter requisitions
   const filteredPRs = prList.filter(pr => {
-    const matchesSearch = pr.pr_number.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (pr.requester_name && pr.requester_name.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesSearch = pr.pr_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (pr.requester_name && pr.requester_name.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesPriority = filterPriority ? pr.priority === filterPriority : true;
     const matchesStatus = filterStatus ? pr.status.includes(filterStatus) : true;
     const matchesDept = filterDept ? pr.department_id === parseInt(filterDept) : true;
@@ -470,11 +487,11 @@ export default function PurchaseRequisition() {
 
   return (
     <div className="flex flex-col gap-5" style={{ fontFamily: 'Inter, sans-serif' }}>
-      
+
       {/* Toast Alert */}
       {toast.show && (
         <div className={`toast-notification p-3 rounded-lg shadow-xl text-white ${toast.type === 'error' ? 'bg-red-500' : 'bg-emerald-500'}`}
-             style={{ position: 'fixed', right: '20px', top: '20px', zIndex: 1100, transition: 'all 0.3s' }}>
+          style={{ position: 'fixed', right: '20px', top: '20px', zIndex: 1100, transition: 'all 0.3s' }}>
           <div className="flex items-center gap-2">
             {toast.type === 'error' ? <ShieldAlert size={20} /> : <CheckCircle2 size={20} />}
             <span className="font-semibold text-sm">{toast.message}</span>
@@ -483,89 +500,99 @@ export default function PurchaseRequisition() {
       )}
 
       {/* Requisition Title Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        padding: "24px",
-        background: "linear-gradient(135deg, var(--bg-surface) 0%, rgba(99, 102, 241, 0.05) 100%)",
-        border: "1px solid var(--border)",
-        borderRadius: "12px",
-        marginBottom: "24px"
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{
-            background: 'rgba(99, 102, 241, 0.1)',
-            color: 'rgb(99, 102, 241)',
-            padding: '12px',
-            borderRadius: '12px'
-          }}>
-            <ClipboardList size={24} />
+      {activeTab === 'list' && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: "24px",
+          background: "linear-gradient(135deg, var(--bg-surface) 0%, rgba(99, 102, 241, 0.05) 100%)",
+          border: "1px solid var(--border)",
+          borderRadius: "12px",
+          marginBottom: "24px"
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{
+              background: 'rgba(99, 102, 241, 0.1)',
+              color: 'rgb(99, 102, 241)',
+              padding: '12px',
+              borderRadius: '12px'
+            }}>
+              <ClipboardList size={24} />
+            </div>
+            <div>
+              <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>Purchase Requisition (PR)</h2>
+              <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Manage, approve and analyze internal garment factory purchase requisitions.</p>
+            </div>
           </div>
-          <div>
-            <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>Purchase Requisition (PR)</h2>
-            <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Manage, approve and analyze internal garment factory purchase requisitions.</p>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => { setActiveTab('list'); loadPRData(); }}
+              className={activeTab === 'list' ? 'btn btn-primary' : 'btn btn-secondary'}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px' }}
+            >
+              All Requisitions
+            </button>
+            <button
+              onClick={() => setActiveTab('new')}
+              className={activeTab === 'new' ? 'btn btn-primary' : 'btn btn-secondary'}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px' }}
+            >
+              <Plus size={16} />
+              New Request
+            </button>
+            <button
+              onClick={() => setActiveTab('analytics')}
+              className={activeTab === 'analytics' ? 'btn btn-primary' : 'btn btn-secondary'}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px' }}
+            >
+              <TrendingUp size={16} />
+              Analytics
+            </button>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => { setActiveTab('list'); loadPRData(); }} 
-            className={activeTab === 'list' ? 'btn btn-primary' : 'btn btn-secondary'}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px' }}
-          >
-            All Requisitions
-          </button>
-          <button 
-            onClick={() => setActiveTab('new')} 
-            className={activeTab === 'new' ? 'btn btn-primary' : 'btn btn-secondary'}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px' }}
-          >
-            <Plus size={16} />
-            New Request
-          </button>
-          <button 
-            onClick={() => setActiveTab('analytics')} 
-            className={activeTab === 'analytics' ? 'btn btn-primary' : 'btn btn-secondary'}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px' }}
-          >
-            <TrendingUp size={16} />
-            Analytics
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* Dashboard Summary Cards */}
       {activeTab === 'list' && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
-            <div className="p-3 bg-blue-50 text-blue-600 rounded-xl"><ClipboardList size={22} /></div>
-            <div>
-              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Total PRs</p>
-              <h3 className="text-2xl font-black text-slate-800 mt-1">{stats.totalPRs}</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
+          <div className="card stat-card" style={{ '--stat-color': '#3b82f6' }}>
+            <div className="stat-icon" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
+              <ClipboardList size={24} />
+            </div>
+            <div className="stat-info">
+              <h3>{stats.totalPRs}</h3>
+              <p>Total PRs</p>
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
-            <div className="p-3 bg-amber-50 text-amber-600 rounded-xl"><Clock size={22} /></div>
-            <div>
-              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Pending</p>
-              <h3 className="text-2xl font-black text-slate-800 mt-1">{stats.pendingApproval}</h3>
+          <div className="card stat-card" style={{ '--stat-color': '#f59e0b' }}>
+            <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+              <Clock size={24} />
+            </div>
+            <div className="stat-info">
+              <h3>{stats.pendingApproval}</h3>
+              <p>Pending</p>
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
-            <div className="p-3 bg-rose-50 text-rose-600 rounded-xl"><AlertTriangle size={22} /></div>
-            <div>
-              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Urgent Flagged</p>
-              <h3 className="text-2xl font-black text-slate-800 mt-1">{stats.urgentRequests}</h3>
+          <div className="card stat-card" style={{ '--stat-color': '#ef4444' }}>
+            <div className="stat-icon" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
+              <AlertTriangle size={24} />
+            </div>
+            <div className="stat-info">
+              <h3>{stats.urgentRequests}</h3>
+              <p>Urgent Flagged</p>
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
-            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl"><TrendingUp size={22} /></div>
-            <div>
-              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Monthly Value</p>
-              <h3 className="text-2xl font-black text-slate-800 mt-1">{stats.monthlyPurchaseValue.toLocaleString()} <span className="text-sm font-medium text-slate-400">INR</span></h3>
+          <div className="card stat-card" style={{ '--stat-color': '#10b981' }}>
+            <div className="stat-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+              <TrendingUp size={24} />
+            </div>
+            <div className="stat-info">
+              <h3>{stats.monthlyPurchaseValue.toLocaleString()}</h3>
+              <p>Monthly Value (INR)</p>
             </div>
           </div>
         </div>
@@ -574,7 +601,7 @@ export default function PurchaseRequisition() {
       {/* ────────────────────────────────── TAB 1: LIST VIEW ────────────────────────────────── */}
       {activeTab === 'list' && (
         <div className="card" style={{ padding: 0, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          
+
           {/* Filters Bar */}
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', padding: '16px 20px', alignItems: 'center', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', gap: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -593,7 +620,7 @@ export default function PurchaseRequisition() {
             </div>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12 }}>
-              <select 
+              <select
                 value={filterPriority}
                 onChange={(e) => setFilterPriority(e.target.value)}
                 className="form-control"
@@ -606,7 +633,7 @@ export default function PurchaseRequisition() {
                 <option value="Critical">Critical</option>
               </select>
 
-              <select 
+              <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className="form-control"
@@ -619,7 +646,7 @@ export default function PurchaseRequisition() {
                 <option value="Rejected">Rejected</option>
               </select>
 
-              <select 
+              <select
                 value={filterDept}
                 onChange={(e) => setFilterDept(e.target.value)}
                 className="form-control"
@@ -631,7 +658,7 @@ export default function PurchaseRequisition() {
                 ))}
               </select>
 
-              <button 
+              <button
                 onClick={loadPRData}
                 style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'white', color: 'var(--text-muted)', cursor: 'pointer' }}
                 title="Refresh Table"
@@ -645,7 +672,7 @@ export default function PurchaseRequisition() {
           <div className="table-responsive" style={{ flex: 1 }}>
             {loading ? (
               <div className="p-16 flex flex-col items-center gap-3 text-slate-400">
-                <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color:'#3b82f6'}}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#3b82f6' }}><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
                 <span className="text-xs">Loading requisitions…</span>
               </div>
             ) : filteredPRs.length === 0 ? (
@@ -675,35 +702,34 @@ export default function PurchaseRequisition() {
                         <td style={{ fontFamily: "monospace", color: '#4f46e5', fontWeight: 700 }}>{pr.pr_number}</td>
                         <td style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#eff6ff', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: 11, textTransform: 'uppercase' }}>
-                            {pr.requester_name ? pr.requester_name.substring(0,2) : 'EM'}
+                            {pr.requester_name ? pr.requester_name.substring(0, 2) : 'EM'}
                           </div>
                           <span style={{ fontWeight: 600 }}>{pr.requester_name}</span>
                         </td>
                         <td>{pr.department_name}</td>
                         <td>{new Date(pr.required_date).toLocaleDateString()}</td>
                         <td style={{ textAlign: "center" }}>
-                          <span className={`badge ${
-                            pr.priority === 'Critical' ? 'bg-red-100 text-red-800' :
-                            pr.priority === 'High' ? 'bg-orange-100 text-orange-800' :
-                            pr.priority === 'Medium' ? 'bg-blue-100 text-blue-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
+                          <span className={`badge ${pr.priority === 'Critical' ? 'bg-red-100 text-red-800' :
+                              pr.priority === 'High' ? 'bg-orange-100 text-orange-800' :
+                                pr.priority === 'Medium' ? 'bg-blue-100 text-blue-800' :
+                                  'bg-gray-100 text-gray-800'
+                            }`}>
                             {pr.priority}
                           </span>
                         </td>
                         <td style={{ textAlign: "center" }}>
-                          <span style={{ 
-                            color: pr.status.includes('Approved') ? '#047857' : pr.status.includes('Rejected') ? '#ef4444' : '#d97706', 
-                            fontWeight: 700, 
-                            backgroundColor: pr.status.includes('Approved') ? '#d1fae5' : pr.status.includes('Rejected') ? '#fef2f2' : '#fef3c7', 
-                            padding: '4px 10px', borderRadius: 12, fontSize: 12 
+                          <span style={{
+                            color: pr.status.includes('Approved') ? '#047857' : pr.status.includes('Rejected') ? '#ef4444' : '#d97706',
+                            fontWeight: 700,
+                            backgroundColor: pr.status.includes('Approved') ? '#d1fae5' : pr.status.includes('Rejected') ? '#fef2f2' : '#fef3c7',
+                            padding: '4px 10px', borderRadius: 12, fontSize: 12
                           }}>
                             {pr.status}
                           </span>
                         </td>
                         <td style={{ textAlign: "right", fontWeight: 700 }}>{totalCost.toLocaleString()} INR</td>
                         <td style={{ textAlign: "center" }}>
-                          <button 
+                          <button
                             onClick={async () => {
                               const detail = await storesService.getPRDetail(pr.id);
                               setSelectedPr(detail);
@@ -715,7 +741,7 @@ export default function PurchaseRequisition() {
                             <Eye size={13} />
                           </button>
                           {pr.status === 'Requested' && (
-                            <button 
+                            <button
                               onClick={async () => {
                                 if (confirm("Are you sure you want to cancel/delete this requisition?")) {
                                   await storesService.deletePR(pr.id);
@@ -741,165 +767,156 @@ export default function PurchaseRequisition() {
       )}
       {/* ────────────────────────────────── TAB 2: MULTI-SECTION REQUEST FORM ────────────────────────────────── */}
       {activeTab === 'new' && (
-        <form onSubmit={handlePRSubmit} className="card animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24, border: '1px solid var(--border)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 20, borderBottom: '1px solid var(--border)' }}>
-            <h2 style={{ fontSize: 20, fontWeight: 850, margin: 0, color: 'var(--text-primary)' }}>Raise New Purchase Requisition</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-primary" type="submit" disabled={submitLoading} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px' }}>
-                {submitLoading ? <Loader className="animate-spin" size={16} /> : <Save size={16} />}
-                Submit Requisition
-              </button>
-              <button className="btn btn-secondary" type="button" onClick={() => setActiveTab('list')} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px' }}>
-                <X size={16} /> Cancel
-              </button>
-            </div>
+        <div className="animate-fade">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+            <button 
+              type="button"
+              onClick={() => setActiveTab('list')} 
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+              onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
+              <ArrowLeft size={24} />
+            </button>
+            <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+              Raise New Purchase Requisition
+            </h2>
           </div>
 
-          {notifications.map((notif) => (
-            <div key={notif.id} style={{ padding: '12px 16px', borderRadius: '8px', background: notif.type === 'error' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)', color: notif.type === 'error' ? '#ef4444' : '#f59e0b', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <AlertTriangle size={18} />
-              <span style={{ fontSize: 14, fontWeight: 500 }}>{notif.message}</span>
+          <div className="card" style={{ padding: 0 }}>
+            <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
+              <button
+                type="button"
+                style={{
+                  padding: '16px 24px', background: '#fff',
+                  border: 'none', borderBottom: '3px solid var(--primary)',
+                  fontWeight: 600, color: 'var(--primary)',
+                  cursor: 'pointer', whiteSpace: 'nowrap'
+                }}
+              >
+                Requisition Details
+              </button>
             </div>
-          ))}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            {/* Section 1: Requisition Coordinates */}
-            <fieldset style={{ border: '1px solid var(--border)', borderRadius: 12, padding: '24px 32px', margin: 0 }}>
-              <legend style={{ padding: '0 12px', fontSize: 13, fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                1. Requisition Info
-              </legend>
-              <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr 1fr', gap: 20 }}>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Required Date *</label>
-                  <input 
-                    type="date" 
-                    value={form.required_date}
-                    onChange={(e) => setForm(prev => ({ ...prev, required_date: e.target.value }))}
-                    required
-                    className="form-control" 
-                  />
-                </div>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Type</label>
-                  <select 
-                    value={form.request_type} 
-                    onChange={(e) => setForm(prev => ({ ...prev, request_type: e.target.value }))}
-                    className="form-control"
-                  >
-                    <option value="Normal">Normal</option>
-                    <option value="Urgent">Urgent</option>
-                    <option value="Emergency">Emergency</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Priority</label>
-                  <select 
-                    value={form.priority} 
-                    onChange={(e) => setForm(prev => ({ ...prev, priority: e.target.value }))}
-                    className="form-control"
-                  >
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
-                    <option value="Critical">Critical</option>
-                  </select>
-                </div>
-              </div>
-              <div className="form-row" style={{ marginTop: 20 }}>
-                <div className="form-group" style={{ width: '100%' }}>
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>General Description</label>
-                  <textarea 
-                    value={form.description}
-                    onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Enter requisition notes, purpose, machinery specifications..."
-                    className="form-control"
-                    style={{ minHeight: 80 }}
-                  />
-                </div>
-              </div>
-            </fieldset>
+            <div style={{ padding: 24, background: '#fff' }}>
+              <form onSubmit={handlePRSubmit}>
+                {notifications.map((notif) => (
+                  <div key={notif.id} style={{ padding: '12px 16px', borderRadius: '8px', background: notif.type === 'error' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)', color: notif.type === 'error' ? '#ef4444' : '#f59e0b', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
+                    <AlertTriangle size={18} />
+                    <span style={{ fontSize: 14, fontWeight: 500 }}>{notif.message}</span>
+                  </div>
+                ))}
 
-            {/* Section 2: Requester Details */}
-            <fieldset style={{ border: '1px solid var(--border)', borderRadius: 12, padding: '24px 32px', margin: 0 }}>
-              <legend style={{ padding: '0 12px', fontSize: 13, fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                2. Requester Profile
-              </legend>
-              <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 20 }}>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Employee Requisitioner *</label>
-                  <select 
-                    value={form.requester_id}
-                    onChange={(e) => handleEmployeeChange(e.target.value)}
-                    className="form-control"
-                    required
-                  >
-                    <option value="">Select Employee</option>
-                    {masters.employees.map(e => (
-                      <option key={e.id} value={e.id}>{e.employee_code} - {e.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Department</label>
-                  <select 
-                    value={form.department_id}
-                    onChange={(e) => setForm(prev => ({ ...prev, department_id: e.target.value }))}
-                    className="form-control"
-                  >
-                    <option value="">Department Name</option>
-                    {masters.departments.map(d => (
-                      <option key={d.id} value={d.id}>{d.department_name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Cost Center *</label>
-                  <select 
-                    value={form.cost_center_id}
-                    onChange={(e) => setForm(prev => ({ ...prev, cost_center_id: e.target.value }))}
-                    required
-                    className="form-control"
-                  >
-                    <option value="">Select Cost Center</option>
-                    {masters.costCenters.map(c => (
-                      <option key={c.id} value={c.id}>{c.code} - {c.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Branch / Factory</label>
-                  <input 
-                    type="text" 
-                    value={form.branch_factory}
-                    onChange={(e) => setForm(prev => ({ ...prev, branch_factory: e.target.value }))}
-                    className="form-control"
-                  />
-                </div>
-              </div>
-            </fieldset>
+                <fieldset style={{ border: 'none', padding: 0, margin: 0 }}>
+                  <div className="animate-fade">
+                    <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
+                      Requisition Info
+                    </h4>
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                      <div className="form-group">
+                        <label>Required Date *</label>
+                        <input
+                          type="date"
+                          value={form.required_date}
+                          onChange={(e) => setForm(prev => ({ ...prev, required_date: e.target.value }))}
+                          required
+                          className="form-control"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <MasterDropdown
+                          label="Type"
+                          name="request_type"
+                          value={form.request_type}
+                          options={['Normal', 'Urgent', 'Emergency']}
+                          onChange={(name, val) => setForm(prev => ({ ...prev, [name]: val }))}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <MasterDropdown
+                          label="Priority"
+                          name="priority"
+                          value={form.priority}
+                          options={['Low', 'Medium', 'High', 'Critical']}
+                          onChange={(name, val) => setForm(prev => ({ ...prev, [name]: val }))}
+                        />
+                      </div>
+                      <div className="form-group" style={{ gridColumn: 'span 3' }}>
+                        <label>General Description</label>
+                        <textarea
+                          value={form.description}
+                          onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
+                          placeholder="Enter requisition notes, purpose, machinery specifications..."
+                          className="form-control"
+                          rows="3"
+                        />
+                      </div>
+                    </div>
 
-            {/* Section 3: Material Line Items Grid */}
-            <fieldset style={{ border: '1px solid var(--border)', borderRadius: 12, padding: '24px 32px', margin: 0 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <legend style={{ padding: '0 12px', fontSize: 13, fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  3. Material Line Items
-                </legend>
-                <button 
-                  type="button"
-                  onClick={addMaterialRow}
-                  className="btn btn-secondary"
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', fontSize: 12 }}
-                >
-                  <Plus size={14} /> Add Row
-                </button>
-              </div>
+                    <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
+                      Requester Profile
+                    </h4>
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                      <div className="form-group">
+                        <MasterDropdown
+                          label="Employee Requisitioner"
+                          name="requester_id"
+                          value={form.requester_id}
+                          options={masters.employees.map(e => ({...e, name: `${e.employee_code} - ${e.name}`}))}
+                          required={true}
+                          onChange={(name, val) => handleEmployeeChange(val)}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <MasterDropdown
+                          label="Department"
+                          name="department_id"
+                          entityType="department"
+                          value={form.department_id}
+                          options={masters.departments}
+                          onChange={(name, val) => setForm(prev => ({ ...prev, [name]: val }))}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <MasterDropdown
+                          label="Cost Center"
+                          name="cost_center_id"
+                          value={form.cost_center_id}
+                          options={masters.costCenters.map(c => ({...c, name: `${c.code} - ${c.name}`}))}
+                          required={true}
+                          onChange={(name, val) => setForm(prev => ({ ...prev, [name]: val }))}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Branch / Factory</label>
+                        <input
+                          type="text"
+                          value={form.branch_factory}
+                          onChange={(e) => setForm(prev => ({ ...prev, branch_factory: e.target.value }))}
+                          placeholder="Enter Branch or Factory"
+                          className="form-control"
+                        />
+                      </div>
+                    </div>
+
+                    <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>Material Line Items</span>
+                      <button
+                        type="button"
+                        onClick={addMaterialRow}
+                        className="btn btn-secondary"
+                        style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', fontSize: 12, fontWeight: 'normal' }}
+                      >
+                        <Plus size={14} /> Add Row
+                      </button>
+                    </h4>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {form.items.map((row, index) => (
                   <div key={index} style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 16, position: 'relative', background: 'var(--bg-secondary)' }}>
                     {form.items.length > 1 && (
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => removeMaterialRow(index)}
                         style={{ position: 'absolute', top: 16, right: 16, background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}
                         title="Remove Row"
@@ -907,11 +924,11 @@ export default function PurchaseRequisition() {
                         <Trash2 size={16} />
                       </button>
                     )}
-                    
+
                     <div className="form-row" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: 16 }}>
                       <div className="form-group">
                         <div className="flex justify-between items-center mb-2">
-                          <label style={{ fontWeight: 600, margin: 0, fontSize: 12 }}>Select Item *</label>
+                          <label style={{ margin: 0 }}>Select Item *</label>
                           <button
                             type="button"
                             onClick={() => {
@@ -937,49 +954,41 @@ export default function PurchaseRequisition() {
                             className="form-control"
                           />
                         ) : (
-                          <select 
+                          <MasterDropdown
+                            label=""
+                            name="item_id"
+                            entityType="item"
                             value={row.item_id}
-                            onChange={(e) => handleItemChange(index, 'item_id', e.target.value)}
-                            required
-                            className="form-control"
-                          >
-                            <option value="">Select Item Code</option>
-                            {masters.items.map(i => (
-                              <option key={i.id} value={i.id}>{i.item_code} - {i.item_name}</option>
-                            ))}
-                          </select>
+                            options={masters.items.map(i => ({...i, name: `${i.item_code} - ${i.item_name}`}))}
+                            required={true}
+                            onChange={(name, val) => handleItemChange(index, name, val)}
+                          />
                         )}
                       </div>
                       <div className="form-group">
-                        <label style={{ fontWeight: 600, marginBottom: 8, display: 'block', fontSize: 12 }}>UOM</label>
-                        <select 
+                        <MasterDropdown
+                          label="UOM"
+                          name="uom_id"
+                          entityType="uom"
                           value={row.uom_id}
-                          onChange={(e) => handleItemChange(index, 'uom_id', e.target.value)}
-                          className="form-control"
-                        >
-                          <option value="">UOM</option>
-                          {masters.uoms.map(u => (
-                            <option key={u.id} value={u.id}>{u.uom_name}</option>
-                          ))}
-                        </select>
+                          options={masters.uoms}
+                          onChange={(name, val) => handleItemChange(index, name, val)}
+                        />
                       </div>
                       <div className="form-group">
-                        <label style={{ fontWeight: 600, marginBottom: 8, display: 'block', fontSize: 12 }}>Category</label>
-                        <select 
+                        <MasterDropdown
+                          label="Category"
+                          name="category_id"
+                          entityType="category"
                           value={row.category_id}
-                          onChange={(e) => handleItemChange(index, 'category_id', e.target.value)}
-                          className="form-control"
-                        >
-                          <option value="">Category</option>
-                          {masters.categories.map(c => (
-                            <option key={c.id} value={c.id}>{c.category_name}</option>
-                          ))}
-                        </select>
+                          options={masters.categories}
+                          onChange={(name, val) => handleItemChange(index, name, val)}
+                        />
                       </div>
                       <div className="form-group">
-                        <label style={{ fontWeight: 600, marginBottom: 8, display: 'block', fontSize: 12 }}>Qty Requested *</label>
-                        <input 
-                          type="number" 
+                        <label>Qty Requested *</label>
+                        <input
+                          type="number"
                           min="1" step="any"
                           value={row.quantity}
                           onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value) || 0)}
@@ -988,9 +997,9 @@ export default function PurchaseRequisition() {
                         />
                       </div>
                       <div className="form-group">
-                        <label style={{ fontWeight: 600, marginBottom: 8, display: 'block', fontSize: 12 }}>Est Unit Price</label>
-                        <input 
-                          type="number" 
+                        <label>Est Unit Price</label>
+                        <input
+                          type="number"
                           min="0" step="any"
                           value={row.estimated_unit_price}
                           onChange={(e) => handleItemChange(index, 'estimated_unit_price', parseFloat(e.target.value) || 0)}
@@ -1020,22 +1029,18 @@ export default function PurchaseRequisition() {
 
                     <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 16, marginTop: 16 }}>
                       <div className="form-group">
-                        <label style={{ fontWeight: 600, marginBottom: 8, display: 'block', fontSize: 11, color: 'var(--text-muted)' }}>WAREHOUSE LOCATION</label>
-                        <select 
+                        <MasterDropdown
+                          label="WAREHOUSE LOCATION"
+                          name="warehouse_id"
                           value={row.warehouse_id}
-                          onChange={(e) => handleItemChange(index, 'warehouse_id', e.target.value)}
-                          className="form-control"
-                        >
-                          <option value="">Warehouse</option>
-                          {masters.warehouses.map(w => (
-                            <option key={w.id} value={w.id}>{w.warehouse_name}</option>
-                          ))}
-                        </select>
+                          options={masters.warehouses.map(w => ({...w, name: w.warehouse_name}))}
+                          onChange={(name, val) => handleItemChange(index, name, val)}
+                        />
                       </div>
                       <div className="form-group">
-                        <label style={{ fontWeight: 600, marginBottom: 8, display: 'block', fontSize: 11, color: 'var(--text-muted)' }}>RACK / BIN LOCATION</label>
-                        <input 
-                          type="text" 
+                        <label style={{ fontSize: 11, color: 'var(--text-muted)' }}>RACK / BIN LOCATION</label>
+                        <input
+                          type="text"
                           value={row.rack_bin}
                           onChange={(e) => handleItemChange(index, 'rack_bin', e.target.value)}
                           placeholder="e.g. Rack A / Shelf 2"
@@ -1043,9 +1048,9 @@ export default function PurchaseRequisition() {
                         />
                       </div>
                       <div className="form-group">
-                        <label style={{ fontWeight: 600, marginBottom: 8, display: 'block', fontSize: 11, color: 'var(--text-muted)' }}>BRAND / MAKER</label>
-                        <input 
-                          type="text" 
+                        <label style={{ fontSize: 11, color: 'var(--text-muted)' }}>BRAND / MAKER</label>
+                        <input
+                          type="text"
                           value={row.brand}
                           onChange={(e) => handleItemChange(index, 'brand', e.target.value)}
                           placeholder="Servo, Tex, etc."
@@ -1053,9 +1058,9 @@ export default function PurchaseRequisition() {
                         />
                       </div>
                       <div className="form-group">
-                        <label style={{ fontWeight: 600, marginBottom: 8, display: 'block', fontSize: 11, color: 'var(--text-muted)' }}>REMARKS / SPECS</label>
-                        <input 
-                          type="text" 
+                        <label style={{ fontSize: 11, color: 'var(--text-muted)' }}>REMARKS / SPECS</label>
+                        <input
+                          type="text"
                           value={row.remarks}
                           onChange={(e) => handleItemChange(index, 'remarks', e.target.value)}
                           placeholder="URGENT rebuild spare ref"
@@ -1066,118 +1071,119 @@ export default function PurchaseRequisition() {
                   </div>
                 ))}
               </div>
-            </fieldset>
 
-            {/* Section 4: Budget & Delivery Settings */}
-            <fieldset style={{ border: '1px solid var(--border)', borderRadius: 12, padding: '24px 32px', margin: 0 }}>
-              <legend style={{ padding: '0 12px', fontSize: 13, fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                4. Budget & Delivery Controls
-              </legend>
-              <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 20 }}>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Allocated Budget Code *</label>
-                  <select 
-                    value={form.budget_id}
-                    onChange={(e) => {
-                      setForm(prev => ({ ...prev, budget_id: e.target.value }));
-                      validateRequisitionBudget(form.items, e.target.value);
-                    }}
-                    required
-                    className="form-control"
-                  >
-                    <option value="">Select Budget</option>
-                    {masters.budgets.map(b => (
-                      <option key={b.id} value={b.id}>{b.budget_code} (Project: {b.project_code})</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Available Budget</label>
-                  <input 
-                    type="text" 
-                    disabled
-                    value={
-                      form.budget_id 
-                        ? (masters.budgets.find(b => b.id === parseInt(form.budget_id))?.budget_available || 0).toLocaleString() + ' INR'
-                        : '0 INR'
-                    }
-                    className="form-control"
-                    style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}
-                  />
-                </div>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Used Budget</label>
-                  <input 
-                    type="text" 
-                    disabled
-                    value={
-                      form.budget_id 
-                        ? (masters.budgets.find(b => b.id === parseInt(form.budget_id))?.budget_used || 0).toLocaleString() + ' INR'
-                        : '0 INR'
-                    }
-                    className="form-control"
-                    style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}
-                  />
-                </div>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Estimated Total</label>
-                  <div style={{ padding: '10px 14px', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: 8, color: '#1d4ed8', fontWeight: 800, fontSize: 14 }}>
-                    {calculateGrandTotal().toLocaleString()} INR
+                    <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
+                      Budget & Delivery Controls
+                    </h4>
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                      <div className="form-group">
+                        <MasterDropdown
+                          label="Allocated Budget Code"
+                          name="budget_id"
+                          value={form.budget_id}
+                          options={masters.budgets.map(b => ({...b, name: `${b.budget_code} (Project: ${b.project_code})`}))}
+                          required={true}
+                          onChange={(name, val) => {
+                            setForm(prev => ({ ...prev, [name]: val }));
+                            validateRequisitionBudget(form.items, val);
+                          }}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Available Budget</label>
+                        <input
+                          type="text"
+                          disabled
+                          value={
+                            form.budget_id
+                              ? (masters.budgets.find(b => b.id === parseInt(form.budget_id))?.budget_available || 0).toLocaleString() + ' INR'
+                              : '0 INR'
+                          }
+                          className="form-control"
+                          style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Used Budget</label>
+                        <input
+                          type="text"
+                          disabled
+                          value={
+                            form.budget_id
+                              ? (masters.budgets.find(b => b.id === parseInt(form.budget_id))?.budget_used || 0).toLocaleString() + ' INR'
+                              : '0 INR'
+                          }
+                          className="form-control"
+                          style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Estimated Total</label>
+                        <div style={{ padding: '10px 14px', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: 8, color: '#1d4ed8', fontWeight: 800, fontSize: 14 }}>
+                          {calculateGrandTotal().toLocaleString()} INR
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr 2fr', marginTop: 20 }}>
+                      <div className="form-group">
+                        <MasterDropdown
+                          label="Delivery Warehouse"
+                          name="delivery_warehouse_id"
+                          value={form.delivery_warehouse_id}
+                          options={masters.warehouses.map(w => ({...w, name: w.warehouse_name}))}
+                          required={true}
+                          onChange={(name, val) => setForm(prev => ({ ...prev, [name]: val }))}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Expected Delivery Date</label>
+                        <input
+                          type="date"
+                          value={form.expected_delivery_date}
+                          onChange={(e) => setForm(prev => ({ ...prev, expected_delivery_date: e.target.value }))}
+                          className="form-control"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Delivery Address</label>
+                        <input
+                          type="text"
+                          value={form.delivery_address}
+                          onChange={(e) => setForm(prev => ({ ...prev, delivery_address: e.target.value }))}
+                          placeholder="Enter Delivery Address"
+                          className="form-control"
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+                </fieldset>
 
-              <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr 2fr', gap: 20, marginTop: 20 }}>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Delivery Warehouse *</label>
-                  <select 
-                    value={form.delivery_warehouse_id}
-                    onChange={(e) => setForm(prev => ({ ...prev, delivery_warehouse_id: e.target.value }))}
-                    required
-                    className="form-control"
-                  >
-                    <option value="">Select Warehouse</option>
-                    {masters.warehouses.map(w => (
-                      <option key={w.id} value={w.id}>{w.warehouse_name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Expected Delivery Date</label>
-                  <input 
-                    type="date" 
-                    value={form.expected_delivery_date}
-                    onChange={(e) => setForm(prev => ({ ...prev, expected_delivery_date: e.target.value }))}
-                    className="form-control"
-                  />
-                </div>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Delivery Address</label>
-                  <input 
-                    type="text" 
-                    value={form.delivery_address}
-                    onChange={(e) => setForm(prev => ({ ...prev, delivery_address: e.target.value }))}
-                    placeholder="Coimbatore Factory, Weaving Shed 3, Bay 2"
-                    className="form-control"
-                  />
-                </div>
-              </div>
-            </fieldset>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+            <button type="button" className="btn btn-secondary" onClick={() => setActiveTab('list')}>
+              <X size={16} /> Close
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={submitLoading}>
+              {submitLoading ? <Loader className="animate-spin" size={16} /> : <Save size={16} />} Save
+            </button>
           </div>
         </form>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ────────────────────────────────── TAB 3: DETAILS & TIMELINE WORKFLOW ────────────────────────────────── */}
       {activeTab === 'view' && selectedPr && (
         <div className="space-y-6">
-          
+
           {/* Main PR view Card */}
           <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-6">
-            
+
             {/* Action headers */}
             <div className="flex justify-between items-center border-b border-slate-100 pb-4">
               <div className="flex items-center gap-3">
-                <button 
+                <button
                   onClick={() => setActiveTab('list')}
                   className="p-2 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-600 transition-colors border border-slate-200"
                 >
@@ -1190,7 +1196,7 @@ export default function PurchaseRequisition() {
               </div>
 
               <div className="flex items-center gap-3">
-                <button 
+                <button
                   onClick={() => window.print()}
                   className="btn btn-secondary px-4 py-2"
                 >
@@ -1199,7 +1205,7 @@ export default function PurchaseRequisition() {
 
                 {/* If still requested stage -> authorize approval comments submission */}
                 {!selectedPr.status.includes('Approved') && !selectedPr.status.includes('Rejected') && (
-                  <button 
+                  <button
                     onClick={() => setApprovalModal({
                       open: true,
                       prId: selectedPr.id,
@@ -1217,7 +1223,7 @@ export default function PurchaseRequisition() {
 
             {/* Layout grids */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              
+
               {/* Header profile cards */}
               <div className="space-y-1">
                 <p className="text-xs uppercase font-bold text-slate-400 tracking-wider">Requester Details</p>
@@ -1297,7 +1303,7 @@ export default function PurchaseRequisition() {
               </h4>
 
               <div className="relative border-l-2 border-blue-100 ml-4 pl-6 space-y-6">
-                
+
                 {/* Seed Step */}
                 <div className="relative">
                   <div className="absolute -left-[31px] top-0 w-4 h-4 rounded-full bg-emerald-500 border-4 border-white"></div>
@@ -1308,9 +1314,8 @@ export default function PurchaseRequisition() {
                 {/* Database Approvals loop */}
                 {selectedPr.approvals.map((app, index) => (
                   <div key={index} className="relative">
-                    <div className={`absolute -left-[31px] top-0 w-4 h-4 rounded-full border-4 border-white ${
-                      app.status === 'Approved' ? 'bg-emerald-500' : 'bg-rose-500'
-                    }`}></div>
+                    <div className={`absolute -left-[31px] top-0 w-4 h-4 rounded-full border-4 border-white ${app.status === 'Approved' ? 'bg-emerald-500' : 'bg-rose-500'
+                      }`}></div>
                     <div className="text-xs font-bold text-slate-700">{app.stage} - <span className={
                       app.status === 'Approved' ? 'text-emerald-600' : 'text-rose-600'
                     }>{app.status}</span></div>
@@ -1324,10 +1329,9 @@ export default function PurchaseRequisition() {
 
                 {/* Final status display */}
                 <div className="relative">
-                  <div className={`absolute -left-[31px] top-0 w-4 h-4 rounded-full border-4 border-white ${
-                    selectedPr.status === 'Approved' ? 'bg-emerald-500' : 
-                    selectedPr.status === 'Rejected' ? 'bg-rose-500' : 'bg-slate-200'
-                  }`}></div>
+                  <div className={`absolute -left-[31px] top-0 w-4 h-4 rounded-full border-4 border-white ${selectedPr.status === 'Approved' ? 'bg-emerald-500' :
+                      selectedPr.status === 'Rejected' ? 'bg-rose-500' : 'bg-slate-200'
+                    }`}></div>
                   <div className="text-xs font-bold text-slate-500">Current Status: <span className="font-extrabold text-blue-600">{selectedPr.status}</span></div>
                 </div>
 
@@ -1342,7 +1346,7 @@ export default function PurchaseRequisition() {
       {/* ────────────────────────────────── TAB 4: ANALYTICS & CHARTS ────────────────────────────────── */}
       {activeTab === 'analytics' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, animation: 'fadeIn 0.3s ease' }}>
-          
+
           {/* Dept wise purchase requisitions */}
           <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
             <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
@@ -1399,17 +1403,17 @@ export default function PurchaseRequisition() {
             <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: 200, paddingTop: 24, borderBottom: '1px solid var(--border)', padding: '0 16px' }}>
               {stats.monthlyTrend.map((t, idx) => (
                 <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: 60 }}>
-                  <div 
-                    style={{ 
-                      width: '100%', 
-                      background: 'var(--primary)', 
-                      borderRadius: '6px 6px 0 0', 
+                  <div
+                    style={{
+                      width: '100%',
+                      background: 'var(--primary)',
+                      borderRadius: '6px 6px 0 0',
                       height: `${(t.value / 450000) * 140 + 20}px`,
                       transition: 'height 0.3s ease'
                     }}
                   ></div>
                   <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>{t.month}</span>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--primary)' }}>{(t.value/1000)}k</span>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--primary)' }}>{(t.value / 1000)}k</span>
                 </div>
               ))}
             </div>
@@ -1422,14 +1426,14 @@ export default function PurchaseRequisition() {
       {approvalModal.open && (
         <div className="modal-overlay fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center" style={{ zIndex: 1050 }}>
           <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-2xl max-w-md w-full space-y-4 m-4">
-            
+
             <div className="flex justify-between items-center border-b border-slate-50 pb-2">
               <h3 className="text-lg font-bold text-slate-800 flex items-center gap-1.5">
                 <Shield size={20} className="text-blue-600" />
                 Submit Requisition Approval
               </h3>
-              <button 
-                onClick={() => setApprovalModal(prev => ({ ...prev, open: false }))} 
+              <button
+                onClick={() => setApprovalModal(prev => ({ ...prev, open: false }))}
                 className="text-slate-400 hover:text-slate-600"
               >
                 <X size={20} />
@@ -1439,7 +1443,7 @@ export default function PurchaseRequisition() {
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Approval Stage</label>
-                <select 
+                <select
                   value={approvalModal.stage}
                   onChange={(e) => setApprovalModal(prev => ({ ...prev, stage: e.target.value }))}
                   className="w-full p-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none"
@@ -1454,7 +1458,7 @@ export default function PurchaseRequisition() {
 
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Status Action</label>
-                <select 
+                <select
                   value={approvalModal.status}
                   onChange={(e) => setApprovalModal(prev => ({ ...prev, status: e.target.value }))}
                   className="w-full p-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none"
@@ -1466,7 +1470,7 @@ export default function PurchaseRequisition() {
 
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Comments / Reason <span className="text-red-500">*</span></label>
-                <textarea 
+                <textarea
                   value={approvalModal.comments}
                   onChange={(e) => setApprovalModal(prev => ({ ...prev, comments: e.target.value }))}
                   placeholder="Enter specific comments or reason for approval/rejection..."
@@ -1477,13 +1481,13 @@ export default function PurchaseRequisition() {
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
-              <button 
-                onClick={() => setApprovalModal(prev => ({ ...prev, open: false }))} 
+              <button
+                onClick={() => setApprovalModal(prev => ({ ...prev, open: false }))}
                 className="px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl text-xs font-bold transition-all"
               >
                 Close
               </button>
-              <button 
+              <button
                 onClick={submitApproval}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all"
               >

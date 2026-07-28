@@ -473,21 +473,21 @@ export default function WeavingDelivery() {
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginBottom: 24 }}>
-            <div className="card stat-card" onClick={() => setTypeFilter('All Types')} style={{ cursor: 'pointer', border: typeFilter === 'All Types' ? '2px solid var(--primary)' : '1px solid transparent' }}>
+            <div className="card stat-card" onClick={() => setTypeFilter('All Types')} style={{ cursor: 'pointer', transition: 'all 0.2s' }}>
               <div className="stat-icon purple" style={{ background: 'rgba(124, 58, 237, 0.1)', color: '#7c3aed' }}><Truck size={24} /></div>
               <div className="stat-details">
                 <h3>Total Deliveries</h3>
                 <div className="value">{records.length}</div>
               </div>
             </div>
-            <div className="card stat-card" onClick={() => setTypeFilter('Direct')} style={{ cursor: 'pointer', border: typeFilter === 'Direct' ? '2px solid #10b981' : '1px solid transparent' }}>
+            <div className="card stat-card" onClick={() => setTypeFilter('Direct')} style={{ cursor: 'pointer', transition: 'all 0.2s' }}>
               <div className="stat-icon emerald" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}><Truck size={24} /></div>
               <div className="stat-details">
                 <h3>Direct Delivery</h3>
                 <div className="value">{records.filter(r => !r.weaving_po_no).length}</div>
               </div>
             </div>
-            <div className="card stat-card" onClick={() => setTypeFilter('Against Order')} style={{ cursor: 'pointer', border: typeFilter === 'Against Order' ? '2px solid #f59e0b' : '1px solid transparent' }}>
+            <div className="card stat-card" onClick={() => setTypeFilter('Against Order')} style={{ cursor: 'pointer', transition: 'all 0.2s' }}>
               <div className="stat-icon amber" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}><Truck size={24} /></div>
               <div className="stat-details">
                 <h3>Against Order</h3>

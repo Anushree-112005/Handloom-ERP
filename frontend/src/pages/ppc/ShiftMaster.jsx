@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Settings, Save, Search, Settings2, Trash2, Clock, Database, ToggleRight, ToggleLeft, Edit2, X, ArrowLeft, Eye, Plus } from 'lucide-react';
 import { subMasterAPI } from '../../services/api';
+import { confirmDialog } from '../../utils/dialogs';
 
 export default function ShiftMaster() {
   const [shifts, setShifts] = useState([]);
@@ -112,7 +113,13 @@ export default function ShiftMaster() {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this shift?")) {
+    const confirmed = await confirmDialog({
+      title: 'Delete Shift',
+      message: 'Are you sure you want to delete this shift? This action cannot be undone.',
+      type: 'delete',
+      confirmText: 'Delete'
+    });
+    if (confirmed) {
       try {
         await subMasterAPI.delete('ppc_shift_master', id);
         fetchShifts();

@@ -11,6 +11,7 @@ import {
   PolarAngleAxis, PolarRadiusAxis, Radar
 } from 'recharts';
 import api from '../../services/api';
+import MasterDropdown from '../../components/MasterDropdown';
 import { showError, showSuccess } from '../../utils/notifications';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
@@ -261,25 +262,29 @@ const DriverPerformance = () => {
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', flex: 1, justifyContent: 'flex-end' }}>
           {viewType === 'driver' ? (
-            <select 
-              className="form-control"
-              style={{ width: 180, margin: 0, height: 38 }}
-              value={filters.driverId}
-              onChange={(e) => setFilters({...filters, driverId: e.target.value})}
-            >
-              <option value="">All Drivers</option>
-              {drivers.map(d => <option key={d.id} value={d.id}>{d.driver_name}</option>)}
-            </select>
+            <div style={{ width: 180 }}>
+              <MasterDropdown
+                value={filters.driverId}
+                onChange={(val) => setFilters({...filters, driverId: val})}
+                options={[
+                  { value: '', label: 'All Drivers' },
+                  ...drivers.map(d => ({ value: d.id, label: d.driver_name || d.name }))
+                ]}
+                placeholder="All Drivers"
+              />
+            </div>
           ) : (
-            <select 
-              className="form-control"
-              style={{ width: 180, margin: 0, height: 38 }}
-              value={filters.vehicleId}
-              onChange={(e) => setFilters({...filters, vehicleId: e.target.value})}
-            >
-              <option value="">All Vehicles</option>
-              {vehicles.map(v => <option key={v.id} value={v.id}>{v.vehicle_number}</option>)}
-            </select>
+            <div style={{ width: 180 }}>
+              <MasterDropdown
+                value={filters.vehicleId}
+                onChange={(val) => setFilters({...filters, vehicleId: val})}
+                options={[
+                  { value: '', label: 'All Vehicles' },
+                  ...vehicles.map(v => ({ value: v.id, label: v.vehicle_number }))
+                ]}
+                placeholder="All Vehicles"
+              />
+            </div>
           )}
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

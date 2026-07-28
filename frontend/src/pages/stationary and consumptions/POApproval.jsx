@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { mockDb } from './mockDb';
-import { Check, X, Eye } from 'lucide-react';
+import { Check, X, Eye, FileText, Clock, CheckCircle, XCircle } from 'lucide-react';
 
 export default function POApproval() {
   const [pos, setPOs] = useState([]);
@@ -29,29 +29,46 @@ export default function POApproval() {
   const [view, setView] = useState('list');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredPOs = pos.filter(po => 
+  const filteredPOs = pos.filter(po =>
     po.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     po.vendor?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const stats = [
+    { label: 'Total POs', value: pos.length, icon: <FileText size={24} />, color: '#6366f1' },
+    { label: 'Pending Approval', value: pos.filter(po => po.status === 'Ordered').length, icon: <Clock size={24} />, color: '#f59e0b' },
+    { label: 'Approved', value: pos.filter(po => po.status === 'Approved' || po.status === 'Completed').length, icon: <CheckCircle size={24} />, color: '#10b981' },
+    { label: 'Rejected', value: pos.filter(po => po.status === 'Rejected').length, icon: <XCircle size={24} />, color: '#ef4444' }
+  ];
+
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Check style={{ color: '#6366f1' }} /> Purchase Order Approval
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Approve Purchase Orders before dispatching them to vendors</p>
-        </div>
-        {view === 'form' && (
-          <button onClick={() => setView('list')} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            Back to List
-          </button>
-        )}
-      </div>
-
       {view === 'list' ? (
-        <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Check style={{ color: '#6366f1' }} /> Purchase Order Approval
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Approve Purchase Orders before dispatching them to vendors</p>
+            </div>
+          </div>
+
+          <div className="stats-grid">
+            {stats.map((s, i) => (
+              <div key={i} className="stat-card" style={{ '--stat-color': s.color }}>
+                <div className="stat-icon" style={{ background: `${s.color}1a`, color: s.color }}>
+                  {s.icon}
+                </div>
+                <div className="stat-info">
+                  <h3>{s.value}</h3>
+                  <p>{s.label}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column', marginTop: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Approval Queue ({filteredPOs.length})</h3>
             <div className="search-bar" style={{ position: 'relative', width: 250 }}>
@@ -89,10 +106,10 @@ export default function POApproval() {
                       <td style={{ fontWeight: 600 }}>{po.vendor}</td>
                       <td style={{ textAlign: 'right', fontWeight: 700 }}>₹{totalVal.toLocaleString()}</td>
                       <td style={{ textAlign: 'center' }}>
-                        <span style={{ 
-                          background: (po.status === 'Approved' || po.status === 'Completed') ? '#dcfce7' : po.status === 'Ordered' ? '#dbeafe' : '#fef3c7', 
-                          color: (po.status === 'Approved' || po.status === 'Completed') ? '#166534' : po.status === 'Ordered' ? '#1e40af' : '#92400e', 
-                          padding: '4px 10px', borderRadius: '12px', fontSize: 12, fontWeight: 600 
+                        <span style={{
+                          background: (po.status === 'Approved' || po.status === 'Completed') ? '#dcfce7' : po.status === 'Ordered' ? '#dbeafe' : '#fef3c7',
+                          color: (po.status === 'Approved' || po.status === 'Completed') ? '#166534' : po.status === 'Ordered' ? '#1e40af' : '#92400e',
+                          padding: '4px 10px', borderRadius: '12px', fontSize: 12, fontWeight: 600
                         }}>
                           {po.status}
                         </span>
@@ -117,6 +134,7 @@ export default function POApproval() {
             </table>
           </div>
         </div>
+        </>
       ) : (
         <div className="card animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24, flex: 1 }}>
           {selectedPO && (
@@ -126,10 +144,10 @@ export default function POApproval() {
                   <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Review Purchase Order: {selectedPO.id}</h3>
                   <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Review vendor details and line items before authorizing.</p>
                 </div>
-                <span style={{ 
-                  background: (selectedPO.status === 'Approved' || selectedPO.status === 'Completed') ? '#dcfce7' : selectedPO.status === 'Ordered' ? '#dbeafe' : '#fef3c7', 
-                  color: (selectedPO.status === 'Approved' || selectedPO.status === 'Completed') ? '#166534' : selectedPO.status === 'Ordered' ? '#1e40af' : '#92400e', 
-                  padding: '6px 14px', borderRadius: '12px', fontSize: 13, fontWeight: 600 
+                <span style={{
+                  background: (selectedPO.status === 'Approved' || selectedPO.status === 'Completed') ? '#dcfce7' : selectedPO.status === 'Ordered' ? '#dbeafe' : '#fef3c7',
+                  color: (selectedPO.status === 'Approved' || selectedPO.status === 'Completed') ? '#166534' : selectedPO.status === 'Ordered' ? '#1e40af' : '#92400e',
+                  padding: '6px 14px', borderRadius: '12px', fontSize: 13, fontWeight: 600
                 }}>
                   {selectedPO.status}
                 </span>

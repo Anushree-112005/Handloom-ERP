@@ -334,15 +334,15 @@ export default function WarpBeamReceipt() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginBottom: 24 }}>
-            <div className="card stat-card" onClick={() => setTypeFilter('All Types')} style={{ cursor: 'pointer', border: typeFilter === 'All Types' ? '2px solid var(--primary)' : '1px solid transparent' }}>
+            <div className="card stat-card" onClick={() => setTypeFilter('All Types')} style={{ cursor: 'pointer', transition: 'all 0.2s' }}>
               <div className="stat-icon purple"><ArrowDownToLine size={24} /></div>
               <div className="stat-details"><h3>Total Receipts</h3><div className="value">{receipts.length}</div></div>
             </div>
-            <div className="card stat-card" onClick={() => setTypeFilter('Direct')} style={{ cursor: 'pointer', border: typeFilter === 'Direct' ? '2px solid #10b981' : '1px solid transparent' }}>
+            <div className="card stat-card" onClick={() => setTypeFilter('Direct')} style={{ cursor: 'pointer', transition: 'all 0.2s' }}>
               <div className="stat-icon emerald"><ArrowDownToLine size={24} /></div>
               <div className="stat-details"><h3>Direct</h3><div className="value">{receipts.filter(r => r.rcvd_type === 'Direct').length}</div></div>
             </div>
-            <div className="card stat-card" onClick={() => setTypeFilter('Against Order')} style={{ cursor: 'pointer', border: typeFilter === 'Against Order' ? '2px solid #f59e0b' : '1px solid transparent' }}>
+            <div className="card stat-card" onClick={() => setTypeFilter('Against Order')} style={{ cursor: 'pointer', transition: 'all 0.2s' }}>
               <div className="stat-icon amber"><ArrowDownToLine size={24} /></div>
               <div className="stat-details"><h3>Against Order</h3><div className="value">{receipts.filter(r => r.rcvd_type === 'Against Order').length}</div></div>
             </div>

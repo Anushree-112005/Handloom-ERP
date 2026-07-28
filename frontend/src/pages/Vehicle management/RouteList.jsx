@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { showError, showSuccess } from '../../utils/notifications';
 import { showConfirm } from '../../components/ConfirmDialog';
-import { Plus, MapPin, Navigation, Clock, DollarSign, Save, X, Edit2, Trash2, Eye, Search, Filter, Download } from 'lucide-react';
+import { Plus, MapPin, Navigation, Clock, DollarSign, Save, X, Edit2, Trash2, Eye, Search, Filter, Download, ArrowLeft } from 'lucide-react';
+import MasterDropdown from '../../components/MasterDropdown';
 import { getDispatches } from '../../services/dispatchService';
 import * as XLSX from 'xlsx';
 
@@ -291,17 +292,23 @@ const RouteList = () => {
   if (view === 'form') {
     return (
       <div className="animate-fade">
-        <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{editingRoute ? 'Edit Route' : 'Add New Route'}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setView('list')}><X size={16} /> Close</button>
-              <button type="submit" form="routeForm" className="btn btn-primary" disabled={isSaving}><Save size={16} /> {isSaving ? 'Saving...' : (editingRoute ? 'Update Route' : 'Save Route')}</button>
-            </div>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+          <button 
+            type="button"
+            onClick={() => setView('list')} 
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+            onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+            onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            {editingRoute ? 'Edit Route' : 'Add New Route'}
+          </h2>
+        </div>
 
-          <div style={{ padding: 32, background: '#fff' }}>
-            <form id="routeForm" onSubmit={handleSubmit}>
+        <div className="card" style={{ padding: 32, background: '#fff' }}>
+          <form id="routeForm" onSubmit={handleSubmit}>
               <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Route Details</h4>
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 <div className="form-group">
@@ -340,22 +347,34 @@ const RouteList = () => {
                 </div>
                 <div className="form-group">
                   <label>Road Condition *</label>
-                  <select className="form-control" name="roadCondition" value={formData.roadCondition} onChange={handleInputChange} required>
-                    {roadConditions.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <MasterDropdown
+                    entity="road_condition"
+                    value={formData.roadCondition}
+                    onChange={(val) => setFormData({ ...formData, roadCondition: val })}
+                    options={roadConditions.map(c => ({ value: c, label: c }))}
+                    placeholder="Select Road Condition"
+                  />
                 </div>
 
                 <div className="form-group">
                   <label>Route Type *</label>
-                  <select className="form-control" name="routeType" value={formData.routeType} onChange={handleInputChange} required>
-                    {routeTypes.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <MasterDropdown
+                    entity="route_type"
+                    value={formData.routeType}
+                    onChange={(val) => setFormData({ ...formData, routeType: val })}
+                    options={routeTypes.map(c => ({ value: c, label: c }))}
+                    placeholder="Select Route Type"
+                  />
                 </div>
                 <div className="form-group">
                   <label>Difficulty *</label>
-                  <select className="form-control" name="difficulty" value={formData.difficulty} onChange={handleInputChange} required>
-                    {difficulties.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <MasterDropdown
+                    entity="route_difficulty"
+                    value={formData.difficulty}
+                    onChange={(val) => setFormData({ ...formData, difficulty: val })}
+                    options={difficulties.map(c => ({ value: c, label: c }))}
+                    placeholder="Select Difficulty"
+                  />
                 </div>
                 <div className="form-group" style={{ display: 'flex', alignItems: 'center', paddingTop: 24 }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
@@ -377,18 +396,25 @@ const RouteList = () => {
                 </div>
                 <div className="form-group">
                   <label>Fuel Station (Linked)</label>
-                  <select className="form-control" name="fuelStationId" value={formData.fuelStationId} onChange={handleInputChange}>
-                    <option value="">Select a Station</option>
-                    {stations.map(s => <option key={s.id} value={s.id}>{s.name} - {s.location}</option>)}
-                  </select>
+                  <MasterDropdown
+                    value={formData.fuelStationId}
+                    onChange={(val) => {
+                      const st = stations.find(s => String(s.id) === String(val));
+                      setFormData({ ...formData, fuelStationId: val, fuelStationName: st ? st.name : formData.fuelStationName });
+                    }}
+                    options={stations.map(s => ({ value: s.id, label: `${s.name} - ${s.location || ''}`.trim() }))}
+                    placeholder="Select a Station"
+                  />
                 </div>
 
                 <div className="form-group">
                   <label>Vehicle Number</label>
-                  <select className="form-control" name="fuelVehicleNumber" value={formData.fuelVehicleNumber} onChange={handleInputChange}>
-                    <option value="">Select Vehicle</option>
-                    {vehicles.map(v => <option key={v.id} value={v.vehicle_number}>{v.vehicle_number}</option>)}
-                  </select>
+                  <MasterDropdown
+                    value={formData.fuelVehicleNumber}
+                    onChange={(val) => setFormData({ ...formData, fuelVehicleNumber: val })}
+                    options={vehicles.map(v => ({ value: v.vehicle_number, label: v.vehicle_number }))}
+                    placeholder="Select Vehicle"
+                  />
                 </div>
                 <div className="form-group">
                   <label>Fuel Quantity (Liters)</label>
@@ -401,18 +427,30 @@ const RouteList = () => {
 
                 <div className="form-group">
                   <label>Payment Mode</label>
-                  <select className="form-control" name="fuelPaymentMode" value={formData.fuelPaymentMode} onChange={handleInputChange}>
-                    {paymentMethods.map(m => <option key={m} value={m}>{m}</option>)}
-                  </select>
+                  <MasterDropdown
+                    entity="payment_mode"
+                    value={formData.fuelPaymentMode}
+                    onChange={(val) => setFormData({ ...formData, fuelPaymentMode: val })}
+                    options={paymentMethods.map(m => ({ value: m, label: m }))}
+                    placeholder="Select Payment Mode"
+                  />
                 </div>
                 <div className="form-group">
                   <label>Odometer Reading</label>
                   <input type="number" step="0.1" className="form-control" name="fuelOdometer" value={formData.fuelOdometer} onChange={handleInputChange} />
                 </div>
               </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
+                  <X size={16} /> Close
+                </button>
+                <button type="submit" disabled={isSaving} className="btn btn-primary">
+                  <Save size={16} /> {isSaving ? 'Saving...' : (editingRoute ? 'Update Route' : 'Save Route')}
+                </button>
+              </div>
             </form>
           </div>
-        </div>
       </div>
     );
   }
@@ -496,11 +534,19 @@ const RouteList = () => {
             <span style={{ fontSize: 13, fontWeight: 600 }}>Filter:</span>
           </div>
 
-          <select className="form-control" style={{ width: 180, margin: 0 }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-            <option value="All Status">All Status</option>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-          </select>
+          <div style={{ width: 180 }}>
+            <MasterDropdown
+              value={statusFilter}
+              onChange={(val) => setStatusFilter(val || 'All Status')}
+              options={[
+                { value: 'All Status', label: 'All Status' },
+                { value: 'Active', label: 'Active' },
+                { value: 'Inactive', label: 'Inactive' }
+              ]}
+              placeholder="Filter Status"
+              allowClear={false}
+            />
+          </div>
 
           <button className="btn btn-secondary" onClick={handleExportExcel} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <Download size={16} /> Export Excel

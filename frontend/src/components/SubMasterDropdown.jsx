@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { CheckCircle, X, Edit2, Trash2, ChevronDown } from 'lucide-react';
 import { subMasterAPI } from '../services/api';
 
@@ -22,6 +23,7 @@ export default function SubMasterDropdown({
   filterFn,
   allowCustom = true,
   multiple = false,
+  extraOptions = [],
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,10 +33,25 @@ export default function SubMasterDropdown({
   const [addingText, setAddingText] = useState('');
   const [busy, setBusy] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [dropdownCoords, setDropdownCoords] = useState(null);
   const containerRef = useRef(null);
 
   const selectedValues = multiple ? (value ? value.split(', ') : []) : [];
-  const withIdsList = options?.masters_with_ids?.[entity] || [];
+  const withIdsList = [...extraOptions, ...(options?.masters_with_ids?.[entity] || [])];
+
+  // Calculate dropdown position when opened
+  useEffect(() => {
+    if (isOpen && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      setDropdownCoords({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width
+      });
+    } else {
+      setDropdownCoords(null);
+    }
+  }, [isOpen]);
 
   // Reset highlighted index when dropdown is toggled or search term changes
   useEffect(() => {
@@ -44,7 +61,12 @@ export default function SubMasterDropdown({
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleOutsideClick = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target) &&
+        !e.target.closest('.master-dropdown-portal') &&
+        !e.target.closest('.submaster-dropdown-portal')
+      ) {
         setIsOpen(false);
         setEditingId(null);
         setAddingMode(false);
@@ -218,7 +240,7 @@ export default function SubMasterDropdown({
       onKeyDown={handleKeyDown}
     >
       {label && <label>{label}{required ? ' *' : ''}</label>}
-      
+
       {/* Dropdown Trigger */}
       <div
         className="form-control"
@@ -252,26 +274,25 @@ export default function SubMasterDropdown({
       </div>
 
       {/* Floating Dropdown Menu */}
-      {isOpen && !disabled && (
+      {isOpen && !disabled && dropdownCoords && createPortal(
         <div
-          onKeyDown={(e) => {
-            e.stopPropagation();
-            if (e.key === ' ' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON') {
-              e.preventDefault();
-            }
-          }}
+          className="submaster-dropdown-portal"
           style={{
             position: 'absolute',
-            top: '100%',
-            left: 0,
-            right: 0,
-            zIndex: 1000,
-            background: '#fff',
+            top: `${dropdownCoords.top + 4}px`,
+            left: `${dropdownCoords.left}px`,
+            width: `${Math.max(dropdownCoords.width, 220)}px`,
+            background: 'white',
             border: '1px solid var(--border)',
             borderRadius: '8px',
-            boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)',
-            marginTop: '4px',
-            overflow: 'hidden'
+            boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+            zIndex: 9999,
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+          onMouseDown={(e) => {
+            // Prevent outside click handler from firing when clicking inside the portal
+            e.stopPropagation();
           }}
         >
           {/* Search bar */}
@@ -287,7 +308,7 @@ export default function SubMasterDropdown({
               border: '1px solid var(--border)',
               borderRadius: '6px'
             }}
-            placeholder={`Search ${label}...`}
+            placeholder={`Search ${label || category || 'options'}...`}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onClick={(e) => e.stopPropagation()}
@@ -368,7 +389,7 @@ export default function SubMasterDropdown({
                         >
                           <CheckCircle size={14} />
                         </button>
-                         <button
+                        <button
                           type="button"
                           className="btn btn-secondary"
                           style={{ padding: '0 6px', height: '28px', display: 'flex', alignItems: 'center' }}
@@ -387,7 +408,7 @@ export default function SubMasterDropdown({
                             <input
                               type="checkbox"
                               checked={selectedValues.includes(item.name)}
-                              onChange={() => {}}
+                              onChange={() => { }}
                               style={{ cursor: 'pointer', pointerEvents: 'none' }}
                             />
                           )}
@@ -509,7 +530,8 @@ export default function SubMasterDropdown({
               </div>
             )
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -8,6 +8,7 @@ export default function WarehouseStock() {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [statusFilter, setStatusFilter] = useState('All');
   
   // New Item State
   const [newItem, setNewItem] = useState({
@@ -114,6 +115,9 @@ export default function WarehouseStock() {
   };
 
   const filteredItems = stockItems.filter(item => {
+    if (statusFilter === 'Verified' && item.status !== 'Verified') return false;
+    if (statusFilter === 'Pending' && item.status === 'Verified') return false;
+    if (statusFilter === 'With Photos' && (!item.images || item.images.length === 0)) return false;
     if (!searchTerm) return true;
     const lowerTerm = searchTerm.toLowerCase();
     return (
@@ -155,6 +159,65 @@ export default function WarehouseStock() {
           <button className="btn btn-primary" onClick={() => setShowAddModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <Plus size={16} /> New Stock Record
           </button>
+        </div>
+      </div>
+
+      {/* Summary Stat Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
+        <div
+          className="card stat-card"
+          onClick={() => setStatusFilter('All')}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+        >
+          <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
+            <Package size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Total Records</h3>
+            <div className="value">{stockItems.length}</div>
+          </div>
+        </div>
+
+        <div
+          className="card stat-card"
+          onClick={() => setStatusFilter('Verified')}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+        >
+          <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
+            <CheckCircle size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Verified Stock</h3>
+            <div className="value">{stockItems.filter(i => i.status === 'Verified').length}</div>
+          </div>
+        </div>
+
+        <div
+          className="card stat-card"
+          onClick={() => setStatusFilter('Pending')}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+        >
+          <div className="stat-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>
+            <Clock size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Pending Verification</h3>
+            <div className="value">{stockItems.filter(i => i.status !== 'Verified').length}</div>
+          </div>
+        </div>
+
+        <div
+          className="card stat-card"
+          onClick={() => setStatusFilter('With Photos')}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+        >
+          <div className="stat-icon" style={{ background: 'rgba(139,92,246,0.1)', color: '#8b5cf6' }}>
+            <ImageIcon size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>With Photos</h3>
+            <div className="value">{stockItems.filter(i => i.images && i.images.length > 0).length}</div>
+          </div>
         </div>
       </div>
 

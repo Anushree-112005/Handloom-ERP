@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { Plus, Save, Trash2, X, FileText, Image, Search, Filter, Upload, Download } from 'lucide-react';
+import MasterDropdown from '../../components/MasterDropdown';
 
 export default function SwatchCardManagement() {
   const [view, setView] = useState('list'); // 'list' or 'form'
@@ -269,9 +270,6 @@ export default function SwatchCardManagement() {
               </h2>
               <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Enter swatch specifications and digital footprint details</p>
             </div>
-            <button onClick={() => setView('list')} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              Back to List
-            </button>
           </div>
 
           <div className="card animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -279,15 +277,15 @@ export default function SwatchCardManagement() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20 }}>
                 <div className="form-group">
                   <label>Swatch Type <span style={{ color: '#ef4444' }}>*</span></label>
-                  <select 
-                    value={formData.swatch_type} 
-                    onChange={(e) => setFormData({ ...formData, swatch_type: e.target.value })}
-                    className="form-control"
-                  >
-                    {swatchTypes.map(t => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
+                  <MasterDropdown
+                    label="Swatch Type"
+                    name="swatch_type"
+                    entity="swatch_type"
+                    value={formData.swatch_type}
+                    onChange={(val) => setFormData({ ...formData, swatch_type: val })}
+                    options={swatchTypes}
+                    allowCustom={true}
+                  />
                 </div>
 
                 <div className="form-group">

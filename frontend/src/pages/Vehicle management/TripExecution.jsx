@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { showError, showSuccess } from '../../utils/notifications';
+import { promptDialog } from '../../utils/dialogs';
 import { Play, MapPin, Truck, User, Package, CheckCircle, Clock } from 'lucide-react';
 
 const TripExecution = () => {
@@ -127,8 +128,12 @@ const TripExecution = () => {
                     <button onClick={() => handleStatusUpdate(trip.id, 'COMPLETED')} className="btn btn-success">
                       Complete Trip
                     </button>
-                    <button onClick={() => {
-                      const issue = window.prompt("Enter issue detail:");
+                    <button onClick={async () => {
+                      const issue = await promptDialog({
+                        title: 'Report Issue',
+                        message: 'Enter issue detail for this trip:',
+                        promptPlaceholder: 'Describe the issue...'
+                      });
                       if (issue) handleReportIssue(trip, issue);
                     }} className="btn btn-secondary">
                       Report Issue

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Key, Plus, Trash2, Edit2 } from 'lucide-react';
 import api from '../../services/api';
+import { confirmDialog, alertDialog } from '../../utils/dialogs';
 
 export default function RoleManagement() {
   const [roles, setRoles] = useState([]);
@@ -59,7 +60,7 @@ export default function RoleManagement() {
       setEditingRole(null);
       setFormData({ name: '', description: '' });
     } catch (err) {
-      alert(err.response?.data?.detail || 'Failed to save role');
+      alertDialog({ title: 'Error', message: err.response?.data?.detail || 'Failed to save role', type: 'error' });
     } finally {
       setSubmitting(false);
     }
@@ -72,12 +73,18 @@ export default function RoleManagement() {
   };
 
   const handleDeleteRole = async (roleId) => {
-    if (!window.confirm("Are you sure you want to delete this role?")) return;
+    const confirmed = await confirmDialog({
+      title: 'Delete Role',
+      message: 'Are you sure you want to delete this role? This action cannot be undone.',
+      type: 'delete',
+      confirmText: 'Delete'
+    });
+    if (!confirmed) return;
     try {
       await api.delete(`/rbac/roles/${roleId}`);
       setRoles(roles.filter(r => r.id !== roleId));
     } catch (err) {
-      alert(err.response?.data?.detail || 'Failed to delete role');
+      alertDialog({ title: 'Error', message: err.response?.data?.detail || 'Failed to delete role', type: 'error' });
     }
   };
 

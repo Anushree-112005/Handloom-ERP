@@ -1310,7 +1310,7 @@ export default function PartyMaster() {
         <div
           className="card stat-card"
           onClick={() => handleCardClick('Total')}
-          style={{ cursor: 'pointer', border: typeFilter === 'All Types' && statusFilter === 'All Status' ? '2px solid var(--primary)' : '1px solid transparent', transition: 'all 0.2s' }}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
             <Users size={24} />
@@ -1324,7 +1324,7 @@ export default function PartyMaster() {
         <div
           className="card stat-card"
           onClick={() => handleCardClick('Sales Party')}
-          style={{ cursor: 'pointer', border: typeFilter === 'Sales Party' ? '2px solid #10b981' : '1px solid transparent', transition: 'all 0.2s' }}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
             <ShoppingCart size={24} />
@@ -1338,7 +1338,7 @@ export default function PartyMaster() {
         <div
           className="card stat-card"
           onClick={() => handleCardClick('Purchase Party')}
-          style={{ cursor: 'pointer', border: typeFilter === 'Purchase Party' ? '2px solid #f59e0b' : '1px solid transparent', transition: 'all 0.2s' }}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>
             <Briefcase size={24} />
@@ -1352,7 +1352,7 @@ export default function PartyMaster() {
         <div
           className="card stat-card"
           onClick={() => handleCardClick('Active')}
-          style={{ cursor: 'pointer', border: statusFilter === 'Active' ? '2px solid #8b5cf6' : '1px solid transparent', transition: 'all 0.2s' }}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(139,92,246,0.1)', color: '#8b5cf6' }}>
             <CheckCircle size={24} />

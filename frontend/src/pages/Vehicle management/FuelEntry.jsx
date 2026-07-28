@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Fuel, Search, Filter, Edit2, Trash2, X, Save, TrendingUp, Zap } from 'lucide-react';
+import { Plus, Fuel, Search, Filter, Edit2, Trash2, X, Save, TrendingUp, Zap, ArrowLeft } from 'lucide-react';
 import api from '../../services/api';
+import MasterDropdown from '../../components/MasterDropdown';
 import { showError, showSuccess } from '../../utils/notifications';
 import { showConfirm } from '../../components/ConfirmDialog';
 
@@ -136,25 +137,33 @@ export default function FuelEntry() {
   if (view === 'form') {
     return (
       <div className="animate-fade">
-        <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{editingId ? 'Edit Fuel Entry' : 'New Fuel Entry'}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setView('list')}><X size={16} /> Close</button>
-              <button type="submit" form="entryForm" className="btn btn-primary"><Save size={16} /> Save Entry</button>
-            </div>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+          <button 
+            type="button"
+            onClick={() => setView('list')} 
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+            onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+            onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            {editingId ? 'Edit Fuel Entry' : 'New Fuel Entry'}
+          </h2>
+        </div>
 
-          <div style={{ padding: 32 }}>
-            <form id="entryForm" onSubmit={handleSubmit}>
+        <div className="card" style={{ padding: 32, background: '#fff' }}>
+          <form id="entryForm" onSubmit={handleSubmit}>
               <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Fuel Entry Details</h4>
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 <div className="form-group">
                   <label>Vehicle *</label>
-                  <select className="form-control" name="vehicle_id" value={formData.vehicle_id} onChange={handleInputChange} required>
-                    <option value="">-- Select Vehicle --</option>
-                    {vehicles.map(v => <option key={v.id} value={v.id}>{v.vehicle_number}</option>)}
-                  </select>
+                  <MasterDropdown
+                    value={formData.vehicle_id}
+                    onChange={(val) => setFormData({ ...formData, vehicle_id: val })}
+                    options={vehicles.map(v => ({ value: v.id, label: v.vehicle_number }))}
+                    placeholder="Select Vehicle"
+                  />
                 </div>
                 <div className="form-group">
                   <label>Date *</label>
@@ -162,9 +171,13 @@ export default function FuelEntry() {
                 </div>
                 <div className="form-group">
                   <label>Fuel Type *</label>
-                  <select className="form-control" name="fuel_type" value={formData.fuel_type} onChange={handleInputChange} required>
-                    {fuelTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
+                  <MasterDropdown
+                    entity="fuel_type"
+                    value={formData.fuel_type}
+                    onChange={(val) => setFormData({ ...formData, fuel_type: val })}
+                    options={fuelTypes.map(t => ({ value: t, label: t }))}
+                    placeholder="Select Fuel Type"
+                  />
                 </div>
 
                 <div className="form-group">
@@ -190,9 +203,17 @@ export default function FuelEntry() {
                   <textarea className="form-control" name="notes" value={formData.notes} onChange={handleInputChange} rows="3" style={{ resize: 'vertical' }}></textarea>
                 </div>
               </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
+                  <X size={16} /> Close
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  <Save size={16} /> {editingId ? 'Update Entry' : 'Save Entry'}
+                </button>
+              </div>
             </form>
           </div>
-        </div>
       </div>
     );
   }
@@ -267,10 +288,18 @@ export default function FuelEntry() {
           <Filter size={16} />
           <span style={{ fontSize: 13, fontWeight: 600 }}>Type:</span>
         </div>
-        <select className="form-control" style={{ width: 120, margin: 0 }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-          <option value="All">All Types</option>
-          {fuelTypes.map(t => <option key={t} value={t}>{t}</option>)}
-        </select>
+        <div style={{ width: 160 }}>
+          <MasterDropdown
+            value={statusFilter}
+            onChange={(val) => setStatusFilter(val || 'All')}
+            options={[
+              { value: 'All', label: 'All Types' },
+              ...fuelTypes.map(t => ({ value: t, label: t }))
+            ]}
+            placeholder="Filter Type"
+            allowClear={false}
+          />
+        </div>
       </div>
 
       {/* Split Layout */}

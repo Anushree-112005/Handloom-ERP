@@ -2,27 +2,28 @@ import React, { useState, useEffect } from 'react';
 import storesService from '../../services/storesService';
 import {
   Plus, Trash2, Search, RefreshCw, CheckCircle, AlertCircle,
-  Loader2, Package, TrendingUp, Warehouse, ClipboardCheck, ShieldCheck, Save
+  Loader2, Package, TrendingUp, Warehouse, ClipboardCheck, ShieldCheck, Save, X, ArrowLeft
 } from 'lucide-react';
+import MasterDropdown from '../../components/MasterDropdown';
 
 const inspectionColors = {
-  'Accepted':  'bg-emerald-50 text-emerald-600',
-  'Rejected':  'bg-red-50 text-red-500',
-  'Partial':   'bg-amber-50 text-amber-600',
-  'Pending':   'bg-slate-100 text-slate-500',
+  'Accepted': 'bg-emerald-50 text-emerald-600',
+  'Rejected': 'bg-red-50 text-red-500',
+  'Partial': 'bg-amber-50 text-amber-600',
+  'Pending': 'bg-slate-100 text-slate-500',
 };
 
 export default function GRNStockInward() {
-  const [view, setView]               = useState('list');
-  const [loading, setLoading]         = useState(false);
+  const [view, setView] = useState('list');
+  const [loading, setLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
-  const [grns, setGrns]               = useState([]);
-  const [pos, setPOs]                 = useState([]);
-  const [employees, setEmployees]     = useState([]);
-  const [warehouses, setWarehouses]   = useState([]);
-  const [itemsList, setItemsList]     = useState([]);
-  const [searchTerm, setSearchTerm]   = useState('');
-  const [toast, setToast]             = useState({ show: false, msg: '', ok: true });
+  const [grns, setGrns] = useState([]);
+  const [pos, setPOs] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [warehouses, setWarehouses] = useState([]);
+  const [itemsList, setItemsList] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [toast, setToast] = useState({ show: false, msg: '', ok: true });
 
   const [formData, setFormData] = useState({
     po_id: '', received_by_id: '', warehouse_id: '', items: []
@@ -75,17 +76,17 @@ export default function GRNStockInward() {
         po_id: poId,
         warehouse_id: sel.delivery_warehouse_id || prev.warehouse_id,
         items: sel.items.map(i => ({
-          item_id: i.item_id, 
+          item_id: i.item_id,
           item_name: i.item_name,
-          category_id: i.category_id, 
+          category_id: i.category_id,
           uom_id: i.uom_id,
-          ordered_quantity: i.quantity, 
+          ordered_quantity: i.quantity,
           received_quantity: i.quantity,
-          inspection_status: 'Accepted', 
-          rack_bin: '', 
-          room: '', 
-          rack: '', 
-          rack_no: '', 
+          inspection_status: 'Accepted',
+          rack_bin: '',
+          room: '',
+          rack: '',
+          rack_no: '',
           remarks: ''
         }))
       }));
@@ -131,6 +132,7 @@ export default function GRNStockInward() {
       });
       showToast('GRN logged successfully! Stock levels updated.');
       setView('list');
+      loadData();
     } catch (err) { console.error(err); showToast('Failed to log GRN.', false); }
     finally { setSubmitLoading(false); }
   };
@@ -149,14 +151,22 @@ export default function GRNStockInward() {
   const linkedPO = pos.find(p => p.id === parseInt(formData.po_id));
 
   const stats = [
-    { label: 'Total GRNs',       value: grns.length,
-      icon: <ClipboardCheck size={24} />, color: '#10b981' },
-    { label: 'Pending POs',      value: pos.filter(p => p.status === 'Approved' || p.status === 'Pending').length,
-      icon: <Package size={24} />,        color: '#f59e0b' },
-    { label: 'Warehouses',        value: warehouses.length,
-      icon: <Warehouse size={24} />,      color: '#3b82f6' },
-    { label: 'Items Tracked',     value: itemsList.length,
-      icon: <TrendingUp size={24} />,     color: '#8b5cf6' },
+    {
+      label: 'Total GRNs', value: grns.length,
+      icon: <ClipboardCheck size={24} />, color: '#10b981'
+    },
+    {
+      label: 'Pending POs', value: pos.filter(p => p.status === 'Approved' || p.status === 'Pending').length,
+      icon: <Package size={24} />, color: '#f59e0b'
+    },
+    {
+      label: 'Warehouses', value: warehouses.length,
+      icon: <Warehouse size={24} />, color: '#3b82f6'
+    },
+    {
+      label: 'Items Tracked', value: itemsList.length,
+      icon: <TrendingUp size={24} />, color: '#8b5cf6'
+    },
   ];
 
   return (
@@ -168,41 +178,37 @@ export default function GRNStockInward() {
       )}
 
       {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        padding: "24px",
-        background: "linear-gradient(135deg, var(--bg-surface) 0%, rgba(99, 102, 241, 0.05) 100%)",
-        border: "1px solid var(--border)",
-        borderRadius: "12px",
-        marginBottom: "24px"
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{
-            background: 'rgba(99, 102, 241, 0.1)',
-            color: 'rgb(99, 102, 241)',
-            padding: '12px',
-            borderRadius: '12px'
-          }}>
-            <ClipboardCheck size={24} />
+      {view === 'list' && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: "24px",
+          background: "linear-gradient(135deg, var(--bg-surface) 0%, rgba(99, 102, 241, 0.05) 100%)",
+          border: "1px solid var(--border)",
+          borderRadius: "12px",
+          marginBottom: "24px"
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{
+              background: 'rgba(99, 102, 241, 0.1)',
+              color: 'rgb(99, 102, 241)',
+              padding: '12px',
+              borderRadius: '12px'
+            }}>
+              <ClipboardCheck size={24} />
+            </div>
+            <div>
+              <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>Stock Inward (GRN)</h2>
+              <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Receive, inspect and register newly arrived material shipments from vendors.</p>
+            </div>
           </div>
-          <div>
-            <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>Stock Inward (GRN)</h2>
-            <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Receive, inspect and register newly arrived material shipments from vendors.</p>
-          </div>
-        </div>
-        {view === 'list' ? (
           <button onClick={() => { setFormData({ po_id: '', received_by_id: '', warehouse_id: '', items: [] }); setView('form'); }}
             className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px' }}>
             <Plus size={16} /> New GRN
           </button>
-        ) : (
-          <button onClick={() => setView('list')} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px' }}>
-            ← Back to List
-          </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {view === 'list' ? (
         <>
@@ -279,154 +285,179 @@ export default function GRNStockInward() {
           </div>
         </>
       ) : (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5 mt-4">
-          <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-              <div style={{ padding: '12px', background: 'rgba(16, 185, 129, 0.1)', color: 'rgb(16, 185, 129)', borderRadius: '12px' }}>
-                <ClipboardCheck size={20} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>New GRN — Stock Inward Entry</h3>
-                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>Select the PO to auto-populate items. Verify quantities and inspection status.</p>
-              </div>
-            </div>
-
-            <fieldset style={{ margin: 0, padding: 0, border: 'none' }}>
-              <legend style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '16px' }}>Receipt Details</legend>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '8px' }}>
-                    Purchase Order <span style={{ color: '#ef4444' }}>*</span>
-                  </label>
-                  <select value={formData.po_id} onChange={e => handlePOChange(e.target.value)} required
-                    className="form-control">
-                    <option value="">Select PO Number</option>
-                    {pos.map(po => <option key={po.id} value={po.id}>{po.po_no} — {po.vendor_name}</option>)}
-                  </select>
-                  {linkedPO && (
-                    <p style={{ marginTop: '8px', fontSize: '12px', color: 'rgb(5, 150, 105)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <CheckCircle size={14} /> {linkedPO.items?.length || 0} item(s) loaded from PO
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '8px' }}>
-                    Received By <span style={{ color: '#ef4444' }}>*</span>
-                  </label>
-                  <select value={formData.received_by_id} onChange={e => setFormData({ ...formData, received_by_id: e.target.value })} required
-                    className="form-control">
-                    <option value="">Select Receiver</option>
-                    {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
-                  </select>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '8px' }}>
-                    Storage Warehouse <span style={{ color: '#ef4444' }}>*</span>
-                  </label>
-                  <select value={formData.warehouse_id} onChange={e => setFormData({ ...formData, warehouse_id: e.target.value })} required
-                    className="form-control">
-                    <option value="">Select Warehouse</option>
-                    {warehouses.map(wh => <option key={wh.id} value={wh.id}>{wh.warehouse_name}</option>)}
-                  </select>
-                </div>
-              </div>
-            </fieldset>
-          </div>
-
-          {formData.items.length > 0 ? (
-            <div className="card" style={{ overflow: 'hidden' }}>
-              <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <h4 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <ShieldCheck size={18} style={{ color: 'var(--primary)' }} /> Inward Inspection Checklist
-                </h4>
-                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{formData.items.length} item(s) from PO</span>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="bg-slate-50 text-slate-400 uppercase text-[9px] font-bold tracking-wider border-b border-slate-100">
-                      <th className="px-5 py-3">#</th>
-                      <th className="px-5 py-3">Item</th>
-                      <th className="px-5 py-3 text-right">Ordered</th>
-                      <th className="px-5 py-3">Received Qty</th>
-                      <th className="px-5 py-3">Inspection</th>
-                      <th className="px-5 py-3">Room</th>
-                      <th className="px-5 py-3">Rack</th>
-                      <th className="px-5 py-3">Rack No</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-sm text-slate-600">
-                    {formData.items.map((item, idx) => {
-                      const obj = itemsList.find(i => i.id === item.item_id);
-                      const short = item.received_quantity < item.ordered_quantity;
-                      return (
-                        <tr key={idx} className={`hover:bg-slate-50/50 ${short ? 'bg-amber-50/30' : ''}`}>
-                          <td className="px-5 py-3 font-bold text-slate-400">{idx + 1}</td>
-                          <td className="px-5 py-3">
-                            <p className="font-semibold text-slate-800">{obj?.item_name || `Item #${item.item_id}`}</p>
-                            {obj?.item_code && <p className="text-xs text-slate-400 font-mono">{obj.item_code}</p>}
-                          </td>
-                          <td className="px-5 py-3 text-right font-semibold text-slate-600">{item.ordered_quantity}</td>
-                          <td className="px-5 py-3">
-                            <input type="number" min="0" value={item.received_quantity}
-                              onChange={e => setItemField(idx, 'received_quantity', parseFloat(e.target.value) || 0)}
-                              className={`form-control ${short ? 'border-amber-300 bg-amber-50' : ''}`}
-                              style={{ width: '90px', padding: '6px 10px' }} />
-                            {short && <p className="text-xs text-amber-600 mt-1">Short by {item.ordered_quantity - item.received_quantity}</p>}
-                          </td>
-                          <td className="px-5 py-3">
-                            <select value={item.inspection_status} onChange={e => setItemField(idx, 'inspection_status', e.target.value)}
-                              className="form-control" style={{ minWidth: '110px' }}>
-                              {['Accepted', 'Rejected', 'Partial', 'Pending'].map(s => <option key={s} value={s}>{s}</option>)}
-                            </select>
-                          </td>
-                          <td className="px-5 py-3">
-                            <input type="text" value={item.room || ''} onChange={e => setItemField(idx, 'room', e.target.value)}
-                              placeholder="e.g. Room A"
-                              className="form-control" style={{ minWidth: '100px' }} />
-                          </td>
-                          <td className="px-5 py-3">
-                            <input type="text" value={item.rack || ''} onChange={e => setItemField(idx, 'rack', e.target.value)}
-                              placeholder="e.g. Rack 3"
-                              className="form-control" style={{ minWidth: '100px' }} />
-                          </td>
-                          <td className="px-5 py-3">
-                            <input type="text" value={item.rack_no || ''} onChange={e => setItemField(idx, 'rack_no', e.target.value)}
-                              placeholder="e.g. R-12"
-                              className="form-control" style={{ minWidth: '100px' }} />
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                  <tfoot>
-                    <tr className="bg-emerald-50/60 border-t-2 border-emerald-100">
-                      <td colSpan={2} className="px-5 py-2.5 text-xs font-bold text-emerald-700">Total Received</td>
-                      <td className="px-5 py-2.5 text-right font-bold text-slate-600">{formData.items.reduce((s, i) => s + (i.ordered_quantity || 0), 0)}</td>
-                      <td className="px-5 py-2.5 font-extrabold text-emerald-700">{formData.items.reduce((s, i) => s + (i.received_quantity || 0), 0)} units</td>
-                      <td colSpan={4} />
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            </div>
-          ) : (
-            <div className="card" style={{ padding: '40px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-              <Package size={36} style={{ color: 'var(--border)' }} />
-              <p style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-muted)' }}>Select a Purchase Order above to load items for inspection.</p>
-            </div>
-          )}
-
-          <div className="flex justify-end gap-3 pt-4">
-            <button type="button" onClick={() => setView('list')} className="btn btn-secondary">Cancel</button>
-            <button type="submit" disabled={submitLoading || formData.items.length === 0}
-              className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              {submitLoading ? <><Loader2 size={16} className="animate-spin" /> Saving…</> : <><Save size={16} /> Record GRN Inward</>}
+        <div className="animate-fade">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+            <button 
+              type="button"
+              onClick={() => setView('list')} 
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+              onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
+              <ArrowLeft size={24} />
             </button>
+            <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+              New GRN — Stock Inward Entry
+            </h2>
           </div>
-        </form>
+
+          <div className="card" style={{ padding: 0 }}>
+            <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
+              <button
+                type="button"
+                style={{
+                  padding: '16px 24px', background: '#fff',
+                  border: 'none', borderBottom: '3px solid var(--primary)',
+                  fontWeight: 600, color: 'var(--primary)',
+                  cursor: 'pointer', whiteSpace: 'nowrap'
+                }}
+              >
+                Stock Inward Details
+              </button>
+            </div>
+
+            <div style={{ padding: 24, background: '#fff' }}>
+              <form onSubmit={handleSubmit}>
+                <fieldset style={{ border: 'none', padding: 0, margin: 0 }}>
+                  <div className="animate-fade">
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                      <div className="form-group">
+                        <label>Purchase Order *</label>
+                        <MasterDropdown
+                          label=""
+                          name="po_id"
+                          value={formData.po_id}
+                          options={pos.map(po => ({...po, name: `${po.po_no} — ${po.vendor_name}`, id: po.id.toString()}))}
+                          required={true}
+                          onChange={(name, val) => handlePOChange(val)}
+                        />
+                        {linkedPO && (
+                          <p style={{ marginTop: '8px', fontSize: '12px', color: 'rgb(5, 150, 105)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <CheckCircle size={14} /> {linkedPO.items?.length || 0} item(s) loaded from PO
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="form-group">
+                        <label>Received By *</label>
+                        <MasterDropdown
+                          label=""
+                          name="received_by_id"
+                          value={formData.received_by_id}
+                          options={employees}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Storage Warehouse *</label>
+                        <MasterDropdown
+                          label=""
+                          name="warehouse_id"
+                          value={formData.warehouse_id}
+                          options={warehouses.map(wh => ({...wh, name: wh.warehouse_name}))}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
+                      </div>
+                    </div>
+
+                    {formData.items.length > 0 ? (
+                      <>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
+                          <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
+                            Inward Inspection Checklist
+                          </h4>
+                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{formData.items.length} item(s) from PO</span>
+                        </div>
+                        <div style={{ overflowX: 'auto', margin: '16px 0' }}>
+                          <table className="data-table" style={{ width: '100%', marginBottom: 0 }}>
+                            <thead>
+                              <tr>
+                                <th style={{ width: 40 }}>#</th>
+                                <th>Item</th>
+                                <th style={{ textAlign: 'right' }}>Ordered</th>
+                                <th style={{ textAlign: 'center' }}>Received Qty</th>
+                                <th>Inspection</th>
+                                <th>Room</th>
+                                <th>Rack</th>
+                                <th>Rack No</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {formData.items.map((item, idx) => {
+                                const obj = itemsList.find(i => i.id === item.item_id);
+                                const short = item.received_quantity < item.ordered_quantity;
+                                return (
+                                  <tr key={idx} style={{ background: short ? 'rgba(245, 158, 11, 0.05)' : 'transparent' }}>
+                                    <td style={{ fontWeight: 600, color: 'var(--text-muted)' }}>{idx + 1}</td>
+                                    <td>
+                                      <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{obj?.item_name || `Item #${item.item_id}`}</div>
+                                      {obj?.item_code && <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'monospace' }}>{obj.item_code}</div>}
+                                    </td>
+                                    <td style={{ textAlign: 'right', fontWeight: 600 }}>{item.ordered_quantity}</td>
+                                    <td style={{ textAlign: 'center' }}>
+                                      <input type="number" min="0" value={item.received_quantity}
+                                        onChange={e => setItemField(idx, 'received_quantity', parseFloat(e.target.value) || 0)}
+                                        className="form-control"
+                                        style={{ width: 100, display: 'inline-block', borderColor: short ? '#fcd34d' : undefined, background: short ? '#fffbeb' : undefined, margin: 0 }} />
+                                      {short && <div style={{ fontSize: 11, color: '#d97706', marginTop: 4 }}>Short by {item.ordered_quantity - item.received_quantity}</div>}
+                                    </td>
+                                    <td>
+                                      <MasterDropdown
+                                        label=""
+                                        name="inspection_status"
+                                        value={item.inspection_status}
+                                        options={['Accepted', 'Rejected', 'Partial', 'Pending']}
+                                        onChange={(name, val) => setItemField(idx, name, val)}
+                                      />
+                                    </td>
+                                    <td>
+                                      <input type="text" value={item.room || ''} onChange={e => setItemField(idx, 'room', e.target.value)} placeholder="e.g. Room A" className="form-control" style={{ minWidth: 90, margin: 0 }} />
+                                    </td>
+                                    <td>
+                                      <input type="text" value={item.rack || ''} onChange={e => setItemField(idx, 'rack', e.target.value)} placeholder="e.g. Rack 3" className="form-control" style={{ minWidth: 90, margin: 0 }} />
+                                    </td>
+                                    <td>
+                                      <input type="text" value={item.rack_no || ''} onChange={e => setItemField(idx, 'rack_no', e.target.value)} placeholder="e.g. R-12" className="form-control" style={{ minWidth: 90, margin: 0 }} />
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                            <tfoot>
+                              <tr style={{ background: 'rgba(16, 185, 129, 0.05)', borderTop: '2px solid rgba(16, 185, 129, 0.2)' }}>
+                                <td colSpan={2} style={{ fontSize: 12, fontWeight: 700, color: '#047857', padding: '12px 16px' }}>Total Received</td>
+                                <td style={{ textAlign: 'right', fontWeight: 700, padding: '12px 16px' }}>{formData.items.reduce((s, i) => s + (i.ordered_quantity || 0), 0)}</td>
+                                <td style={{ textAlign: 'center', fontWeight: 800, color: '#047857', padding: '12px 16px' }}>{formData.items.reduce((s, i) => s + (i.received_quantity || 0), 0)} units</td>
+                                <td colSpan={4} />
+                              </tr>
+                            </tfoot>
+                          </table>
+                        </div>
+                      </>
+                    ) : (
+                      <div style={{ padding: 40, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, border: '1px dashed var(--border)', borderRadius: 12, marginTop: 24, background: 'var(--bg-secondary)' }}>
+                        <Package size={36} style={{ color: 'var(--text-muted)' }} />
+                        <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-muted)' }}>Select a Purchase Order above to load items for inspection.</p>
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, borderTop: '1px solid var(--border)', paddingTop: 24 }}>
+                      <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
+                        Close
+                      </button>
+                      <button type="submit" className="btn btn-primary" disabled={submitLoading || formData.items.length === 0}>
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                </fieldset>
+              </form>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

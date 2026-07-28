@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { FileText, Search, Download, ArrowUpRight, ArrowDownLeft, Filter, Calendar } from 'lucide-react';
+import { FileText, Search, Download, ArrowUpRight, ArrowDownLeft, Filter, Calendar, Package } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import api from '../../services/api';
 
@@ -47,8 +47,66 @@ export default function StockLedger() {
         </div>
       </div>
 
+      {/* Summary Stat Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
+        <div
+          className="card stat-card"
+          onClick={() => setTxnTypeFilter('All Transactions')}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+        >
+          <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
+            <FileText size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Total Transactions</h3>
+            <div className="value">{ledgerData.length}</div>
+          </div>
+        </div>
+
+        <div
+          className="card stat-card"
+          onClick={() => setTxnTypeFilter('Inward')}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+        >
+          <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
+            <ArrowDownLeft size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Inward Receipts</h3>
+            <div className="value">{ledgerData.filter(i => i.type === 'Inward').length}</div>
+          </div>
+        </div>
+
+        <div
+          className="card stat-card"
+          onClick={() => setTxnTypeFilter('Outward')}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+        >
+          <div className="stat-icon" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>
+            <ArrowUpRight size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Outward Issues</h3>
+            <div className="value">{ledgerData.filter(i => i.type === 'Outward').length}</div>
+          </div>
+        </div>
+
+        <div
+          className="card stat-card"
+          style={{ transition: 'all 0.2s' }}
+        >
+          <div className="stat-icon" style={{ background: 'rgba(139,92,246,0.1)', color: '#8b5cf6' }}>
+            <Package size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Total Volume In (Qty)</h3>
+            <div className="value">{ledgerData.reduce((acc, i) => acc + (Number(i.qtyIn) || 0), 0).toLocaleString()}</div>
+          </div>
+        </div>
+      </div>
+
       {/* Filter Controls */}
-      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', gap: 16, alignItems: 'center', background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
+      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', gap: 16, alignItems: 'center', background: 'var(--bg-secondary)' }}>
         <div style={{ position: 'relative', flex: 1 }}>
           <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input 

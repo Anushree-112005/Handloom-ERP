@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Users, Plus, Save, ArrowLeft, Edit2, Search, Trash2, Key, Shield, CheckCircle, XCircle } from 'lucide-react';
 import { employeeAPI } from '../../services/api';
+import { confirmDialog, alertDialog } from '../../utils/dialogs';
 
 const SearchableSelect = ({ options, value, onChange, disabled, placeholder }) => {
   const [search, setSearch] = useState('');
@@ -193,18 +194,24 @@ export default function UserManagement() {
       setView('list');
       fetchUsers();
     } catch (err) {
-      alert("Error saving user. " + (err.response?.data?.detail || err.message));
+      alertDialog({ title: 'Error', message: "Error saving user. " + (err.response?.data?.detail || err.message), type: 'error' });
     }
   };
 
   const handleDelete = async (id, name, e) => {
     e.stopPropagation();
-    if (window.confirm(`Are you sure you want to delete user ${name}?`)) {
+    const confirmed = await confirmDialog({
+      title: 'Delete User',
+      message: `Are you sure you want to delete user ${name}? This action cannot be undone.`,
+      type: 'delete',
+      confirmText: 'Delete'
+    });
+    if (confirmed) {
       try {
         await employeeAPI.delete(id);
         fetchUsers();
       } catch (err) {
-        alert("Error deleting user.");
+        alertDialog({ title: 'Error', message: "Error deleting user.", type: 'error' });
       }
     }
   };

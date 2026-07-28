@@ -1306,7 +1306,7 @@ export default function PackingSlip() {
         <div
           className="card stat-card"
           onClick={() => handleCardClick('Total')}
-          style={{ cursor: 'pointer', border: statusFilter === 'All Status' ? '2px solid var(--primary)' : '1px solid transparent', transition: 'all 0.2s' }}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
             <Box size={24} />
@@ -1320,7 +1320,7 @@ export default function PackingSlip() {
         <div
           className="card stat-card"
           onClick={() => handleCardClick('Packed')}
-          style={{ cursor: 'pointer', border: statusFilter === 'Packed' ? '2px solid #10b981' : '1px solid transparent', transition: 'all 0.2s' }}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
             <CheckCircle size={24} />
@@ -1334,7 +1334,7 @@ export default function PackingSlip() {
         <div
           className="card stat-card"
           onClick={() => handleCardClick('Shipped')}
-          style={{ cursor: 'pointer', border: statusFilter === 'Shipped' ? '2px solid #8b5cf6' : '1px solid transparent', transition: 'all 0.2s' }}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(139,92,246,0.1)', color: '#8b5cf6' }}>
             <RefreshCw size={24} />
@@ -1347,7 +1347,7 @@ export default function PackingSlip() {
 
         <div
           className="card stat-card"
-          style={{ border: '1px solid transparent' }}
+          style={{ transition: 'all 0.2s' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>
             <FileSpreadsheet size={24} />

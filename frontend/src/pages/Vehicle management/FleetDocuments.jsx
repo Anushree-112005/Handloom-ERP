@@ -4,6 +4,7 @@ import {
   Calendar, AlertCircle, CheckCircle, FileText, Upload, ArrowLeft 
 } from 'lucide-react';
 import api from '../../services/api';
+import MasterDropdown from '../../components/MasterDropdown';
 import { showError, showSuccess } from '../../utils/notifications';
 import { showConfirm } from '../../components/ConfirmDialog';
 
@@ -244,31 +245,43 @@ export default function FleetDocuments() {
   if (view === 'form') {
     return (
       <div className="animate-fade">
-        <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{editingId ? 'Edit Compliance Document' : 'New Compliance Document'}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setView('list')}><X size={16} /> Close</button>
-              <button type="submit" form="docForm" className="btn btn-primary"><Save size={16} /> Save Document</button>
-            </div>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+          <button 
+            type="button"
+            onClick={() => setView('list')} 
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+            onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+            onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            {editingId ? 'Edit Compliance Document' : 'New Compliance Document'}
+          </h2>
+        </div>
 
-          <div style={{ padding: 32 }}>
-            <form id="docForm" onSubmit={handleSubmit}>
+        <div className="card" style={{ padding: 32, background: '#fff' }}>
+          <form id="docForm" onSubmit={handleSubmit}>
               <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Document Details</h4>
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 <div className="form-group">
                   <label>Vehicle *</label>
-                  <select className="form-control" name="vehicle_id" value={formData.vehicle_id} onChange={handleInputChange} required>
-                    <option value="">-- Select Vehicle --</option>
-                    {vehicles.map(v => <option key={v.id} value={v.id}>{v.vehicle_number}</option>)}
-                  </select>
+                  <MasterDropdown
+                    value={formData.vehicle_id}
+                    onChange={(val) => setFormData({ ...formData, vehicle_id: val })}
+                    options={vehicles.map(v => ({ value: v.id, label: v.vehicle_number }))}
+                    placeholder="Select Vehicle"
+                  />
                 </div>
                 <div className="form-group">
                   <label>Document Type *</label>
-                  <select className="form-control" name="document_type" value={formData.document_type} onChange={handleInputChange} required>
-                    {docTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
+                  <MasterDropdown
+                    entity="document_type"
+                    value={formData.document_type}
+                    onChange={(val) => setFormData({ ...formData, document_type: val })}
+                    options={docTypes.map(t => ({ value: t, label: t }))}
+                    placeholder="Select Document Type"
+                  />
                 </div>
                 <div className="form-group">
                   <label>Document / Ref Number *</label>
@@ -305,9 +318,17 @@ export default function FleetDocuments() {
                   <textarea className="form-control" name="notes" value={formData.notes} onChange={handleInputChange} rows="4" style={{ resize: 'vertical' }} placeholder="Any additional details..."></textarea>
                 </div>
               </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
+                  <X size={16} /> Close
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  <Save size={16} /> {editingId ? 'Update Document' : 'Save Document'}
+                </button>
+              </div>
             </form>
           </div>
-        </div>
       </div>
     );
   }
@@ -382,21 +403,37 @@ export default function FleetDocuments() {
           <Filter size={16} />
           <span style={{ fontSize: 13, fontWeight: 600 }}>Type:</span>
         </div>
-        <select className="form-control" style={{ width: 200, margin: 0 }} value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
-          <option value="All Types">All Types</option>
-          {docTypes.map(t => <option key={t} value={t}>{t}</option>)}
-        </select>
+        <div style={{ width: 200 }}>
+          <MasterDropdown
+            value={typeFilter}
+            onChange={(val) => setTypeFilter(val || 'All Types')}
+            options={[
+              { value: 'All Types', label: 'All Types' },
+              ...docTypes.map(t => ({ value: t, label: t }))
+            ]}
+            placeholder="Filter Type"
+            allowClear={false}
+          />
+        </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
           <Filter size={16} />
           <span style={{ fontSize: 13, fontWeight: 600 }}>Status:</span>
         </div>
-        <select className="form-control" style={{ width: 150, margin: 0 }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-          <option value="All Status">All Status</option>
-          <option value="Active">Active</option>
-          <option value="Expired">Expired</option>
-          <option value="Soon Expiring">Soon Expiring</option>
-        </select>
+        <div style={{ width: 180 }}>
+          <MasterDropdown
+            value={statusFilter}
+            onChange={(val) => setStatusFilter(val || 'All Status')}
+            options={[
+              { value: 'All Status', label: 'All Status' },
+              { value: 'Active', label: 'Active' },
+              { value: 'Expired', label: 'Expired' },
+              { value: 'Soon Expiring', label: 'Soon Expiring' }
+            ]}
+            placeholder="Filter Status"
+            allowClear={false}
+          />
+        </div>
       </div>
 
       {/* Split Layout */}
