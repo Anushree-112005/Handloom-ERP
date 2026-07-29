@@ -149,16 +149,32 @@ export const storesService = {
     const response = await api.get('/stores-consumables/warehouses');
     return response.data;
   },
+  createWarehouse: async (data) => {
+    const response = await api.post('/stores-consumables/warehouses', data);
+    return response.data;
+  },
   getCostCenters: async () => {
     const response = await api.get('/stores-consumables/cost-centers');
+    return response.data;
+  },
+  createCostCenter: async (data) => {
+    const response = await api.post('/stores-consumables/cost-centers', data);
     return response.data;
   },
   getBudgets: async () => {
     const response = await api.get('/stores-consumables/budgets');
     return response.data;
   },
+  createBudget: async (data) => {
+    const response = await api.post('/stores-consumables/budgets', data);
+    return response.data;
+  },
   getEmployees: async () => {
     const response = await api.get('/stores-consumables/employees');
+    return response.data;
+  },
+  createEmployee: async (data) => {
+    const response = await api.post('/stores-consumables/employees', data);
     return response.data;
   },
   getPRStats: async () => {

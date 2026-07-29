@@ -28,7 +28,7 @@ export default function VehicleList() {
   // Form state
   const initialForm = {
     vehicle_number: '',
-    vehicle_type: 'YARN_CARRIER',
+    vehicle_type: '',
     make: '',
     model: '',
     year_of_manufacture: '',
@@ -42,7 +42,7 @@ export default function VehicleList() {
     permit_expiry: '',
     pollution_expiry: '',
     current_mileage: '',
-    status: 'ACTIVE'
+    status: ''
   };
 
   const [formData, setFormData] = useState(initialForm);
@@ -98,7 +98,7 @@ export default function VehicleList() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.vehicle_number || !formData.make || !formData.model) {
       showError('Please fill required fields: Vehicle Number, Make, Model');
       return;
@@ -216,9 +216,9 @@ export default function VehicleList() {
     return (
       <div className="animate-fade">
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
-          <button 
+          <button
             type="button"
-            onClick={() => setView('list')} 
+            onClick={() => setView('list')}
             style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
             onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
             onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
@@ -232,101 +232,101 @@ export default function VehicleList() {
 
         <div className="card" style={{ padding: 32, background: '#fff' }}>
           <form id="vehicleForm" onSubmit={handleSubmit}>
-              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Vehicle Information</h4>
-              <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-                <div className="form-group">
-                  <label>Vehicle Number *</label>
-                  <input className="form-control" name="vehicle_number" value={formData.vehicle_number} onChange={handleInputChange} placeholder="MH-02-AB-1234" required />
-                </div>
-                <div className="form-group">
-                  <label>Vehicle Type *</label>
-                  <MasterDropdown
-                    entity="vehicle_type"
-                    value={formData.vehicle_type}
-                    onChange={(val) => setFormData({ ...formData, vehicle_type: val })}
-                    options={vehicleTypes}
-                    placeholder="Select Vehicle Type"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Status *</label>
-                  <MasterDropdown
-                    entity="vehicle_status"
-                    value={formData.status}
-                    onChange={(val) => setFormData({ ...formData, status: val })}
-                    options={statusOptions}
-                    placeholder="Select Status"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Make *</label>
-                  <input className="form-control" name="make" value={formData.make} onChange={handleInputChange} placeholder="Tata" required />
-                </div>
-                <div className="form-group">
-                  <label>Model *</label>
-                  <input className="form-control" name="model" value={formData.model} onChange={handleInputChange} placeholder="3118" required />
-                </div>
-                <div className="form-group">
-                  <label>Year of Manufacture</label>
-                  <input type="number" className="form-control" name="year_of_manufacture" value={formData.year_of_manufacture} onChange={handleInputChange} />
-                </div>
-
-                <div className="form-group">
-                  <label>Chassis Number</label>
-                  <input className="form-control" name="chassis_number" value={formData.chassis_number} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Engine Number</label>
-                  <input className="form-control" name="engine_number" value={formData.engine_number} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Capacity</label>
-                  <input type="number" className="form-control" name="capacity_tons" value={formData.capacity_tons} onChange={handleInputChange} step="0.1" />
-                </div>
-
-                <div className="form-group">
-                  <label>RC Number</label>
-                  <input className="form-control" name="rc_number" value={formData.rc_number} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Insurance Number</label>
-                  <input className="form-control" name="insurance_number" value={formData.insurance_number} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Insurance Expiry</label>
-                  <input type="date" className="form-control" name="insurance_expiry" value={formData.insurance_expiry} onChange={handleInputChange} />
-                </div>
-
-                <div className="form-group">
-                  <label>Fitness Expiry</label>
-                  <input type="date" className="form-control" name="fitness_expiry" value={formData.fitness_expiry} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Permit Expiry</label>
-                  <input type="date" className="form-control" name="permit_expiry" value={formData.permit_expiry} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Pollution Expiry</label>
-                  <input type="date" className="form-control" name="pollution_expiry" value={formData.pollution_expiry} onChange={handleInputChange} />
-                </div>
-
-                <div className="form-group">
-                  <label>Current Mileage (km)</label>
-                  <input type="number" className="form-control" name="current_mileage" value={formData.current_mileage} onChange={handleInputChange} step="0.1" />
-                </div>
+            <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Vehicle Information</h4>
+            <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+              <div className="form-group">
+                <label>Vehicle Number *</label>
+                <input className="form-control" name="vehicle_number" value={formData.vehicle_number} onChange={handleInputChange} placeholder="MH-02-AB-1234" required />
+              </div>
+              <div className="form-group">
+                <label>Vehicle Type *</label>
+                <MasterDropdown
+                  entity="vehicle_type"
+                  value={formData.vehicle_type}
+                  onChange={(val) => setFormData({ ...formData, vehicle_type: val })}
+                  options={vehicleTypes}
+                  placeholder="--- Select Vehicle Type ---"
+                />
+              </div>
+              <div className="form-group">
+                <label>Status *</label>
+                <MasterDropdown
+                  entity="vehicle_status"
+                  value={formData.status}
+                  onChange={(val) => setFormData({ ...formData, status: val })}
+                  options={statusOptions}
+                  placeholder="--- Select Status ---"
+                />
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
-                  <X size={16} /> Close
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  <Save size={16} /> {editingId ? 'Update Vehicle' : 'Save Vehicle'}
-                </button>
+              <div className="form-group">
+                <label>Make *</label>
+                <input className="form-control" name="make" value={formData.make} onChange={handleInputChange} placeholder="Tata" required />
               </div>
-            </form>
-          </div>
+              <div className="form-group">
+                <label>Model *</label>
+                <input className="form-control" name="model" value={formData.model} onChange={handleInputChange} placeholder="3118" required />
+              </div>
+              <div className="form-group">
+                <label>Year of Manufacture</label>
+                <input type="number" className="form-control" name="year_of_manufacture" value={formData.year_of_manufacture} onChange={handleInputChange} />
+              </div>
+
+              <div className="form-group">
+                <label>Chassis Number</label>
+                <input className="form-control" name="chassis_number" value={formData.chassis_number} onChange={handleInputChange} />
+              </div>
+              <div className="form-group">
+                <label>Engine Number</label>
+                <input className="form-control" name="engine_number" value={formData.engine_number} onChange={handleInputChange} />
+              </div>
+              <div className="form-group">
+                <label>Capacity</label>
+                <input type="number" className="form-control" name="capacity_tons" value={formData.capacity_tons} onChange={handleInputChange} step="0.1" />
+              </div>
+
+              <div className="form-group">
+                <label>RC Number</label>
+                <input className="form-control" name="rc_number" value={formData.rc_number} onChange={handleInputChange} />
+              </div>
+              <div className="form-group">
+                <label>Insurance Number</label>
+                <input className="form-control" name="insurance_number" value={formData.insurance_number} onChange={handleInputChange} />
+              </div>
+              <div className="form-group">
+                <label>Insurance Expiry</label>
+                <input type="date" className="form-control" name="insurance_expiry" value={formData.insurance_expiry} onChange={handleInputChange} />
+              </div>
+
+              <div className="form-group">
+                <label>Fitness Expiry</label>
+                <input type="date" className="form-control" name="fitness_expiry" value={formData.fitness_expiry} onChange={handleInputChange} />
+              </div>
+              <div className="form-group">
+                <label>Permit Expiry</label>
+                <input type="date" className="form-control" name="permit_expiry" value={formData.permit_expiry} onChange={handleInputChange} />
+              </div>
+              <div className="form-group">
+                <label>Pollution Expiry</label>
+                <input type="date" className="form-control" name="pollution_expiry" value={formData.pollution_expiry} onChange={handleInputChange} />
+              </div>
+
+              <div className="form-group">
+                <label>Current Mileage (km)</label>
+                <input type="number" className="form-control" name="current_mileage" value={formData.current_mileage} onChange={handleInputChange} step="0.1" />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
+                <X size={16} /> Close
+              </button>
+              <button type="submit" className="btn btn-primary">
+                <Save size={16} /> {editingId ? 'Update Vehicle' : 'Save Vehicle'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     );
   }
@@ -420,7 +420,7 @@ export default function VehicleList() {
                 { value: 'INACTIVE', label: 'Inactive' },
                 { value: 'UNDER_MAINTENANCE', label: 'Under Maintenance' }
               ]}
-              placeholder="Filter Status"
+              placeholder="--- Filter Status ---"
               allowClear={false}
             />
           </div>

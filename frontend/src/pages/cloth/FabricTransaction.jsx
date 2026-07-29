@@ -4626,7 +4626,7 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
                                     required={f.required}
                                     disabled={f.readOnly}
                                   >
-                                    <option value="">-- Select --</option>
+                                    <option value="">---select----</option>
                                     {(f.name === 'designNo' && dbDesigns && dbDesigns.length > 0 
                                       ? Array.from(new Set(dbDesigns.map(d => d.design_no).filter(Boolean))) 
                                       : (f.options || [])

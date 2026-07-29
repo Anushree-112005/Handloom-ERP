@@ -2,9 +2,26 @@ import React, { useState } from 'react';
 import { Plus, MapPin, Phone, DollarSign, Fuel, ArrowLeft, Save, X, Edit2, Trash2 } from 'lucide-react';
 import { showConfirm } from '../../components/ConfirmDialog';
 
+const InfoRow2 = ({ label, value }) => (
+  <div style={{ display: 'flex', padding: '8px 0', borderBottom: '1px dashed #e2e8f0', fontSize: 11 }}>
+    <div style={{ width: '40%', color: '#0f172a', fontWeight: 600 }}>{label}</div>
+    <div style={{ width: '5%', color: '#0f172a', textAlign: 'center' }}>:</div>
+    <div style={{ width: '55%', color: '#0f172a', fontWeight: 500 }}>{value || '-'}</div>
+  </div>
+);
+
 const FuelStationList = () => {
   const [fuelStations, setFuelStations] = useState([]);
-  const [mode, setMode] = useState('list'); // 'list' or 'form'
+  const [mode, setMode] = useState('list');
+  const [viewingStation, setViewingStation] = React.useState(null);
+  const profilePreviewRef = React.useRef(null);
+  const generateProfilePDF = async (item) => {
+    if (profilePreviewRef.current) {
+      const safeName = (item?.stationName || 'Station').toString().replace(/[^a-zA-Z0-9_-]/g, '_');
+      await downloadElementAsPdf(profilePreviewRef.current, `Station_Profile_${safeName}.pdf`);
+    }
+  };
+ // 'list' or 'form'
   const [editingStation, setEditingStation] = useState(null);
   const [formData, setFormData] = useState({
     stationName: '',

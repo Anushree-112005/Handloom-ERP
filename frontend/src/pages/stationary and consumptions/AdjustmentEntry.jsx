@@ -33,8 +33,7 @@ export default function AdjustmentEntry() {
   });
 
   const showToast = (msg, ok = true) => {
-    setToast({ show: true, msg, ok });
-    setTimeout(() => setToast({ show: false, msg: '', ok: true }), 3500);
+    if (!ok) alert(msg);
   };
 
   useEffect(() => { loadData(); }, [view]);
@@ -245,56 +244,53 @@ export default function AdjustmentEntry() {
             </div>
 
             <div className="overflow-x-auto flex-1">
-              {loading ? (
-                <div className="p-16 flex flex-col items-center gap-3 text-slate-400">
-                  <Loader2 size={28} className="animate-spin text-violet-400" />
-                  <span className="text-xs">Loading adjustments…</span>
-                </div>
-              ) : filteredAdj.length === 0 ? (
-                <div className="p-16 flex flex-col items-center gap-3 text-slate-400">
-                  <div className="p-5 bg-violet-50 rounded-2xl"><BarChart3 size={38} className="text-violet-300" /></div>
-                  <span className="text-sm font-bold text-slate-600">No stock adjustments recorded yet.</span>
-                  <span className="text-xs text-slate-400">Click "New Adjustment" to reconcile inventory discrepancies.</span>
-                </div>
-              ) : (
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="bg-slate-50/80 text-slate-500 uppercase text-xs font-bold tracking-wider border-b border-slate-100">
-                      <th className="px-5 py-3">Adjustment No</th>
-                      <th className="px-5 py-3">Date</th>
-                      <th className="px-5 py-3">Type</th>
-                      <th className="px-5 py-3">Adjusted By</th>
-                      <th className="px-5 py-3">Reason</th>
-                      <th className="px-5 py-3 text-center">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-sm text-slate-600">
-                    {filteredAdj.map(a => (
-                      <tr key={a.id} className="hover:bg-slate-50/60 transition-colors">
-                        <td className="px-5 py-3 font-bold text-slate-800 font-mono">{a.adjustment_no}</td>
-                        <td className="px-5 py-3">{a.adjustment_date ? new Date(a.adjustment_date).toLocaleDateString('en-IN') : '—'}</td>
-                        <td className="px-5 py-3">
-                          <span className={`px-3 py-1 rounded-full font-bold text-xs ${typeColors[a.type] || 'bg-slate-100 text-slate-500'}`}>{a.type}</span>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Adjustment No</th>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Adjusted By</th>
+                    <th>Reason</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr><td colSpan="6" style={{ textAlign: 'center', padding: 20 }}>Loading...</td></tr>
+                  ) : filteredAdj.length === 0 ? (
+                    <tr><td colSpan="6" style={{ textAlign: 'center', padding: 20 }}>No stock adjustments recorded yet.</td></tr>
+                  ) : (
+                    filteredAdj.map(a => (
+                      <tr key={a.id}>
+                        <td>{a.adjustment_no}</td>
+                        <td>{a.adjustment_date ? new Date(a.adjustment_date).toLocaleDateString('en-IN') : '-'}</td>
+                        <td>
+                          <span className={`status-badge ${a.type?.toLowerCase().replace(' ', '-') || 'addition'}`}>
+                            {a.type}
+                          </span>
                         </td>
-                        <td className="px-5 py-3 font-semibold text-slate-700">{a.adjusted_by_name || '—'}</td>
-                        <td className="px-5 py-3 text-slate-500">{a.reason || 'Routine Audit'}</td>
-                        <td className="px-5 py-3 text-center">
-                          <button onClick={() => handleDelete(a.id)} className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"><Trash2 size={14} /></button>
+                        <td>{a.adjusted_by_name || '-'}</td>
+                        <td>{a.reason || 'Routine Audit'}</td>
+                        <td>
+                          <button onClick={() => handleDelete(a.id)} className="icon-btn delete-btn">
+                            <Trash2 size={16} />
+                          </button>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </>
       ) : (
         <div className="animate-fade">
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
-            <button 
+            <button
               type="button"
-              onClick={() => setView('list')} 
+              onClick={() => setView('list')}
               style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
               onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
               onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
@@ -325,7 +321,7 @@ export default function AdjustmentEntry() {
               <form onSubmit={handleSubmit}>
                 <fieldset style={{ border: 'none', padding: 0, margin: 0 }}>
                   <div className="animate-fade">
-                    
+
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                       <div className="form-group">
                         <label>Adjustment Type *</label>
@@ -334,12 +330,12 @@ export default function AdjustmentEntry() {
                           name="type"
                           value={formData.type}
                           options={[
-                            {id: 'Damage', name: 'Damage (Deduction)'},
-                            {id: 'Expired', name: 'Expired (Deduction)'},
-                            {id: 'Lost', name: 'Lost (Deduction)'},
-                            {id: 'Breakage', name: 'Breakage (Deduction)'},
-                            {id: 'Surplus', name: 'Surplus (Addition)'},
-                            {id: 'Audit Correction', name: 'Audit Correction (Manual)'}
+                            { id: 'Damage', name: 'Damage (Deduction)' },
+                            { id: 'Expired', name: 'Expired (Deduction)' },
+                            { id: 'Lost', name: 'Lost (Deduction)' },
+                            { id: 'Breakage', name: 'Breakage (Deduction)' },
+                            { id: 'Surplus', name: 'Surplus (Addition)' },
+                            { id: 'Audit Correction', name: 'Audit Correction (Manual)' }
                           ]}
                           onChange={(name, val) => handleTypeChange(val)}
                         />
@@ -419,7 +415,7 @@ export default function AdjustmentEntry() {
                                       label=""
                                       name="item_id"
                                       value={item.item_id}
-                                      options={itemsList.map(i => ({...i, name: `${i.item_code} — ${i.item_name}`}))}
+                                      options={itemsList.map(i => ({ ...i, name: `${i.item_code} — ${i.item_name}` }))}
                                       onChange={(name, val) => handleItemChange(idx, val)}
                                     />
                                   </td>

@@ -16,7 +16,7 @@ export default function CategoryMaster() {
     category_code: '',
     category_name: '',
     description: '',
-    status: 'Active'
+    status: ''
   });
 
   const fetchCategories = async () => {
@@ -52,7 +52,7 @@ export default function CategoryMaster() {
         category_code: '',
         category_name: '',
         description: '',
-        status: 'Active'
+        status: ''
       });
       setEditingId(null);
     }
@@ -286,6 +286,7 @@ export default function CategoryMaster() {
                           value={formData.status}
                           options={['Active', 'Inactive']}
                           required={true}
+                          placeholder="----select-----"
                           onChange={(name, val) => setFormData({ ...formData, [name]: val })}
                         />
                       </div>

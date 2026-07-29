@@ -1127,7 +1127,7 @@ export default function PartyMaster() {
                         onChange={handleFieldChange}
                         onOptionsRefresh={handleRefreshOptions}
                         disabled={isReadOnly}
-                        placeholder="-- Select --"
+                        placeholder="---select----"
                       />
 
                       <div className="form-group">
@@ -1191,7 +1191,7 @@ export default function PartyMaster() {
                         onChange={handleFieldChange}
                         onOptionsRefresh={handleRefreshOptions}
                         disabled={isReadOnly}
-                        placeholder="-- Select --"
+                        placeholder="---select----"
                       />
 
                       <SubMasterDropdown
@@ -1216,7 +1216,7 @@ export default function PartyMaster() {
                         onChange={handleFieldChange}
                         onOptionsRefresh={handleRefreshOptions}
                         disabled={isReadOnly}
-                        placeholder="-- Select --"
+                        placeholder="---select----"
                       />
                       <div className="form-group">
                         <label>Deliver Party Name</label>

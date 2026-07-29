@@ -31,8 +31,8 @@ export default function DriverList() {
     phone_number: '',
     address: '',
     years_of_experience: '0',
-    status: 'Active',
-    qualification: 'HMV',
+    status: '',
+    qualification: '',
     aadhar_number: '',
     emergency_contact: '',
     assigned_vehicle_id: ''
@@ -147,8 +147,17 @@ export default function DriverList() {
 
   // FORM VIEW
   if (view === 'form') {
-    return (
-      <div className="animate-fade">
+    
+  const profilePreviewRef = useRef(null);
+  const generateProfilePDF = async (item) => {
+    if (profilePreviewRef.current) {
+      const safeName = (item?.driver_name || 'Driver').toString().replace(/[^a-zA-Z0-9_-]/g, '_');
+      await downloadElementAsPdf(profilePreviewRef.current, `Driver_Profile_${safeName}.pdf`);
+    }
+  };
+
+  return (
+    <div className="animate-fade">
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
           <button 
             type="button"
@@ -191,7 +200,7 @@ export default function DriverList() {
                     value={formData.status}
                     onChange={(val) => setFormData({ ...formData, status: val })}
                     options={statuses.map(s => ({ value: s, label: s }))}
-                    placeholder="Select Status"
+                    placeholder="--- Select Status ---"
                   />
                 </div>
 
@@ -212,7 +221,7 @@ export default function DriverList() {
                       value: v.id,
                       label: `${v.vehicle_number} (${v.make || ''} ${v.model || ''})`.trim()
                     }))}
-                    placeholder="Select a Vehicle"
+                    placeholder="--- Select a Vehicle ---"
                   />
                 </div>
 
@@ -314,15 +323,15 @@ export default function DriverList() {
               { value: 'All', label: 'All Status' },
               ...statuses.map(s => ({ value: s, label: s }))
             ]}
-            placeholder="Filter Status"
+            placeholder="--- Filter Status ---"
             allowClear={false}
           />
         </div>
       </div>
 
       {/* Split Layout */}
+      {/* Full Width Table */}
       <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
-        {/* Table */}
         <div style={{ flex: 1, overflowX: 'auto' }}>
           <div className="card" style={{ padding: 0 }}>
             <table className="data-table">
@@ -357,11 +366,14 @@ export default function DriverList() {
                       </td>
                       <td onClick={e => e.stopPropagation()} style={{ textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                          <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={() => handleOpenForm(d)}>
+                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); setSelectedViewDriver(v); }} title="Preview Profile">
+                            <Eye size={16} color="var(--primary)" />
+                          </button>
+                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); handleOpenForm(v)(); }} title="Edit">
                             <Edit2 size={16} />
                           </button>
-                          <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={(e) => handleDelete(d.id, e)}>
-                            <Trash2 size={16} color="#ef4444" />
+                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); handleDelete(v.id, e); }} title="Delete">
+                            <Trash2 size={16} color="var(--danger, #ef4444)" />
                           </button>
                         </div>
                       </td>
@@ -373,32 +385,73 @@ export default function DriverList() {
           </div>
         </div>
 
-        {/* Details Panel */}
+        
+        {/* Profile View Modal */}
         {selectedViewDriver && (
-          <div style={{ flex: '0 0 380px' }}>
-            <div className="card animate-slide" style={{ position: 'sticky', top: 24, padding: '24px 20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
-                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--primary)' }}>
-                  <Users size={16} style={{ display: 'inline', marginRight: 8 }} />
-                  Driver Details
-                </h3>
-                <button onClick={() => setSelectedViewDriver(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
-                  <X size={18} />
-                </button>
+          <div className="fixed inset-0" style={{ zIndex: 100, display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(4px)' }}>
+            <div className="animate-scale-up" style={{ background: '#f8fafc', width: '95%', maxWidth: 900, height: '90vh', borderRadius: 12, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+              
+              <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', zIndex: 10, flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Eye size={18} style={{ color: '#4f46e5' }} /> 
+                  <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1e293b' }}>Driver Profile Preview</h3>
+                </div>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <button onClick={() => generateProfilePDF(selectedViewDriver)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#e2e8f0', border: 'none', color: '#1e293b', padding: '6px 12px', fontSize: 12, fontWeight: 600 }}>
+                    <Download size={14} /> Download PDF
+                  </button>
+                  <button onClick={() => setSelectedViewDriver(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b' }}><X size={20} /></button>
+                </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, maxHeight: '65vh', overflowY: 'auto' }}>
-                <DetailRow label="Name" value={selectedViewDriver.driver_name} />
-                <DetailRow label="Phone" value={selectedViewDriver.phone_number} />
-                <DetailRow label="License" value={selectedViewDriver.driver_license} />
-                <DetailRow label="License Expiry" value={selectedViewDriver.license_expiry_date} />
-                <DetailRow label="Assigned Vehicle" value={vehicles.find(v => v.id === selectedViewDriver.assigned_vehicle_id)?.vehicle_number || '-'} />
-                <DetailRow label="Experience" value={`${Number(selectedViewDriver.years_of_experience || 0)} years`} />
-                <DetailRow label="Status" value={<span style={{ fontWeight: 800, color: 'var(--primary)' }}>{selectedViewDriver.status}</span>} />
+              <div style={{ flex: 1, overflowY: 'auto', padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div ref={profilePreviewRef} style={{ width: '100%', maxWidth: 794, background: '#ffffff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', borderRadius: 4, position: 'relative', marginBottom: 20, overflow: 'hidden' }}>
+                  
+                  <div style={{ padding: '32px 40px 20px 40px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                        <div><img src={logoImg} alt="Dinesh Exports" style={{ width: 56, height: 56, objectFit: 'contain' }} /></div>
+                        <div>
+                           <h1 style={{ margin: 0, color: '#0f172a', fontSize: 28, fontWeight: 900, letterSpacing: '-0.02em' }}>DINESH EXPORTS</h1>
+                           <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em' }}>THE HOUSE OF FABRICS</p>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'left', width: 300 }}>
+                        <h2 style={{ margin: '0 0 16px 0', color: '#0f172a', fontSize: 18, fontWeight: 800, letterSpacing: '0.05em', textAlign: 'right' }}>DRIVER PROFILE</h2>
+                        <div style={{ display: 'flex', fontSize: 11, marginBottom: 6, alignItems: 'center' }}>
+                          <div style={{ width: 100, fontWeight: 600, color: '#0f172a' }}>Status</div>
+                          <div style={{ width: 20, textAlign: 'center' }}>:</div>
+                          <div><span style={{ background: '#22c55e', color: 'white', padding: '2px 8px', borderRadius: 12, fontSize: 9, fontWeight: 700 }}>{(selectedViewDriver.status || 'ACTIVE').toUpperCase()}</span></div>
+                        </div>
+                        <div style={{ display: 'flex', fontSize: 11, marginBottom: 6 }}>
+                          <div style={{ width: 100, fontWeight: 600, color: '#0f172a' }}>Generated On</div>
+                          <div style={{ width: 20, textAlign: 'center' }}>:</div>
+                          <div style={{ fontWeight: 500, color: '#0f172a' }}>{new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ borderBottom: '3px solid #0f172a' }}></div>
+
+                  <div style={{ padding: '10px 40px 40px 40px' }}>
+                    <div style={{ position: 'relative', border: '1px solid #e2e8f0', borderRadius: 6, padding: '24px 20px 12px 20px', marginTop: 24 }}>
+                      <div style={{ position: 'absolute', top: -14, left: -1, background: '#0f172a', color: 'white', padding: '6px 16px', borderRadius: '6px 6px 6px 0', display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>
+                        <User size={14} /> 1. DETAILS
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 0 }}>
+                        <div>
+                          <InfoRow2 label="Name" value={selectedViewDriver.driver_name} />\n                          <InfoRow2 label="Phone" value={selectedViewDriver.phone_number} />\n                          <InfoRow2 label="License" value={selectedViewDriver.driver_license} />\n                          <InfoRow2 label="License Expiry" value={selectedViewDriver.license_expiry_date} />\n                          <InfoRow2 label="Assigned Vehicle" value={vehicles.find(v => v.id === selectedViewDriver.assigned_vehicle_id)?.vehicle_number || '-'} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         )}
+
       </div>
     </div>
   );

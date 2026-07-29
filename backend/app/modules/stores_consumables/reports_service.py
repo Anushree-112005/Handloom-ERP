@@ -37,23 +37,23 @@ class StoresReportsService:
         report_data = []
         for po in pos:
             vendor_name = po.vendor.vendor_name if po.vendor else "Unknown"
-            if search and search.lower() not in po.po_number.lower() and search.lower() not in vendor_name.lower():
+            if search and search.lower() not in po.po_no.lower() and search.lower() not in vendor_name.lower():
                 continue
             if date_from and str(po.po_date)[:10] < date_from: continue
             if date_to and str(po.po_date)[:10] > date_to: continue
             if vendor and vendor.lower() not in vendor_name.lower(): continue
             if status and status.lower() != po.status.lower(): continue
             
-            total_qty = sum(item.order_qty for item in po.items)
+            total_qty = sum(item.quantity for item in po.items)
             
             report_data.append({
-                "document_number": po.po_number,
+                "document_number": po.po_no,
                 "document_type": "PO",
                 "vendor_name": vendor_name,
                 "date": str(po.po_date)[:10] if po.po_date else "-",
                 "total_items": len(po.items),
                 "total_quantity": total_qty,
-                "total_amount": po.net_amount,
+                "total_amount": po.grand_total,
                 "status": po.status
             })
             
@@ -189,7 +189,7 @@ class StoresReportsService:
             if department and department.lower() not in dept_name.lower(): continue
             if category and category.lower() not in cat_name.lower(): continue
             
-            issued_by_name = issue.issued_by.first_name if issue and issue.issued_by else "Unknown"
+            issued_by_name = issue.issued_by.name if issue and issue.issued_by else "Unknown"
 
             report_data.append({
                 "issue_number": issue.issue_no if issue else "-",

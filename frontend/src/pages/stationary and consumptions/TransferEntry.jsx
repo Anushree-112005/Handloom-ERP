@@ -31,8 +31,7 @@ export default function TransferEntry() {
   });
 
   const showToast = (msg, ok = true) => {
-    setToast({ show: true, msg, ok });
-    setTimeout(() => setToast({ show: false, msg: '', ok: true }), 3500);
+    if (!ok) alert(msg);
   };
 
   useEffect(() => { loadData(); }, [view]);
@@ -90,10 +89,14 @@ export default function TransferEntry() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.source_warehouse_id || !formData.destination_warehouse_id || !formData.transferred_by_id) {
-      showToast('Please fill all required fields.', false); return;
+    const srcId = parseInt(formData.source_warehouse_id);
+    const dstId = parseInt(formData.destination_warehouse_id);
+    const trfId = parseInt(formData.transferred_by_id);
+
+    if (!srcId || isNaN(srcId) || !dstId || isNaN(dstId) || !trfId || isNaN(trfId)) {
+      showToast('Please select valid options from the dropdowns for all required fields.', false); return;
     }
-    if (formData.source_warehouse_id === formData.destination_warehouse_id) {
+    if (srcId === dstId) {
       showToast('Source and destination warehouses must be different.', false); return;
     }
     if (formData.items.length === 0) {
@@ -119,7 +122,12 @@ export default function TransferEntry() {
       showToast('Stock transfer completed successfully!');
       setView('list');
       loadData();
-    } catch (err) { console.error(err); showToast('Failed to execute stock transfer.', false); }
+    } catch (err) {
+      console.error(err);
+      console.error(err.response?.data);
+      alert(JSON.stringify(err.response?.data, null, 2));
+      showToast('Failed to execute stock transfer.', false);
+    }
     finally { setSubmitLoading(false); }
   };
 
@@ -214,70 +222,74 @@ export default function TransferEntry() {
             ))}
           </div>
 
-          <div className="card overflow-hidden flex-1 flex flex-col mt-4">
-            <div className="px-5 py-3 border-b border-slate-50 flex justify-between items-center gap-4 bg-slate-50/40">
+          {/* Filters Card */}
+          <div className="card" style={{ marginBottom: 24, marginTop: 16 }}>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
               <div className="relative w-72">
                 <Search className="absolute left-3 top-2.5 text-slate-400" size={16} />
                 <input type="text" placeholder="Search Transfer No or Warehouse…" value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
-                  className="form-control" style={{ paddingLeft: '36px' }} />
+                  className="form-control" style={{ paddingLeft: '36px', margin: 0 }} />
               </div>
-              <button onClick={loadData} title="Refresh" className="btn btn-secondary p-2"><RefreshCw size={16} /></button>
+              <button onClick={loadData} title="Refresh" className="btn btn-secondary p-2" style={{ height: 'fit-content' }}>
+                <RefreshCw size={16} />
+              </button>
             </div>
+          </div>
 
-            <div className="overflow-x-auto flex-1">
-              {loading ? (
-                <div className="p-16 flex flex-col items-center gap-3 text-slate-400">
-                  <Loader2 size={28} className="animate-spin text-sky-400" />
-                  <span className="text-xs">Loading transfers…</span>
-                </div>
-              ) : filteredTransfers.length === 0 ? (
-                <div className="p-16 flex flex-col items-center gap-3 text-slate-400">
-                  <div className="p-5 bg-sky-50 rounded-2xl"><ArrowRightLeft size={38} className="text-sky-300" /></div>
-                  <span className="text-sm font-bold text-slate-600">No stock transfers recorded yet.</span>
-                  <span className="text-xs text-slate-400">Click "New Transfer" to move stock between warehouses.</span>
-                </div>
-              ) : (
-                <table className="w-full text-left">
+          <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+            <div style={{ flex: 1, overflowX: 'auto' }}>
+              <div className="card" style={{ padding: 0 }}>
+                <table className="data-table">
                   <thead>
-                    <tr className="bg-slate-50/80 text-slate-500 uppercase text-xs font-bold tracking-wider border-b border-slate-100">
-                      <th className="px-5 py-3">Transfer No</th>
-                      <th className="px-5 py-3">Date</th>
-                      <th className="px-5 py-3">From Warehouse</th>
-                      <th className="px-5 py-3">To Warehouse</th>
-                      <th className="px-5 py-3">Transferred By</th>
-                      <th className="px-5 py-3 text-center">Status</th>
-                      <th className="px-5 py-3 text-center">Actions</th>
+                    <tr>
+                      <th>Transfer No</th>
+                      <th>Date</th>
+                      <th>From Warehouse</th>
+                      <th>To Warehouse</th>
+                      <th>Transferred By</th>
+                      <th>Status</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 text-sm text-slate-600">
-                    {filteredTransfers.map(t => (
-                      <tr key={t.id} className="hover:bg-slate-50/60 transition-colors">
-                        <td className="px-5 py-3 font-bold text-slate-800 font-mono">{t.transfer_no}</td>
-                        <td className="px-5 py-3">{t.transfer_date ? new Date(t.transfer_date).toLocaleDateString('en-IN') : '—'}</td>
-                        <td className="px-5 py-3 font-semibold text-slate-700">{t.source_warehouse_name || '—'}</td>
-                        <td className="px-5 py-3 font-semibold text-sky-600">{t.destination_warehouse_name || '—'}</td>
-                        <td className="px-5 py-3 text-slate-500">{t.transferred_by_name || '—'}</td>
-                        <td className="px-5 py-3 text-center">
-                          <span className={`px-3 py-1 rounded-full font-bold text-xs ${statusColors[t.status] || 'bg-slate-100 text-slate-500'}`}>{t.status || 'Completed'}</span>
-                        </td>
-                        <td className="px-5 py-3 text-center">
-                          <button onClick={() => handleDelete(t.id)} className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"><Trash2 size={14} /></button>
-                        </td>
-                      </tr>
-                    ))}
+                  <tbody>
+                    {loading ? (
+                      <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>Loading...</td></tr>
+                    ) : filteredTransfers.length === 0 ? (
+                      <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>No stock transfers recorded yet.</td></tr>
+                    ) : (
+                      filteredTransfers.map(t => (
+                        <tr key={t.id}>
+                          <td>{t.transfer_no}</td>
+                          <td>{t.transfer_date ? new Date(t.transfer_date).toLocaleDateString('en-IN') : '-'}</td>
+                          <td>{t.source_warehouse_name || '-'}</td>
+                          <td style={{ color: 'var(--primary)', fontWeight: 'bold' }}>{t.destination_warehouse_name || '-'}</td>
+                          <td>{t.transferred_by_name || '-'}</td>
+                          <td>
+                            <span className={`status-badge ${t.status?.toLowerCase().replace(' ', '-') || 'completed'}`}>
+                              {t.status || 'Completed'}
+                            </span>
+                          </td>
+                          <td>
+                            <button onClick={() => handleDelete(t.id)} className="icon-btn delete-btn">
+                              <Trash2 size={16} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
-              )}
+              </div>
             </div>
           </div>
         </>
       ) : (
         <div className="animate-fade">
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
-            <button 
+            <button
               type="button"
-              onClick={() => setView('list')} 
+              onClick={() => setView('list')}
               style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
               onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
               onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
@@ -308,7 +320,7 @@ export default function TransferEntry() {
               <form onSubmit={handleSubmit}>
                 <fieldset style={{ border: 'none', padding: 0, margin: 0 }}>
                   <div className="animate-fade">
-                    
+
                     {sameSrc && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', backgroundColor: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '12px', color: '#dc2626', fontSize: '13px', fontWeight: '500', marginBottom: '20px' }}>
                         <AlertCircle size={16} /> Source and destination warehouses cannot be the same.
@@ -322,7 +334,7 @@ export default function TransferEntry() {
                           label=""
                           name="source_warehouse_id"
                           value={formData.source_warehouse_id}
-                          options={warehouses.map(w => ({...w, name: w.warehouse_name}))}
+                          options={warehouses.map(w => ({ ...w, name: w.warehouse_name }))}
                           required={true}
                           onChange={(name, val) => setFormData({ ...formData, [name]: val })}
                         />
@@ -334,7 +346,7 @@ export default function TransferEntry() {
                           label=""
                           name="destination_warehouse_id"
                           value={formData.destination_warehouse_id}
-                          options={warehouses.filter(w => w.id !== parseInt(formData.source_warehouse_id)).map(w => ({...w, name: w.warehouse_name}))}
+                          options={warehouses.filter(w => w.id !== parseInt(formData.source_warehouse_id)).map(w => ({ ...w, name: w.warehouse_name }))}
                           required={true}
                           onChange={(name, val) => setFormData({ ...formData, [name]: val })}
                         />
@@ -397,7 +409,7 @@ export default function TransferEntry() {
                                       label=""
                                       name="item_id"
                                       value={item.item_id}
-                                      options={itemsList.map(i => ({...i, name: `${i.item_code} — ${i.item_name}`}))}
+                                      options={itemsList.map(i => ({ ...i, name: `${i.item_code} — ${i.item_name}` }))}
                                       onChange={(name, val) => handleItemChange(idx, val)}
                                     />
                                   </td>
@@ -456,3 +468,5 @@ export default function TransferEntry() {
     </div>
   );
 }
+
+

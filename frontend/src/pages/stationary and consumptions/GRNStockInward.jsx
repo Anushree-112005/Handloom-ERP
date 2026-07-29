@@ -30,8 +30,7 @@ export default function GRNStockInward() {
   });
 
   const showToast = (msg, ok = true) => {
-    setToast({ show: true, msg, ok });
-    setTimeout(() => setToast({ show: false, msg: '', ok: true }), 3500);
+    if (!ok) alert(msg);
   };
 
   useEffect(() => { loadData(); }, [view]);
@@ -226,61 +225,65 @@ export default function GRNStockInward() {
             ))}
           </div>
 
-          <div className="card overflow-hidden flex-1 flex flex-col mt-4">
-            <div className="px-5 py-3 border-b border-slate-50 flex justify-between items-center gap-4 bg-slate-50/40">
+          {/* Filters Card */}
+          <div className="card" style={{ marginBottom: 24, marginTop: 16 }}>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
               <div className="relative w-72">
                 <Search className="absolute left-3 top-2.5 text-slate-400" size={16} />
                 <input type="text" placeholder="Search GRN No or PO No…" value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
-                  className="form-control" style={{ paddingLeft: '36px' }} />
+                  className="form-control" style={{ paddingLeft: '36px', margin: 0 }} />
               </div>
-              <button onClick={loadData} title="Refresh" className="btn btn-secondary p-2"><RefreshCw size={16} /></button>
+              <button onClick={loadData} title="Refresh" className="btn btn-secondary p-2" style={{ height: 'fit-content' }}>
+                <RefreshCw size={16} />
+              </button>
             </div>
+          </div>
 
-            <div className="overflow-x-auto flex-1">
-              {loading ? (
-                <div className="p-16 flex flex-col items-center gap-3 text-slate-400">
-                  <Loader2 size={28} className="animate-spin text-emerald-400" />
-                  <span className="text-xs">Loading GRN records…</span>
-                </div>
-              ) : filteredGrns.length === 0 ? (
-                <div className="p-16 flex flex-col items-center gap-3 text-slate-400">
-                  <div className="p-5 bg-emerald-50 rounded-2xl"><ClipboardCheck size={38} className="text-emerald-300" /></div>
-                  <span className="text-sm font-bold text-slate-600">No GRN entries recorded yet.</span>
-                  <span className="text-xs text-slate-400">Click "New GRN" to register the first shipment receipt.</span>
-                </div>
-              ) : (
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="bg-slate-50/80 text-slate-500 uppercase text-xs font-bold tracking-wider border-b border-slate-100">
-                      <th className="px-5 py-3">GRN No</th>
-                      <th className="px-5 py-3">Inward Date</th>
-                      <th className="px-5 py-3">PO Reference</th>
-                      <th className="px-5 py-3">Warehouse</th>
-                      <th className="px-5 py-3">Received By</th>
-                      <th className="px-5 py-3 text-center">Status</th>
-                      <th className="px-5 py-3 text-center">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-sm text-slate-600">
-                    {filteredGrns.map(g => (
-                      <tr key={g.id} className="hover:bg-slate-50/60 transition-colors">
-                        <td className="px-5 py-3 font-bold text-slate-800 font-mono">{g.grn_no}</td>
-                        <td className="px-5 py-3">{g.inward_date ? new Date(g.inward_date).toLocaleDateString('en-IN') : '—'}</td>
-                        <td className="px-5 py-3 text-emerald-600 font-semibold">{g.po_number || '—'}</td>
-                        <td className="px-5 py-3 text-slate-500">{g.warehouse_name || '—'}</td>
-                        <td className="px-5 py-3 font-semibold text-slate-700">{g.received_by_name || '—'}</td>
-                        <td className="px-5 py-3 text-center">
-                          <span className="px-3 py-1 rounded-full font-bold text-xs bg-emerald-50 text-emerald-600">{g.status || 'Received'}</span>
+          <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+            <div style={{ flex: 1, overflowX: 'auto' }}>
+              <div className="card" style={{ padding: 0 }}>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>GRN No</th>
+                    <th>Inward Date</th>
+                    <th>PO Reference</th>
+                    <th>Warehouse</th>
+                    <th>Received By</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>Loading...</td></tr>
+                  ) : filteredGrns.length === 0 ? (
+                    <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>No GRN entries recorded yet.</td></tr>
+                  ) : (
+                    filteredGrns.map(g => (
+                      <tr key={g.id}>
+                        <td>{g.grn_no}</td>
+                        <td>{g.inward_date ? new Date(g.inward_date).toLocaleDateString('en-IN') : '-'}</td>
+                        <td style={{ color: 'var(--primary)', fontWeight: 'bold' }}>{g.po_number || '-'}</td>
+                        <td>{g.warehouse_name || '-'}</td>
+                        <td>{g.received_by_name || '-'}</td>
+                        <td>
+                          <span className={`status-badge ${g.status?.toLowerCase().replace(' ', '-') || 'received'}`}>
+                            {g.status || 'Received'}
+                          </span>
                         </td>
-                        <td className="px-5 py-3 text-center">
-                          <button onClick={() => handleDelete(g.id)} className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"><Trash2 size={14} /></button>
+                        <td>
+                          <button onClick={() => handleDelete(g.id)} className="icon-btn delete-btn">
+                            <Trash2 size={16} />
+                          </button>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
+                    ))
+                  )}
+                </tbody>
                 </table>
-              )}
+              </div>
             </div>
           </div>
         </>
@@ -462,3 +465,4 @@ export default function GRNStockInward() {
     </div>
   );
 }
+

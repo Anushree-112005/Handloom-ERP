@@ -7,6 +7,14 @@ import {
   Save, Loader, ArrowLeft
 } from 'lucide-react';
 import MasterDropdown from '../../components/MasterDropdown';
+import { alertDialog } from '../../utils/dialogs';
+
+const DetailRow = ({ label, value }) => (
+  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
+    <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>{label}</span>
+    <span style={{ fontWeight: 600, color: 'var(--text-primary)', textAlign: 'right', maxWidth: '60%' }}>{value || '-'}</span>
+  </div>
+);
 
 export default function PurchaseRequisition() {
   // Navigation tabs: 'list', 'new', 'view', 'analytics'
@@ -108,8 +116,7 @@ export default function PurchaseRequisition() {
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
   const showToast = (message, type = 'success') => {
-    setToast({ show: true, message, type });
-    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4000);
+    if (type === 'error') alert(message);
   };
 
   // Initial Seed check and load master databases
@@ -346,14 +353,53 @@ export default function PurchaseRequisition() {
   // Submit Requisition form
   const handlePRSubmit = async (e) => {
     e.preventDefault();
-    if (!form.required_date || !form.budget_id || !form.requester_id || !form.delivery_warehouse_id) {
-      showToast('Please fill in all required coordinates.', 'error');
+    if (
+      !form.required_date ||
+      !form.budget_id ||
+      !form.requester_id ||
+      !form.department_id ||
+      !form.cost_center_id ||
+      !form.branch_factory ||
+      !form.delivery_warehouse_id
+    ) {
+      alertDialog({ title: 'Validation Error', message: 'Please fill in all required coordinates (Date, Budget, Requester, Department, Cost Center, Branch, Delivery Warehouse).', type: 'error' });
       return;
     }
 
-    const invalidItem = form.items.some(item => (!item.item_id && !item.item_name) || item.quantity <= 0);
+    if (!form.items || form.items.length === 0) {
+      alertDialog({ title: 'Validation Error', message: 'Please add at least one material item.', type: 'error' });
+      return;
+    }
+
+    if (isNaN(parseInt(form.delivery_warehouse_id))) {
+      alertDialog({ title: 'Validation Error', message: 'Please select a valid Delivery Warehouse from the dropdown.', type: 'error' });
+      return;
+    }
+    if (isNaN(parseInt(form.budget_id))) {
+      alertDialog({ title: 'Validation Error', message: 'Please select a valid Budget Code from the dropdown.', type: 'error' });
+      return;
+    }
+    if (isNaN(parseInt(form.requester_id))) {
+      alertDialog({ title: 'Validation Error', message: 'Please select a valid Requester from the dropdown.', type: 'error' });
+      return;
+    }
+    if (isNaN(parseInt(form.department_id))) {
+      alertDialog({ title: 'Validation Error', message: 'Please select a valid Department from the dropdown.', type: 'error' });
+      return;
+    }
+    if (isNaN(parseInt(form.cost_center_id))) {
+      alertDialog({ title: 'Validation Error', message: 'Please select a valid Cost Center from the dropdown.', type: 'error' });
+      return;
+    }
+
+    const invalidItem = form.items.some(item =>
+      (!item.item_id && !item.item_name) ||
+      !item.category_id ||
+      !item.uom_id ||
+      item.quantity <= 0
+    );
     if (invalidItem) {
-      showToast('Please specify valid items and quantities greater than zero.', 'error');
+      alertDialog({ title: 'Validation Error', message: 'Please specify valid items (Item, Category, UOM) and quantities greater than zero.', type: 'error' });
       return;
     }
 
@@ -365,23 +411,24 @@ export default function PurchaseRequisition() {
         priority: form.priority || "Medium",
         description: form.description || null,
 
-        requester_id: parseInt(form.requester_id),
-        department_id: parseInt(form.department_id),
-        cost_center_id: parseInt(form.cost_center_id),
+        requester_id: form.requester_id ? parseInt(form.requester_id) : null,
+        department_id: form.department_id ? parseInt(form.department_id) : null,
+        cost_center_id: form.cost_center_id ? parseInt(form.cost_center_id) : null,
         branch_factory: form.branch_factory,
 
-        delivery_warehouse_id: parseInt(form.delivery_warehouse_id),
+        delivery_warehouse_id: form.delivery_warehouse_id ? parseInt(form.delivery_warehouse_id) : null,
         delivery_plant: form.delivery_plant || null,
         delivery_department_id: form.delivery_department_id ? parseInt(form.delivery_department_id) : null,
         delivery_address: form.delivery_address || null,
         expected_delivery_date: form.expected_delivery_date ? new Date(form.expected_delivery_date).toISOString() : null,
 
-        budget_id: parseInt(form.budget_id),
+        budget_id: form.budget_id ? parseInt(form.budget_id) : null,
         items: form.items.map(item => ({
-          item_id: parseInt(item.item_id),
-          category_id: parseInt(item.category_id),
+          item_id: item.item_id ? parseInt(item.item_id) : null,
+          item_name: item.item_name || null,
+          category_id: item.category_id ? parseInt(item.category_id) : null,
           subcategory_id: item.subcategory_id ? parseInt(item.subcategory_id) : null,
-          uom_id: parseInt(item.uom_id),
+          uom_id: item.uom_id ? parseInt(item.uom_id) : null,
           vendor_id: item.vendor_id ? parseInt(item.vendor_id) : null,
           warehouse_id: item.warehouse_id ? parseInt(item.warehouse_id) : null,
           quantity: parseFloat(item.quantity) || 0,
@@ -442,7 +489,26 @@ export default function PurchaseRequisition() {
       }));
     } catch (err) {
       console.error(err);
-      showToast('Submission error. Verify budget codes.', 'error');
+      let errorMsg = 'Submission error. Verify budget codes.';
+      if (err.response?.data?.detail) {
+        if (Array.isArray(err.response.data.detail)) {
+          errorMsg = err.response.data.detail.map(d => `${d.loc?.join('.') || 'Field'}: ${d.msg}`).join(', ');
+        } else if (typeof err.response.data.detail === 'string') {
+          errorMsg = err.response.data.detail;
+        } else {
+          errorMsg = JSON.stringify(err.response.data.detail);
+        }
+      }
+
+      console.error("422 BACKEND ERROR:", errorMsg);
+      // Fallback native alert in case the custom UI ignores it
+      window.alert("Backend rejected the form: " + errorMsg);
+
+      alertDialog({
+        title: 'Submission Error',
+        message: errorMsg,
+        type: 'error'
+      });
     } finally {
       setSubmitLoading(false);
     }
@@ -527,27 +593,12 @@ export default function PurchaseRequisition() {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => { setActiveTab('list'); loadPRData(); }}
-              className={activeTab === 'list' ? 'btn btn-primary' : 'btn btn-secondary'}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px' }}
-            >
-              All Requisitions
-            </button>
-            <button
               onClick={() => setActiveTab('new')}
-              className={activeTab === 'new' ? 'btn btn-primary' : 'btn btn-secondary'}
+              className="btn btn-primary"
               style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px' }}
             >
               <Plus size={16} />
               New Request
-            </button>
-            <button
-              onClick={() => setActiveTab('analytics')}
-              className={activeTab === 'analytics' ? 'btn btn-primary' : 'btn btn-secondary'}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px' }}
-            >
-              <TrendingUp size={16} />
-              Analytics
             </button>
           </div>
         </div>
@@ -600,12 +651,16 @@ export default function PurchaseRequisition() {
 
       {/* ────────────────────────────────── TAB 1: LIST VIEW ────────────────────────────────── */}
       {activeTab === 'list' && (
-        <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 0, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+          
+          {/* LEFT SIDE: TABLE */}
+          <div style={{ flex: 1, overflowX: 'auto' }}>
+            <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
           {/* Filters Bar */}
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', padding: '16px 20px', alignItems: 'center', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', gap: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Requisitions ({filteredPRs.length})</h3>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>All Requisitions ({filteredPRs.length})</h3>
               <div className="search-bar" style={{ position: 'relative', width: 280 }}>
                 <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} size={16} />
                 <input
@@ -698,7 +753,18 @@ export default function PurchaseRequisition() {
                   {filteredPRs.map((pr) => {
                     const totalCost = pr.items.reduce((acc, item) => acc + (item.quantity * item.estimated_unit_price), 0);
                     return (
-                      <tr key={pr.id}>
+                      <tr 
+                        key={pr.id}
+                        onClick={async () => {
+                          const detail = await storesService.getPRDetail(pr.id);
+                          setSelectedPr(detail);
+                        }}
+                        style={{
+                          cursor: 'pointer',
+                          background: selectedPr?.id === pr.id ? 'var(--bg-secondary)' : 'transparent',
+                          transition: 'background 0.2s'
+                        }}
+                      >
                         <td style={{ fontFamily: "monospace", color: '#4f46e5', fontWeight: 700 }}>{pr.pr_number}</td>
                         <td style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#eff6ff', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: 11, textTransform: 'uppercase' }}>
@@ -710,9 +776,9 @@ export default function PurchaseRequisition() {
                         <td>{new Date(pr.required_date).toLocaleDateString()}</td>
                         <td style={{ textAlign: "center" }}>
                           <span className={`badge ${pr.priority === 'Critical' ? 'bg-red-100 text-red-800' :
-                              pr.priority === 'High' ? 'bg-orange-100 text-orange-800' :
-                                pr.priority === 'Medium' ? 'bg-blue-100 text-blue-800' :
-                                  'bg-gray-100 text-gray-800'
+                            pr.priority === 'High' ? 'bg-orange-100 text-orange-800' :
+                              pr.priority === 'Medium' ? 'bg-blue-100 text-blue-800' :
+                                'bg-gray-100 text-gray-800'
                             }`}>
                             {pr.priority}
                           </span>
@@ -733,7 +799,6 @@ export default function PurchaseRequisition() {
                             onClick={async () => {
                               const detail = await storesService.getPRDetail(pr.id);
                               setSelectedPr(detail);
-                              setActiveTab('view');
                             }}
                             style={{ padding: 6, borderRadius: 8, color: '#3b82f6', background: '#eff6ff', cursor: "pointer", border: "none", marginRight: pr.status === 'Requested' ? 8 : 0 }}
                             title="View details"
@@ -762,16 +827,123 @@ export default function PurchaseRequisition() {
                 </tbody>
               </table>
             )}
+            </div>
           </div>
+        </div>
+
+          {/* RIGHT SIDE: DETAILS PANE */}
+          {selectedPr && (
+            <div style={{ flex: '0 0 450px' }}>
+              <div className="card animate-slide" style={{ position: 'sticky', top: 24, padding: '24px 20px' }}>
+                
+                {/* Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
+                  <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--primary)', fontWeight: 700 }}>
+                    <ClipboardList size={18} /> {selectedPr.pr_number}
+                  </h3>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => window.print()} title="Print"><Printer size={14} /></button>
+                    {!selectedPr.status.includes('Approved') && !selectedPr.status.includes('Rejected') && (
+                      <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: 12 }} onClick={() => setApprovalModal({ open: true, prId: selectedPr.id, stage: 'Department Manager Approval', status: 'Approved', comments: '' })}>
+                        Approve
+                      </button>
+                    )}
+                    <button onClick={() => setSelectedPr(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}><X size={18} /></button>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, maxHeight: '65vh', overflowY: 'auto', paddingRight: 8 }}>
+                  <DetailRow label="Requester" value={`${selectedPr.requester_name} (${selectedPr.department_name})`} />
+                  <DetailRow label="Branch/Factory" value={selectedPr.branch_factory} />
+                  <DetailRow label="Delivery Warehouse" value={selectedPr.delivery_warehouse_name} />
+                  <DetailRow label="Required Date" value={new Date(selectedPr.required_date).toLocaleDateString()} />
+                  <DetailRow label="Budget Code" value={selectedPr.budget_code || 'N/A'} />
+                  <DetailRow label="Priority" value={<span className={`badge ${selectedPr.priority === 'Critical' ? 'bg-red-100 text-red-800' : selectedPr.priority === 'High' ? 'bg-orange-100 text-orange-800' : selectedPr.priority === 'Medium' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>{selectedPr.priority}</span>} />
+                  <DetailRow label="Status" value={<span style={{ color: selectedPr.status.includes('Approved') ? '#047857' : selectedPr.status.includes('Rejected') ? '#ef4444' : '#d97706', fontWeight: 700 }}>{selectedPr.status}</span>} />
+
+                  {/* Notes */}
+                  {selectedPr.description && (
+                    <div style={{ marginTop: 12, padding: 12, background: 'var(--bg-secondary)', borderRadius: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
+                      <strong style={{ display: 'block', marginBottom: 4, color: 'var(--text-primary)' }}>Notes:</strong>
+                      {selectedPr.description}
+                    </div>
+                  )}
+
+                  {/* Items Table Compact */}
+                  <div style={{ marginTop: 16 }}>
+                    <h4 style={{ margin: '0 0 8px 0', fontSize: 13, color: 'var(--text-primary)' }}>Line Items</h4>
+                    <div style={{ border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
+                      <table style={{ width: '100%', fontSize: 11, textAlign: 'left', borderCollapse: 'collapse' }}>
+                        <thead style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>
+                          <tr>
+                            <th style={{ padding: '6px 8px' }}>Item</th>
+                            <th style={{ padding: '6px 8px', textAlign: 'right' }}>Qty</th>
+                            <th style={{ padding: '6px 8px', textAlign: 'right' }}>Total (INR)</th>
+                          </tr>
+                        </thead>
+                        <tbody style={{ divideY: '1px solid var(--border)' }}>
+                          {selectedPr.items.map((item, idx) => (
+                            <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                              <td style={{ padding: '6px 8px' }}>
+                                <div style={{ fontWeight: 600 }}>{item.item_name}</div>
+                                <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{item.item_code}</div>
+                              </td>
+                              <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 500 }}>{item.quantity} {item.uom_name}</td>
+                              <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 600 }}>{(item.quantity * item.estimated_unit_price).toLocaleString()}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Timeline */}
+                  <div style={{ marginTop: 20 }}>
+                    <h4 style={{ margin: '0 0 12px 0', fontSize: 13, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Shield size={14} className="text-blue-500" /> Approval Timeline
+                    </h4>
+                    <div className="relative border-l-2 border-blue-100 ml-4 pl-6 space-y-4">
+                      {/* Seed Step */}
+                      <div className="relative">
+                        <div className="absolute top-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white" style={{ left: '-31px' }}></div>
+                        <div className="text-xs font-bold text-slate-700">Submitted</div>
+                        <div className="text-[10px] text-slate-400">by {selectedPr.requester_name}</div>
+                      </div>
+
+                      {/* Database Approvals */}
+                      {selectedPr.approvals.map((app, index) => (
+                        <div key={index} className="relative">
+                          <div className={`absolute top-0 w-3 h-3 rounded-full border-2 border-white ${app.status === 'Approved' ? 'bg-emerald-500' : 'bg-rose-500'}`} style={{ left: '-31px' }}></div>
+                          <div className="text-xs font-bold text-slate-700">{app.stage} - <span className={app.status === 'Approved' ? 'text-emerald-600' : 'text-rose-600'}>{app.status}</span></div>
+                          <div className="text-[10px] text-slate-500 font-semibold">{app.approver_name}</div>
+                          {app.comments && (
+                            <div className="text-[10px] text-slate-500 italic mt-1 bg-slate-50 p-1.5 rounded border border-slate-100">"{app.comments}"</div>
+                          )}
+                        </div>
+                      ))}
+
+                      {/* Final Status */}
+                      <div className="relative">
+                        <div className={`absolute top-0 w-3 h-3 rounded-full border-2 border-white ${selectedPr.status === 'Approved' ? 'bg-emerald-500' : selectedPr.status === 'Rejected' ? 'bg-rose-500' : 'bg-slate-200'}`} style={{ left: '-31px' }}></div>
+                        <div className="text-xs font-bold text-slate-500">Status: <span className="font-bold text-blue-600">{selectedPr.status}</span></div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          )}
+
         </div>
       )}
       {/* ────────────────────────────────── TAB 2: MULTI-SECTION REQUEST FORM ────────────────────────────────── */}
       {activeTab === 'new' && (
         <div className="animate-fade">
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
-            <button 
+            <button
               type="button"
-              onClick={() => setActiveTab('list')} 
+              onClick={() => setActiveTab('list')}
               style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
               onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
               onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
@@ -861,9 +1033,11 @@ export default function PurchaseRequisition() {
                         <MasterDropdown
                           label="Employee Requisitioner"
                           name="requester_id"
+                          entityType="employee"
                           value={form.requester_id}
-                          options={masters.employees.map(e => ({...e, name: `${e.employee_code} - ${e.name}`}))}
+                          options={masters.employees.map(e => ({ ...e, name: `${e.employee_code} - ${e.name}` }))}
                           required={true}
+                          allowCustom={true}
                           onChange={(name, val) => handleEmployeeChange(val)}
                         />
                       </div>
@@ -874,6 +1048,7 @@ export default function PurchaseRequisition() {
                           entityType="department"
                           value={form.department_id}
                           options={masters.departments}
+                          allowCustom={false}
                           onChange={(name, val) => setForm(prev => ({ ...prev, [name]: val }))}
                         />
                       </div>
@@ -881,9 +1056,11 @@ export default function PurchaseRequisition() {
                         <MasterDropdown
                           label="Cost Center"
                           name="cost_center_id"
+                          entityType="cost_center"
                           value={form.cost_center_id}
-                          options={masters.costCenters.map(c => ({...c, name: `${c.code} - ${c.name}`}))}
+                          options={masters.costCenters.map(c => ({ ...c, name: `${c.code} - ${c.name}` }))}
                           required={true}
+                          allowCustom={true}
                           onChange={(name, val) => setForm(prev => ({ ...prev, [name]: val }))}
                         />
                       </div>
@@ -911,166 +1088,166 @@ export default function PurchaseRequisition() {
                       </button>
                     </h4>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {form.items.map((row, index) => (
-                  <div key={index} style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 16, position: 'relative', background: 'var(--bg-secondary)' }}>
-                    {form.items.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeMaterialRow(index)}
-                        style={{ position: 'absolute', top: 16, right: 16, background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}
-                        title="Remove Row"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    )}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                      {form.items.map((row, index) => (
+                        <div key={index} style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 16, position: 'relative', background: 'var(--bg-secondary)' }}>
+                          {form.items.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeMaterialRow(index)}
+                              style={{ position: 'absolute', top: 16, right: 16, background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+                              title="Remove Row"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
 
-                    <div className="form-row" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: 16 }}>
-                      <div className="form-group">
-                        <div className="flex justify-between items-center mb-2">
-                          <label style={{ margin: 0 }}>Select Item *</label>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const updated = [...form.items];
-                              updated[index].is_manual = !updated[index].is_manual;
-                              updated[index].item_id = "";
-                              updated[index].item_name = "";
-                              setForm(prev => ({ ...prev, items: updated }));
-                            }}
-                            className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold"
-                            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-                          >
-                            {row.is_manual ? "Select Master" : "Type Manual"}
-                          </button>
+                          <div className="form-row" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: 16 }}>
+                            <div className="form-group">
+                              <div className="flex justify-between items-center mb-2">
+                                <label style={{ margin: 0 }}>Select Item *</label>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updated = [...form.items];
+                                    updated[index].is_manual = !updated[index].is_manual;
+                                    updated[index].item_id = "";
+                                    updated[index].item_name = "";
+                                    setForm(prev => ({ ...prev, items: updated }));
+                                  }}
+                                  className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold"
+                                  style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                                >
+                                  {row.is_manual ? "Select Master" : "Type Manual"}
+                                </button>
+                              </div>
+                              {row.is_manual ? (
+                                <input
+                                  type="text"
+                                  placeholder="Type custom item name..."
+                                  value={row.item_name || ""}
+                                  onChange={(e) => handleItemChange(index, 'item_name', e.target.value)}
+                                  required
+                                  className="form-control"
+                                />
+                              ) : (
+                                <MasterDropdown
+                                  label=""
+                                  name="item_id"
+                                  entityType="item"
+                                  value={row.item_id}
+                                  options={masters.items.map(i => ({ ...i, name: `${i.item_code} - ${i.item_name}` }))}
+                                  required={true}
+                                  onChange={(name, val) => handleItemChange(index, name, val)}
+                                />
+                              )}
+                            </div>
+                            <div className="form-group">
+                              <MasterDropdown
+                                label="UOM"
+                                name="uom_id"
+                                entityType="uom"
+                                value={row.uom_id}
+                                options={masters.uoms}
+                                onChange={(name, val) => handleItemChange(index, name, val)}
+                              />
+                            </div>
+                            <div className="form-group">
+                              <MasterDropdown
+                                label="Category"
+                                name="category_id"
+                                entityType="category"
+                                value={row.category_id}
+                                options={masters.categories}
+                                onChange={(name, val) => handleItemChange(index, name, val)}
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label>Qty Requested *</label>
+                              <input
+                                type="number"
+                                min="1" step="any"
+                                value={row.quantity}
+                                onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value) || 0)}
+                                required
+                                className="form-control"
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label>Est Unit Price</label>
+                              <input
+                                type="number"
+                                min="0" step="any"
+                                value={row.estimated_unit_price}
+                                onChange={(e) => handleItemChange(index, 'estimated_unit_price', parseFloat(e.target.value) || 0)}
+                                className="form-control"
+                              />
+                            </div>
+                          </div>
+
+                          {row.item_id && (
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, padding: '12px 16px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: 6, fontSize: 12, color: '#1e3a8a', marginTop: 16 }}>
+                              <div>Current Stock: <span style={{ fontWeight: 800 }}>{row.current_stock}</span></div>
+                              <div>Reserved Stock: <span style={{ fontWeight: 800 }}>{row.reserved_stock}</span></div>
+                              <div>Available Stock: <span style={{ fontWeight: 800 }}>{row.available_stock}</span></div>
+                              <div>Reorder Level: <span style={{ fontWeight: 800 }}>{row.reorder_level}</span></div>
+                              <div>Suggested Qty: <span style={{ fontWeight: 800, color: '#4338ca' }}>{row.suggested_qty}</span></div>
+                            </div>
+                          )}
+
+                          {row.item_id && row.recs && row.recs.length > 0 && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: 6, fontSize: 12, color: '#064e3b', marginTop: 12 }}>
+                              <Sparkles size={14} style={{ color: '#059669' }} />
+                              <div>
+                                <span style={{ fontWeight: 700 }}>AI Vendor recommendation:</span> {row.recs[0].vendor_name} offers this item at {row.recs[0].price} INR with {row.recs[0].delivery_time} lead time.
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 16, marginTop: 16 }}>
+                            <div className="form-group">
+                              <MasterDropdown
+                                label="WAREHOUSE LOCATION"
+                                name="warehouse_id"
+                                value={row.warehouse_id}
+                                options={masters.warehouses.map(w => ({ ...w, name: w.warehouse_name }))}
+                                onChange={(name, val) => handleItemChange(index, name, val)}
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label style={{ fontSize: 11, color: 'var(--text-muted)' }}>RACK / BIN LOCATION</label>
+                              <input
+                                type="text"
+                                value={row.rack_bin}
+                                onChange={(e) => handleItemChange(index, 'rack_bin', e.target.value)}
+                                placeholder="e.g. Rack A / Shelf 2"
+                                className="form-control"
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label style={{ fontSize: 11, color: 'var(--text-muted)' }}>BRAND / MAKER</label>
+                              <input
+                                type="text"
+                                value={row.brand}
+                                onChange={(e) => handleItemChange(index, 'brand', e.target.value)}
+                                placeholder="Servo, Tex, etc."
+                                className="form-control"
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label style={{ fontSize: 11, color: 'var(--text-muted)' }}>REMARKS / SPECS</label>
+                              <input
+                                type="text"
+                                value={row.remarks}
+                                onChange={(e) => handleItemChange(index, 'remarks', e.target.value)}
+                                placeholder="URGENT rebuild spare ref"
+                                className="form-control"
+                              />
+                            </div>
+                          </div>
                         </div>
-                        {row.is_manual ? (
-                          <input
-                            type="text"
-                            placeholder="Type custom item name..."
-                            value={row.item_name || ""}
-                            onChange={(e) => handleItemChange(index, 'item_name', e.target.value)}
-                            required
-                            className="form-control"
-                          />
-                        ) : (
-                          <MasterDropdown
-                            label=""
-                            name="item_id"
-                            entityType="item"
-                            value={row.item_id}
-                            options={masters.items.map(i => ({...i, name: `${i.item_code} - ${i.item_name}`}))}
-                            required={true}
-                            onChange={(name, val) => handleItemChange(index, name, val)}
-                          />
-                        )}
-                      </div>
-                      <div className="form-group">
-                        <MasterDropdown
-                          label="UOM"
-                          name="uom_id"
-                          entityType="uom"
-                          value={row.uom_id}
-                          options={masters.uoms}
-                          onChange={(name, val) => handleItemChange(index, name, val)}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <MasterDropdown
-                          label="Category"
-                          name="category_id"
-                          entityType="category"
-                          value={row.category_id}
-                          options={masters.categories}
-                          onChange={(name, val) => handleItemChange(index, name, val)}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label>Qty Requested *</label>
-                        <input
-                          type="number"
-                          min="1" step="any"
-                          value={row.quantity}
-                          onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value) || 0)}
-                          required
-                          className="form-control"
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label>Est Unit Price</label>
-                        <input
-                          type="number"
-                          min="0" step="any"
-                          value={row.estimated_unit_price}
-                          onChange={(e) => handleItemChange(index, 'estimated_unit_price', parseFloat(e.target.value) || 0)}
-                          className="form-control"
-                        />
-                      </div>
+                      ))}
                     </div>
-
-                    {row.item_id && (
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, padding: '12px 16px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: 6, fontSize: 12, color: '#1e3a8a', marginTop: 16 }}>
-                        <div>Current Stock: <span style={{ fontWeight: 800 }}>{row.current_stock}</span></div>
-                        <div>Reserved Stock: <span style={{ fontWeight: 800 }}>{row.reserved_stock}</span></div>
-                        <div>Available Stock: <span style={{ fontWeight: 800 }}>{row.available_stock}</span></div>
-                        <div>Reorder Level: <span style={{ fontWeight: 800 }}>{row.reorder_level}</span></div>
-                        <div>Suggested Qty: <span style={{ fontWeight: 800, color: '#4338ca' }}>{row.suggested_qty}</span></div>
-                      </div>
-                    )}
-
-                    {row.item_id && row.recs && row.recs.length > 0 && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: 6, fontSize: 12, color: '#064e3b', marginTop: 12 }}>
-                        <Sparkles size={14} style={{ color: '#059669' }} />
-                        <div>
-                          <span style={{ fontWeight: 700 }}>AI Vendor recommendation:</span> {row.recs[0].vendor_name} offers this item at {row.recs[0].price} INR with {row.recs[0].delivery_time} lead time.
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 16, marginTop: 16 }}>
-                      <div className="form-group">
-                        <MasterDropdown
-                          label="WAREHOUSE LOCATION"
-                          name="warehouse_id"
-                          value={row.warehouse_id}
-                          options={masters.warehouses.map(w => ({...w, name: w.warehouse_name}))}
-                          onChange={(name, val) => handleItemChange(index, name, val)}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label style={{ fontSize: 11, color: 'var(--text-muted)' }}>RACK / BIN LOCATION</label>
-                        <input
-                          type="text"
-                          value={row.rack_bin}
-                          onChange={(e) => handleItemChange(index, 'rack_bin', e.target.value)}
-                          placeholder="e.g. Rack A / Shelf 2"
-                          className="form-control"
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label style={{ fontSize: 11, color: 'var(--text-muted)' }}>BRAND / MAKER</label>
-                        <input
-                          type="text"
-                          value={row.brand}
-                          onChange={(e) => handleItemChange(index, 'brand', e.target.value)}
-                          placeholder="Servo, Tex, etc."
-                          className="form-control"
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label style={{ fontSize: 11, color: 'var(--text-muted)' }}>REMARKS / SPECS</label>
-                        <input
-                          type="text"
-                          value={row.remarks}
-                          onChange={(e) => handleItemChange(index, 'remarks', e.target.value)}
-                          placeholder="URGENT rebuild spare ref"
-                          className="form-control"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
 
                     <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
                       Budget & Delivery Controls
@@ -1080,9 +1257,11 @@ export default function PurchaseRequisition() {
                         <MasterDropdown
                           label="Allocated Budget Code"
                           name="budget_id"
+                          entityType="budget"
                           value={form.budget_id}
-                          options={masters.budgets.map(b => ({...b, name: `${b.budget_code} (Project: ${b.project_code})`}))}
+                          options={masters.budgets.map(b => ({ ...b, name: `${b.budget_code} (Project: ${b.project_code})` }))}
                           required={true}
+                          allowCustom={true}
                           onChange={(name, val) => {
                             setForm(prev => ({ ...prev, [name]: val }));
                             validateRequisitionBudget(form.items, val);
@@ -1130,9 +1309,11 @@ export default function PurchaseRequisition() {
                         <MasterDropdown
                           label="Delivery Warehouse"
                           name="delivery_warehouse_id"
+                          entityType="warehouse"
                           value={form.delivery_warehouse_id}
-                          options={masters.warehouses.map(w => ({...w, name: w.warehouse_name}))}
+                          options={masters.warehouses.map(w => ({ ...w, name: w.warehouse_name }))}
                           required={true}
+                          allowCustom={true}
                           onChange={(name, val) => setForm(prev => ({ ...prev, [name]: val }))}
                         />
                       </div>
@@ -1159,189 +1340,21 @@ export default function PurchaseRequisition() {
                   </div>
                 </fieldset>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
-            <button type="button" className="btn btn-secondary" onClick={() => setActiveTab('list')}>
-              <X size={16} /> Close
-            </button>
-            <button type="submit" className="btn btn-primary" disabled={submitLoading}>
-              {submitLoading ? <Loader className="animate-spin" size={16} /> : <Save size={16} />} Save
-            </button>
-          </div>
-        </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ────────────────────────────────── TAB 3: DETAILS & TIMELINE WORKFLOW ────────────────────────────────── */}
-      {activeTab === 'view' && selectedPr && (
-        <div className="space-y-6">
-
-          {/* Main PR view Card */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-6">
-
-            {/* Action headers */}
-            <div className="flex justify-between items-center border-b border-slate-100 pb-4">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setActiveTab('list')}
-                  className="p-2 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-600 transition-colors border border-slate-200"
-                >
-                  <ArrowLeft size={16} className="text-slate-600" />
-                </button>
-                <div>
-                  <h3 className="text-xl font-bold text-slate-800">{selectedPr.pr_number}</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">Created on: {new Date(selectedPr.created_at).toLocaleString()}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => window.print()}
-                  className="btn btn-secondary px-4 py-2"
-                >
-                  <Printer size={16} /> Print Requisition
-                </button>
-
-                {/* If still requested stage -> authorize approval comments submission */}
-                {!selectedPr.status.includes('Approved') && !selectedPr.status.includes('Rejected') && (
-                  <button
-                    onClick={() => setApprovalModal({
-                      open: true,
-                      prId: selectedPr.id,
-                      stage: 'Department Manager Approval',
-                      status: 'Approved',
-                      comments: ''
-                    })}
-                    className="btn btn-primary px-4 py-2"
-                  >
-                    <Check size={16} /> Submit Approval
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+                  <button type="button" className="btn btn-secondary" onClick={() => setActiveTab('list')}>
+                    <X size={16} /> Close
                   </button>
-                )}
-              </div>
+                  <button type="submit" className="btn btn-primary" disabled={submitLoading}>
+                    {submitLoading ? <Loader className="animate-spin" size={16} /> : <Save size={16} />} Save
+                  </button>
+                </div>
+              </form>
             </div>
-
-            {/* Layout grids */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-              {/* Header profile cards */}
-              <div className="space-y-1">
-                <p className="text-xs uppercase font-bold text-slate-400 tracking-wider">Requester Details</p>
-                <div className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/50 space-y-1">
-                  <div className="font-bold text-slate-800">{selectedPr.requester_name}</div>
-                  <div className="text-xs text-slate-500">{selectedPr.department_name}</div>
-                  <div className="text-xs text-slate-400">Branch: {selectedPr.branch_factory}</div>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <p className="text-xs uppercase font-bold text-slate-400 tracking-wider">Delivery Coordinates</p>
-                <div className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/50 space-y-1">
-                  <div className="font-bold text-slate-800">{selectedPr.delivery_warehouse_name}</div>
-                  <div className="text-xs text-slate-500">Address: {selectedPr.delivery_address}</div>
-                  <div className="text-xs text-slate-400">Required: {new Date(selectedPr.required_date).toLocaleDateString()}</div>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <p className="text-xs uppercase font-bold text-slate-400 tracking-wider">Budget Settings</p>
-                <div className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/50 space-y-1">
-                  <div className="font-bold text-slate-800">Budget: {selectedPr.budget_code}</div>
-                  <div className="text-xs text-slate-500">Priority: <span className="font-bold text-blue-600">{selectedPr.priority}</span></div>
-                  <div className="text-xs text-slate-400">Request Type: {selectedPr.request_type}</div>
-                </div>
-              </div>
-
-            </div>
-
-            {/* Description note */}
-            {selectedPr.description && (
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-sm text-slate-600">
-                <div className="font-bold text-slate-800 text-xs uppercase mb-1">Requisition Notes</div>
-                {selectedPr.description}
-              </div>
-            )}
-
-            {/* Line items table */}
-            <div className="space-y-2">
-              <h4 className="font-bold text-slate-800 text-sm">Line Items list</h4>
-              <div className="border border-slate-100 rounded-xl overflow-hidden">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="bg-slate-50 text-slate-500 uppercase text-xs font-bold tracking-wider">
-                      <th className="p-3">Material Code</th>
-                      <th className="p-3">Material Name</th>
-                      <th className="p-3">UOM</th>
-                      <th className="p-3">Warehouse</th>
-                      <th className="p-3 text-right">Quantity</th>
-                      <th className="p-3 text-right">Est. Unit Price</th>
-                      <th className="p-3 text-right">Subtotal</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-sm text-slate-600">
-                    {selectedPr.items.map((item, idx) => (
-                      <tr key={idx}>
-                        <td className="p-3 font-bold text-slate-800">{item.item_code}</td>
-                        <td className="p-3">{item.item_name}</td>
-                        <td className="p-3">{item.uom_name}</td>
-                        <td className="p-3">{item.warehouse_name} (Rack: {item.rack_bin})</td>
-                        <td className="p-3 text-right font-semibold">{item.quantity}</td>
-                        <td className="p-3 text-right">{item.estimated_unit_price} INR</td>
-                        <td className="p-3 text-right font-bold text-slate-800">{(item.quantity * item.estimated_unit_price).toLocaleString()} INR</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Approval Workflow timeline logs */}
-            <div className="space-y-4">
-              <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-                <Shield className="text-blue-600" size={18} />
-                Approval Stages Timeline
-              </h4>
-
-              <div className="relative border-l-2 border-blue-100 ml-4 pl-6 space-y-6">
-
-                {/* Seed Step */}
-                <div className="relative">
-                  <div className="absolute -left-[31px] top-0 w-4 h-4 rounded-full bg-emerald-500 border-4 border-white"></div>
-                  <div className="text-xs font-bold text-slate-700">Requisition Submitted</div>
-                  <div className="text-[11px] text-slate-400">Logged in by Requester</div>
-                </div>
-
-                {/* Database Approvals loop */}
-                {selectedPr.approvals.map((app, index) => (
-                  <div key={index} className="relative">
-                    <div className={`absolute -left-[31px] top-0 w-4 h-4 rounded-full border-4 border-white ${app.status === 'Approved' ? 'bg-emerald-500' : 'bg-rose-500'
-                      }`}></div>
-                    <div className="text-xs font-bold text-slate-700">{app.stage} - <span className={
-                      app.status === 'Approved' ? 'text-emerald-600' : 'text-rose-600'
-                    }>{app.status}</span></div>
-                    <div className="text-[11px] text-slate-500 font-semibold">{app.approver_name} ({app.designation})</div>
-                    <div className="text-xs text-slate-500 italic mt-1 bg-slate-50 p-2.5 rounded-lg border border-slate-100 max-w-lg">
-                      "{app.comments}"
-                    </div>
-                    <div className="text-xs text-slate-400 mt-1">{new Date(app.action_date).toLocaleString()}</div>
-                  </div>
-                ))}
-
-                {/* Final status display */}
-                <div className="relative">
-                  <div className={`absolute -left-[31px] top-0 w-4 h-4 rounded-full border-4 border-white ${selectedPr.status === 'Approved' ? 'bg-emerald-500' :
-                      selectedPr.status === 'Rejected' ? 'bg-rose-500' : 'bg-slate-200'
-                    }`}></div>
-                  <div className="text-xs font-bold text-slate-500">Current Status: <span className="font-extrabold text-blue-600">{selectedPr.status}</span></div>
-                </div>
-
-              </div>
-            </div>
-
           </div>
-
         </div>
       )}
+
+
 
       {/* ────────────────────────────────── TAB 4: ANALYTICS & CHARTS ────────────────────────────────── */}
       {activeTab === 'analytics' && (

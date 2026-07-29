@@ -1450,7 +1450,7 @@ export default function GreigeTransaction({ defaultSection = 'Greige Operations'
                                   required={f.required}
                                   disabled={f.readOnly}
                                 >
-                                  <option value="">-- Select --</option>
+                                  <option value="">---select----</option>
                                   {(f.options || []).map(opt => (
                                     <option key={opt} value={opt}>{opt}</option>
                                   ))}

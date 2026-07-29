@@ -926,8 +926,9 @@ class StoresService:
         db_q = StoresVendorQuotation(
             pr_id=payload.pr_id,
             vendor_id=payload.vendor_id,
+            quote_date=payload.quote_date.replace(tzinfo=None) if payload.quote_date.tzinfo else payload.quote_date,
+            validity_date=payload.validity_date.replace(tzinfo=None) if payload.validity_date.tzinfo else payload.validity_date,
             quote_no=quote_no,
-            validity_date=payload.validity_date,
             payment_terms=payload.payment_terms,
             quotation_file_path=payload.quotation_file_path,
             total_amount=0.0,
@@ -961,7 +962,7 @@ class StoresService:
 
     @staticmethod
     async def get_quotations(db: AsyncSession, search: Optional[str] = None) -> List[StoresVendorQuotation]:
-        stmt = select(StoresVendorQuotation).where(StoresVendorQuotation.is_deleted == False)
+        stmt = select(StoresVendorQuotation).where(StoresVendorQuotation.is_deleted == False).options(selectinload(StoresVendorQuotation.items))
         res = await db.execute(stmt)
         quotes = res.scalars().all()
         for q in quotes:
@@ -1316,7 +1317,7 @@ class StoresService:
 
     @staticmethod
     async def get_department_issues(db: AsyncSession, search: Optional[str] = None) -> List[StoresIssueToDepartment]:
-        stmt = select(StoresIssueToDepartment).where(StoresIssueToDepartment.is_deleted == False)
+        stmt = select(StoresIssueToDepartment).where(StoresIssueToDepartment.is_deleted == False).options(selectinload(StoresIssueToDepartment.items))
         res = await db.execute(stmt)
         issues = res.scalars().all()
         for i in issues:
@@ -1333,7 +1334,7 @@ class StoresService:
     async def get_department_issue(db: AsyncSession, issue_id: int) -> Optional[StoresIssueToDepartment]:
         stmt = select(StoresIssueToDepartment).where(
             and_(StoresIssueToDepartment.id == issue_id, StoresIssueToDepartment.is_deleted == False)
-        )
+        ).options(selectinload(StoresIssueToDepartment.items))
         res = await db.execute(stmt)
         i = res.scalar()
         if not i:
@@ -1412,7 +1413,7 @@ class StoresService:
 
     @staticmethod
     async def get_returns_to_store(db: AsyncSession, search: Optional[str] = None) -> List[StoresReturnToStore]:
-        stmt = select(StoresReturnToStore).where(StoresReturnToStore.is_deleted == False)
+        stmt = select(StoresReturnToStore).where(StoresReturnToStore.is_deleted == False).options(selectinload(StoresReturnToStore.items))
         res = await db.execute(stmt)
         returns = res.scalars().all()
         for r in returns:
@@ -1425,7 +1426,7 @@ class StoresService:
     async def get_return_to_store(db: AsyncSession, return_id: int) -> Optional[StoresReturnToStore]:
         stmt = select(StoresReturnToStore).where(
             and_(StoresReturnToStore.id == return_id, StoresReturnToStore.is_deleted == False)
-        )
+        ).options(selectinload(StoresReturnToStore.items))
         res = await db.execute(stmt)
         r = res.scalar()
         if not r:
@@ -1491,32 +1492,44 @@ class StoresService:
 
     @staticmethod
     async def get_store_transfers(db: AsyncSession, search: Optional[str] = None) -> List[StoresStoreTransfer]:
-        stmt = select(StoresStoreTransfer).where(StoresStoreTransfer.is_deleted == False)
+        stmt = select(StoresStoreTransfer).where(StoresStoreTransfer.is_deleted == False).options(selectinload(StoresStoreTransfer.items))
         res = await db.execute(stmt)
         transfers = res.scalars().all()
         for t in transfers:
             src_res = await db.execute(select(StoresWarehouse).where(StoresWarehouse.id == t.source_warehouse_id))
-            t.source_warehouse_name = src_res.scalar().warehouse_name if src_res.scalar() else "Source Depot"
+            src_wh = src_res.scalar()
+            t.source_warehouse_name = src_wh.warehouse_name if src_wh else "Source Depot"
 
             dst_res = await db.execute(select(StoresWarehouse).where(StoresWarehouse.id == t.destination_warehouse_id))
-            t.destination_warehouse_name = dst_res.scalar().warehouse_name if dst_res.scalar() else "Destination Depot"
+            dst_wh = dst_res.scalar()
+            t.destination_warehouse_name = dst_wh.warehouse_name if dst_wh else "Destination Depot"
+
+            emp_res = await db.execute(select(Employee).where(Employee.id == t.transferred_by_id))
+            emp = emp_res.scalar()
+            t.transferred_by_name = emp.name if emp else "Unknown"
         return transfers
 
     @staticmethod
     async def get_store_transfer(db: AsyncSession, transfer_id: int) -> Optional[StoresStoreTransfer]:
         stmt = select(StoresStoreTransfer).where(
             and_(StoresStoreTransfer.id == transfer_id, StoresStoreTransfer.is_deleted == False)
-        )
+        ).options(selectinload(StoresStoreTransfer.items))
         res = await db.execute(stmt)
         t = res.scalar()
         if not t:
             return None
 
         src_res = await db.execute(select(StoresWarehouse).where(StoresWarehouse.id == t.source_warehouse_id))
-        t.source_warehouse_name = src_res.scalar().warehouse_name if src_res.scalar() else "Source Depot"
+        src_wh = src_res.scalar()
+        t.source_warehouse_name = src_wh.warehouse_name if src_wh else "Source Depot"
 
         dst_res = await db.execute(select(StoresWarehouse).where(StoresWarehouse.id == t.destination_warehouse_id))
-        t.destination_warehouse_name = dst_res.scalar().warehouse_name if dst_res.scalar() else "Destination Depot"
+        dst_wh = dst_res.scalar()
+        t.destination_warehouse_name = dst_wh.warehouse_name if dst_wh else "Destination Depot"
+
+        emp_res = await db.execute(select(Employee).where(Employee.id == t.transferred_by_id))
+        emp = emp_res.scalar()
+        t.transferred_by_name = emp.name if emp else "Unknown"
 
         for item in t.items:
             itm_res = await db.execute(select(StoresItem).where(StoresItem.id == item.item_id))
@@ -1583,7 +1596,7 @@ class StoresService:
 
     @staticmethod
     async def get_stock_adjustments(db: AsyncSession, search: Optional[str] = None) -> List[StoresStockAdjustment]:
-        stmt = select(StoresStockAdjustment).where(StoresStockAdjustment.is_deleted == False)
+        stmt = select(StoresStockAdjustment).where(StoresStockAdjustment.is_deleted == False).options(selectinload(StoresStockAdjustment.items))
         res = await db.execute(stmt)
         adjs = res.scalars().all()
         for a in adjs:
@@ -1596,7 +1609,7 @@ class StoresService:
     async def get_stock_adjustment(db: AsyncSession, adjustment_id: int) -> Optional[StoresStockAdjustment]:
         stmt = select(StoresStockAdjustment).where(
             and_(StoresStockAdjustment.id == adjustment_id, StoresStockAdjustment.is_deleted == False)
-        )
+        ).options(selectinload(StoresStockAdjustment.items))
         res = await db.execute(stmt)
         a = res.scalar()
         if not a:
@@ -1638,7 +1651,7 @@ class StoresService:
         db_dc = StoresReturnableDC(
             dc_no=dc_no,
             issue_id=payload.issue_id,
-            expected_return_date=payload.expected_return_date,
+            expected_return_date=payload.expected_return_date.replace(tzinfo=None) if payload.expected_return_date.tzinfo else payload.expected_return_date,
             issued_to_department_id=payload.issued_to_department_id,
             issued_by_id=payload.issued_by_id,
             status="Issued"
@@ -1665,7 +1678,7 @@ class StoresService:
 
     @staticmethod
     async def get_returnable_dcs(db: AsyncSession, search: Optional[str] = None) -> List[StoresReturnableDC]:
-        stmt = select(StoresReturnableDC).where(StoresReturnableDC.is_deleted == False)
+        stmt = select(StoresReturnableDC).where(StoresReturnableDC.is_deleted == False).options(selectinload(StoresReturnableDC.items))
         res = await db.execute(stmt)
         dcs = res.scalars().all()
         for d in dcs:
@@ -1682,7 +1695,7 @@ class StoresService:
     async def get_returnable_dc(db: AsyncSession, dc_id: int) -> Optional[StoresReturnableDC]:
         stmt = select(StoresReturnableDC).where(
             and_(StoresReturnableDC.id == dc_id, StoresReturnableDC.is_deleted == False)
-        )
+        ).options(selectinload(StoresReturnableDC.items))
         res = await db.execute(stmt)
         d = res.scalar()
         if not d:

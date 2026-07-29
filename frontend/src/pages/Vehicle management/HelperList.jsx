@@ -155,63 +155,88 @@ const HelperList = () => {
     }
   };
 
+  
+  const profilePreviewRef = React.useRef(null);
+  const generateProfilePDF = async (item) => {
+    if (profilePreviewRef.current) {
+      const safeName = (item?.name || 'Helper').toString().replace(/[^a-zA-Z0-9_-]/g, '_');
+      await downloadElementAsPdf(profilePreviewRef.current, `Helper_Profile_${safeName}.pdf`);
+    }
+  };
+
   if (viewingHelper) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-        <div className="form-control">
-          <div className="btn btn-secondary">
-            <h2 className="text-xl font-bold text-slate-900">Helper Details</h2>
-            <button onClick={() => setViewingHelper(null)} className="text-slate-400 hover:text-slate-600">
-              <X size={24} />
-            </button>
-          </div>
-          <div className="p-6 space-y-4">
-            <div className="form-row">
-              <div>
-                <p className="text-xs text-slate-500 uppercase">Name</p>
-                <p className="font-semibold">{viewingHelper.name}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 uppercase">Mobile</p>
-                <p className="font-semibold">{viewingHelper.mobile}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 uppercase">Status</p>
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getStatusColor(viewingHelper.status)}`}>
-                  {viewingHelper.status}
-                </span>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 uppercase">Daily Wage</p>
-                <p className="font-semibold">₹{viewingHelper.daily_wage}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 uppercase">Joining Date</p>
-                <p className="font-semibold">{new Date(viewingHelper.date_of_joining).toLocaleDateString()}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 uppercase">Aadhar Number</p>
-                <p className="font-semibold">{viewingHelper.aadhar_number || 'N/A'}</p>
-              </div>
-              <div className="col-span-2">
-                <p className="text-xs text-slate-500 uppercase">Address</p>
-                <p className="font-semibold">{viewingHelper.address || 'N/A'}</p>
-              </div>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm" style={{ zIndex: 100 }}>
+        <div className="animate-scale-up" style={{ background: '#f8fafc', width: '95%', maxWidth: 900, height: '90vh', borderRadius: 12, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+          
+          <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', zIndex: 10, flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Eye size={18} style={{ color: '#4f46e5' }} /> 
+              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1e293b' }}>Helper Profile Preview</h3>
+            </div>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <button onClick={() => generateProfilePDF(viewingHelper)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#e2e8f0', border: 'none', color: '#1e293b', padding: '6px 12px', fontSize: 12, fontWeight: 600 }}>
+                <Download size={14} /> Download PDF
+              </button>
+              <button onClick={() => setViewingHelper(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b' }}><X size={20} /></button>
             </div>
           </div>
-          <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
-            <button onClick={() => setViewingHelper(null)} className="px-4 py-2 border rounded-lg hover:bg-white transition-colors">Close</button>
-            <button 
-              onClick={() => { openEditForm(viewingHelper); setViewingHelper(null); }}
-              className="btn btn-primary"
-            >
-              Edit Helper
-            </button>
+
+          <div style={{ flex: 1, overflowY: 'auto', padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div ref={profilePreviewRef} style={{ width: '100%', maxWidth: 794, background: '#ffffff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', borderRadius: 4, position: 'relative', marginBottom: 20, overflow: 'hidden' }}>
+              
+              <div style={{ padding: '32px 40px 20px 40px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                    <div><img src={logoImg} alt="Dinesh Exports" style={{ width: 56, height: 56, objectFit: 'contain' }} /></div>
+                    <div>
+                       <h1 style={{ margin: 0, color: '#0f172a', fontSize: 28, fontWeight: 900, letterSpacing: '-0.02em' }}>DINESH EXPORTS</h1>
+                       <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em' }}>THE HOUSE OF FABRICS</p>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'left', width: 300 }}>
+                    <h2 style={{ margin: '0 0 16px 0', color: '#0f172a', fontSize: 18, fontWeight: 800, letterSpacing: '0.05em', textAlign: 'right' }}>HELPER PROFILE</h2>
+                    <div style={{ display: 'flex', fontSize: 11, marginBottom: 6, alignItems: 'center' }}>
+                      <div style={{ width: 100, fontWeight: 600, color: '#0f172a' }}>Status</div>
+                      <div style={{ width: 20, textAlign: 'center' }}>:</div>
+                      <div><span style={{ background: '#22c55e', color: 'white', padding: '2px 8px', borderRadius: 12, fontSize: 9, fontWeight: 700 }}>{(viewingHelper.status || 'ACTIVE').toUpperCase()}</span></div>
+                    </div>
+                    <div style={{ display: 'flex', fontSize: 11, marginBottom: 6 }}>
+                      <div style={{ width: 100, fontWeight: 600, color: '#0f172a' }}>Generated On</div>
+                      <div style={{ width: 20, textAlign: 'center' }}>:</div>
+                      <div style={{ fontWeight: 500, color: '#0f172a' }}>{new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ borderBottom: '3px solid #0f172a' }}></div>
+
+              <div style={{ padding: '10px 40px 40px 40px' }}>
+                <div style={{ position: 'relative', border: '1px solid #e2e8f0', borderRadius: 6, padding: '24px 20px 12px 20px', marginTop: 24 }}>
+                  <div style={{ position: 'absolute', top: -14, left: -1, background: '#0f172a', color: 'white', padding: '6px 16px', borderRadius: '6px 6px 6px 0', display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>
+                    <User size={14} /> 1. DETAILS
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 0 }}>
+                    <div>
+                      <InfoRow2 label="Name" value={viewingHelper.name} />
+                      <InfoRow2 label="Mobile" value={viewingHelper.mobile} />
+                      <InfoRow2 label="Status" value={viewingHelper.status} />
+                      <InfoRow2 label="Daily Wage" value={viewingHelper.daily_wage} />
+                      <InfoRow2 label="Joining Date" value={viewingHelper.date_of_joining ? new Date(viewingHelper.date_of_joining).toLocaleDateString() : '-'} />
+                      <InfoRow2 label="Aadhar Number" value={viewingHelper.aadhar_number} />
+                      <InfoRow2 label="Address" value={viewingHelper.address} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     );
   }
+
 
   if (mode === 'form') {
     return (
@@ -285,7 +310,7 @@ const HelperList = () => {
                     { value: 'INACTIVE', label: 'Inactive' },
                     { value: 'ON_LEAVE', label: 'On Leave' }
                   ]}
-                  placeholder="Select Status"
+                  placeholder="--- Select Status ---"
                 />
               </div>
 
@@ -450,19 +475,19 @@ const HelperList = () => {
                           {helper.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <button onClick={() => setViewingHelper(helper)} className="btn btn-secondary" title="View details">
-                            <Eye size={18} />
-                          </button>
-                          <button onClick={() => openEditForm(helper)} className="btn btn-secondary" title="Edit helper">
-                            <Edit2 size={18} />
-                          </button>
-                          <button onClick={() => handleDelete(helper.id)} className="btn btn-secondary" title="Delete helper">
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </td>
+                      <td onClick={e => e.stopPropagation()} style={{ textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                            <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setViewingHelper(helper)} title="Preview Profile">
+                              <Eye size={16} color="var(--primary)" />
+                            </button>
+                            <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => openEditForm(helper)} title="Edit">
+                              <Edit2 size={16} />
+                            </button>
+                            <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => handleDelete(helper.id)} title="Delete">
+                              <Trash2 size={16} color="var(--danger, #ef4444)" />
+                            </button>
+                          </div>
+                        </td>
                     </tr>
                   ))
                 )}

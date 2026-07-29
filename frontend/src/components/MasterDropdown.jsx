@@ -22,7 +22,7 @@ export default function MasterDropdown({
   onOptionsRefresh,
   required = false,
   disabled = false,
-  placeholder = '-- Select --',
+  placeholder = '---select----',
   onKeyDown,
   allowCustom = true
 }) {
@@ -33,7 +33,7 @@ export default function MasterDropdown({
   const [busy, setBusy] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [dropdownCoords, setDropdownCoords] = useState(null);
-  
+
   // Inline edit state
   const [editingId, setEditingId] = useState(null);
   const [editingText, setEditingText] = useState('');
@@ -41,6 +41,16 @@ export default function MasterDropdown({
   const [addingText, setAddingText] = useState('');
 
   const containerRef = useRef(null);
+
+  const handleChange = (val) => {
+    if (onChange) {
+      if (name !== undefined) {
+        onChange(name, val);
+      } else {
+        onChange(val);
+      }
+    }
+  };
 
   // Configuration map for core entity types
   const config = {
@@ -85,6 +95,34 @@ export default function MasterDropdown({
       delete: storesService.deleteItem,
       update: (id, name) => storesService.updateItem(id, { item_name: name }),
       displayKey: 'item_name'
+    },
+    warehouse: {
+      fetch: storesService.getWarehouses,
+      create: (name) => storesService.createWarehouse({ warehouse_name: name, warehouse_code: name.toUpperCase().slice(0, 10), location: 'Main' }),
+      delete: () => { }, // No delete API yet
+      update: () => { }, // No update API yet
+      displayKey: 'warehouse_name'
+    },
+    cost_center: {
+      fetch: storesService.getCostCenters,
+      create: (name) => storesService.createCostCenter({ name: name, code: name.toUpperCase().slice(0, 10) }),
+      delete: () => { },
+      update: () => { },
+      displayKey: 'name'
+    },
+    budget: {
+      fetch: storesService.getBudgets,
+      create: (name) => storesService.createBudget({ project_code: name.toUpperCase().slice(0, 10), budget_code: name.toUpperCase().slice(0, 10), budget_allocated: 1000000 }),
+      delete: () => { },
+      update: () => { },
+      displayKey: 'budget_code'
+    },
+    employee: {
+      fetch: storesService.getEmployees,
+      create: (name) => storesService.createEmployee({ name: name, employee_code: 'EMP-' + Math.floor(Math.random() * 1000) }),
+      delete: () => { },
+      update: () => { },
+      displayKey: 'name'
     }
   };
 
@@ -95,15 +133,15 @@ export default function MasterDropdown({
   // Foolproof helper to extract ID regardless of backend primary key naming
   const getRecordId = (item) => {
     if (typeof item !== 'object' || !item) return item;
-    return item.id !== undefined ? item.id : 
-           item.vendor_id !== undefined ? item.vendor_id : 
-           item.item_id !== undefined ? item.item_id : 
-           item.category_id !== undefined ? item.category_id : 
-           item.uom_id !== undefined ? item.uom_id : 
-           item.department_id !== undefined ? item.department_id : 
-           item.warehouse_id !== undefined ? item.warehouse_id : 
-           item.quotation_id !== undefined ? item.quotation_id : 
-           item.value !== undefined ? item.value : item.name;
+    return item.id !== undefined ? item.id :
+      item.vendor_id !== undefined ? item.vendor_id :
+        item.item_id !== undefined ? item.item_id :
+          item.category_id !== undefined ? item.category_id :
+            item.uom_id !== undefined ? item.uom_id :
+              item.department_id !== undefined ? item.department_id :
+                item.warehouse_id !== undefined ? item.warehouse_id :
+                  item.quotation_id !== undefined ? item.quotation_id :
+                    item.value !== undefined ? item.value : item.name;
   };
 
   const getLocalStorageKey = () => `master_dropdown_custom_${name || label || 'default'}`;
@@ -259,7 +297,7 @@ export default function MasterDropdown({
         } else if (entity) {
           await subMasterAPI.delete(entity, itemId).catch(err => console.error('API delete error:', err));
         }
-        
+
         const mutations = getCustomMutations();
         const addedIdx = mutations.added.findIndex(o => getRecordId(o) === itemId || (o.name && o.name === itemLabel));
         if (addedIdx !== -1) {
@@ -272,7 +310,7 @@ export default function MasterDropdown({
         await fetchOptions(searchTerm);
 
         if (value === itemId || value === itemLabel || (typeof value === 'object' && getRecordId(value) === itemId)) {
-          onChange(name, '');
+          handleChange('');
         }
         if (onOptionsRefresh) onOptionsRefresh();
       } catch (err) {
@@ -301,11 +339,11 @@ export default function MasterDropdown({
       } else if (entity) {
         await subMasterAPI.update(entity, itemId, { entity, name: newText, is_active: true }).catch(err => console.error('API update error:', err));
       }
-      
+
       const mutations = getCustomMutations();
       const addedIdx = mutations.added.findIndex(o => getRecordId(o) === itemId || (o.name && o.name === itemLabel));
       if (addedIdx !== -1) {
-        mutations.added[addedIdx] = typeof mutations.added[addedIdx] === 'object' 
+        mutations.added[addedIdx] = typeof mutations.added[addedIdx] === 'object'
           ? { ...mutations.added[addedIdx], name: newText, label: newText, value: newText, vendor_name: newText, item_name: newText, category_name: newText, uom_name: newText, department_name: newText }
           : newText;
       } else {
@@ -316,7 +354,7 @@ export default function MasterDropdown({
       await fetchOptions(searchTerm);
 
       if (value === itemId || value === itemLabel) {
-        onChange(name, typeof item === 'object' ? itemId : newText);
+        handleChange(typeof item === 'object' ? itemId : newText);
       }
       setEditingId(null);
       setEditingText('');
@@ -357,7 +395,7 @@ export default function MasterDropdown({
           createdId = res.data.id || res.data.value;
         }
       }
-      
+
       const newObj = { id: createdId, name: newText, label: newText, value: createdId, [entityConfig?.displayKey || 'name']: newText };
       const mutations = getCustomMutations();
       if (!mutations.added.some(o => getRecordId(o) === createdId || (o.name && o.name === newText))) {
@@ -366,7 +404,7 @@ export default function MasterDropdown({
       }
       await fetchOptions(searchTerm);
 
-      onChange(name, createdId);
+      handleChange(createdId);
       setAddingMode(false);
       setAddingText('');
       setIsOpen(false);
@@ -407,7 +445,7 @@ export default function MasterDropdown({
       e.stopPropagation();
       if (highlightedIndex >= 0 && highlightedIndex < options.length) {
         const item = options[highlightedIndex];
-        onChange(name, getRecordId(item));
+        handleChange(getRecordId(item));
         setIsOpen(false);
       }
     } else if (e.key === 'Escape') {
@@ -532,10 +570,10 @@ export default function MasterDropdown({
               options.map((item, index) => {
                 const isHighlighted = index === highlightedIndex;
                 const itemId = getRecordId(item);
-                const isSelected = propOptions 
+                const isSelected = propOptions
                   ? (itemId === value || item.value === value || item.name === value || item === value || Number(itemId) === Number(value))
                   : (value === itemId || Number(value) === Number(itemId));
-                
+
                 const itemLabel = typeof item === 'object' ? (entityConfig ? item[entityConfig.displayKey] || item.name || item.label || item.vendor_name || item.item_name || item.category_name || item.uom_name || item.department_name || item.id : (item.name || item.label || item.vendor_name || item.item_name || item.category_name || item.uom_name || item.department_name || item.value || item.id)) : item;
 
                 return (
@@ -548,7 +586,7 @@ export default function MasterDropdown({
                     }}
                     onClick={() => {
                       if (editingId !== itemId) {
-                        onChange(name, propOptions ? (typeof item === 'object' ? itemId : item) : itemId);
+                        handleChange(propOptions ? (typeof item === 'object' ? itemId : item) : itemId);
                         setIsOpen(false);
                       }
                     }}

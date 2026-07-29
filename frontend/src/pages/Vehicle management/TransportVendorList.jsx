@@ -3,9 +3,26 @@ import { Plus, Truck, Phone, MapPin, DollarSign, Star, Calendar, ArrowLeft, Save
 import MasterDropdown from '../../components/MasterDropdown';
 import { confirmDialog } from '../../utils/dialogs';
 
+const InfoRow2 = ({ label, value }) => (
+  <div style={{ display: 'flex', padding: '8px 0', borderBottom: '1px dashed #e2e8f0', fontSize: 11 }}>
+    <div style={{ width: '40%', color: '#0f172a', fontWeight: 600 }}>{label}</div>
+    <div style={{ width: '5%', color: '#0f172a', textAlign: 'center' }}>:</div>
+    <div style={{ width: '55%', color: '#0f172a', fontWeight: 500 }}>{value || '-'}</div>
+  </div>
+);
+
 const TransportVendorList = () => {
   const [vendors, setVendors] = useState([]);
-  const [mode, setMode] = useState('list'); // 'list' or 'form'
+  const [mode, setMode] = useState('list');
+  const [viewingVendor, setViewingVendor] = React.useState(null);
+  const profilePreviewRef = React.useRef(null);
+  const generateProfilePDF = async (item) => {
+    if (profilePreviewRef.current) {
+      const safeName = (item?.vendorName || 'Vendor').toString().replace(/[^a-zA-Z0-9_-]/g, '_');
+      await downloadElementAsPdf(profilePreviewRef.current, `Vendor_Profile_${safeName}.pdf`);
+    }
+  };
+ // 'list' or 'form'
   const [editingVendor, setEditingVendor] = useState(null);
   const [formData, setFormData] = useState({
     vendorName: '',
@@ -296,7 +313,7 @@ const TransportVendorList = () => {
                     value={formData.paymentTerms}
                     onChange={(val) => setFormData({...formData, paymentTerms: val})}
                     options={paymentTermsOptions.map(term => ({ value: term.value, label: term.label }))}
-                    placeholder="Select Payment Terms"
+                    placeholder="--- Select Payment Terms ---"
                   />
                 </div>
 

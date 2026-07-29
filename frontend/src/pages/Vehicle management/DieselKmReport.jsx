@@ -148,7 +148,7 @@ const DieselKmReport = () => {
                 { value: '', label: 'All Fleet Vehicles' },
                 ...vehicles.map(v => ({ value: v.id, label: `${v.vehicle_number} (${v.model || ''})` }))
               ]}
-              placeholder="All Fleet Vehicles"
+              placeholder="--- All Fleet Vehicles ---"
             />
           </div>
 

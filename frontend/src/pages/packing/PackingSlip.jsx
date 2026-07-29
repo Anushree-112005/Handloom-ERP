@@ -697,7 +697,7 @@ export default function PackingSlip() {
                             }
                           }}
                         >
-                          <option value="">-- Select --</option>
+                          <option value="">---select----</option>
                           {options.masters?.packing_type_master?.map(x => <option key={x} value={x}>{x}</option>)}
                           <option value="__ADD_NEW__" style={{ fontWeight: 'bold', color: 'var(--primary)' }}>+ Add Custom</option>
                         </select>
@@ -744,7 +744,7 @@ export default function PackingSlip() {
                             }
                           }}
                         >
-                          <option value="">-- Select --</option>
+                          <option value="">---select----</option>
                           {options.masters?.godown_master?.map(x => <option key={x} value={x}>{x}</option>)}
                           <option value="__ADD_NEW__" style={{ fontWeight: 'bold', color: 'var(--primary)' }}>+ Add Custom</option>
                         </select>
@@ -783,7 +783,7 @@ export default function PackingSlip() {
                             }
                           }}
                         >
-                          <option value="">-- Select --</option>
+                          <option value="">---select----</option>
                           {options.masters?.pin_master?.map(x => <option key={x} value={x}>{x}</option>)}
                           <option value="__ADD_NEW__" style={{ fontWeight: 'bold', color: 'var(--primary)' }}>+ Add Custom</option>
                         </select>
@@ -822,7 +822,7 @@ export default function PackingSlip() {
                             }
                           }}
                         >
-                          <option value="">-- Select --</option>
+                          <option value="">---select----</option>
                           {options.masters?.bale_list_master?.map(x => <option key={x} value={x}>{x}</option>)}
                           <option value="__ADD_NEW__" style={{ fontWeight: 'bold', color: 'var(--primary)' }}>+ Add Custom</option>
                         </select>
@@ -847,7 +847,7 @@ export default function PackingSlip() {
                         value={formData.ibpo || ''} 
                         onChange={handleIbpoChange}
                       >
-                        <option value="">-- Select --</option>
+                        <option value="">---select----</option>
                         {Array.from(new Set(buyerOrders.map(o => o.ibpo_number).filter(Boolean))).map(ibpo => (
                           <option key={ibpo} value={ibpo}>{ibpo}</option>
                         ))}
@@ -861,7 +861,7 @@ export default function PackingSlip() {
                         value={formData.design_no || ''} 
                         onChange={handleDesignChange}
                       >
-                        <option value="">-- Select --</option>
+                        <option value="">---select----</option>
                         {Array.from(new Set([
                           ...designs.map(d => d.design_no).filter(Boolean),
                           formData.design_no
@@ -923,7 +923,7 @@ export default function PackingSlip() {
                             }
                           }}
                         >
-                          <option value="">-- Select --</option>
+                          <option value="">---select----</option>
                           {options.masters?.stock_type_master?.map(x => <option key={x} value={x}>{x}</option>)}
                           <option value="__ADD_NEW__" style={{ fontWeight: 'bold', color: 'var(--primary)' }}>+ Add Custom</option>
                         </select>
@@ -966,7 +966,7 @@ export default function PackingSlip() {
                             }
                           }}
                         >
-                          <option value="">-- Select --</option>
+                          <option value="">---select----</option>
                           {options.transporters?.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
                           {options.masters?.transport_name_master?.map(x => <option key={'_m_' + x} value={x}>{x}</option>)}
                           <option value="__ADD_NEW__" style={{ fontWeight: 'bold', color: 'var(--primary)' }}>+ Add Custom</option>
@@ -1010,7 +1010,7 @@ export default function PackingSlip() {
                             }
                           }}
                         >
-                          <option value="">-- Select --</option>
+                          <option value="">---select----</option>
                           {options.all_parties?.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                           <option value="__ADD_NEW__" style={{ fontWeight: 'bold', color: 'var(--primary)' }}>+ Add Custom</option>
                         </select>
@@ -1050,7 +1050,7 @@ export default function PackingSlip() {
                             }
                           }}
                         >
-                          <option value="">-- Select --</option>
+                          <option value="">---select----</option>
                           <option value="Packed">Packed</option>
                           <option value="Shipped">Shipped</option>
                           <option value="Cancelled">Cancelled</option>

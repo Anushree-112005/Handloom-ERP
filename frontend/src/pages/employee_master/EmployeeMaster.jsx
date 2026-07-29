@@ -498,7 +498,7 @@ export default function EmployeeMaster() {
                     <div className="form-group">
                       <label>Gender</label>
                       <select className="form-control" name="gender" value={formData.gender} onChange={handleChange}>
-                        <option value="">-- Select --</option>
+                        <option value="">---select----</option>
                         <option>Male</option><option>Female</option><option>Other</option>
                       </select>
                     </div>
@@ -528,7 +528,7 @@ export default function EmployeeMaster() {
                         </div>
                       ) : (
                         <select className="form-control" name="blood_group" value={formData.blood_group} onChange={handleChange}>
-                          <option value="">-- Select --</option>
+                          <option value="">---select----</option>
                           {bloodGroups.map(bg => <option key={bg} value={bg}>{bg}</option>)}
                           <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
                         </select>
@@ -579,7 +579,7 @@ export default function EmployeeMaster() {
                           </div>
                         ) : (
                           <select className="form-control" name="department" value={formData.department} onChange={handleChange}>
-                            <option value="">-- Select --</option>
+                            <option value="">---select----</option>
                             {departments.map(d => <option key={d} value={d}>{d}</option>)}
                             <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
                           </select>
@@ -615,7 +615,7 @@ export default function EmployeeMaster() {
                         </div>
                       ) : (
                         <select className="form-control" name="category" value={formData.category} onChange={handleChange}>
-                          <option value="">-- Select --</option>
+                          <option value="">---select----</option>
                           {categories.map(c => <option key={c} value={c}>{c}</option>)}
                           <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
                         </select>
@@ -655,7 +655,7 @@ export default function EmployeeMaster() {
                         </div>
                       ) : (
                         <select className="form-control" name="shift" value={formData.shift} onChange={handleChange}>
-                          <option value="">-- Select --</option>
+                          <option value="">---select----</option>
                           {shifts.map(s => <option key={s} value={s}>{s}</option>)}
                           <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
                         </select>
@@ -687,7 +687,7 @@ export default function EmployeeMaster() {
                         </div>
                       ) : (
                         <select className="form-control" name="skill_level" value={formData.skill_level} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'identity', 'aadhaar_no')}>
-                          <option value="">-- Select --</option>
+                          <option value="">---select----</option>
                           {skillLevels.map(sl => <option key={sl} value={sl}>{sl}</option>)}
                           <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
                         </select>
@@ -761,7 +761,7 @@ export default function EmployeeMaster() {
                         </div>
                       ) : (
                         <select className="form-control" name="wage_type" value={formData.wage_type} onChange={handleChange}>
-                          <option value="">-- Select --</option>
+                          <option value="">---select----</option>
                           {wageTypes.map(wt => <option key={wt} value={wt}>{wt}</option>)}
                           <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
                         </select>
@@ -855,7 +855,7 @@ export default function EmployeeMaster() {
                         </div>
                       ) : (
                         <select className="form-control" name="payment_mode" value={formData.payment_mode} onChange={handleChange}>
-                          <option value="">-- Select --</option>
+                          <option value="">---select----</option>
                           {paymentModes.map(pm => <option key={pm} value={pm}>{pm}</option>)}
                           <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
                         </select>
@@ -910,7 +910,7 @@ export default function EmployeeMaster() {
                         </div>
                       ) : (
                         <select className="form-control" name="status" value={formData.status} onChange={handleChange}>
-                          <option value="">-- Select --</option>
+                          <option value="">---select----</option>
                           {statuses.map(st => <option key={st} value={st}>{st}</option>)}
                           <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
                         </select>
@@ -973,7 +973,7 @@ export default function EmployeeMaster() {
                         </div>
                       ) : (
                         <select className="form-control" name="department" value={formData.department} onChange={handleChange}>
-                          <option value="">-- Select --</option>
+                          <option value="">---select----</option>
                           {departments.map(d => <option key={d} value={d}>{d}</option>)}
                           <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
                         </select>
@@ -1009,7 +1009,7 @@ export default function EmployeeMaster() {
                         </div>
                       ) : (
                         <select className="form-control" name="category" value={formData.category} onChange={handleChange}>
-                          <option value="">-- Select --</option>
+                          <option value="">---select----</option>
                           {categories.map(c => <option key={c} value={c}>{c}</option>)}
                           <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
                         </select>
@@ -1049,7 +1049,7 @@ export default function EmployeeMaster() {
                         </div>
                       ) : (
                         <select className="form-control" name="shift" value={formData.shift} onChange={handleChange}>
-                          <option value="">-- Select --</option>
+                          <option value="">---select----</option>
                           {shifts.map(s => <option key={s} value={s}>{s}</option>)}
                           <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
                         </select>
@@ -1081,7 +1081,7 @@ export default function EmployeeMaster() {
                         </div>
                       ) : (
                         <select className="form-control" name="skill_level" value={formData.skill_level} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'identity', 'aadhaar_no')}>
-                          <option value="">-- Select --</option>
+                          <option value="">---select----</option>
                           {skillLevels.map(sl => <option key={sl} value={sl}>{sl}</option>)}
                           <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
                         </select>
@@ -1157,7 +1157,7 @@ export default function EmployeeMaster() {
                         </div>
                       ) : (
                         <select className="form-control" name="wage_type" value={formData.wage_type} onChange={handleChange}>
-                          <option value="">-- Select --</option>
+                          <option value="">---select----</option>
                           {wageTypes.map(wt => <option key={wt} value={wt}>{wt}</option>)}
                           <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
                         </select>
@@ -1253,7 +1253,7 @@ export default function EmployeeMaster() {
                         </div>
                       ) : (
                         <select className="form-control" name="payment_mode" value={formData.payment_mode} onChange={handleChange}>
-                          <option value="">-- Select --</option>
+                          <option value="">---select----</option>
                           {paymentModes.map(pm => <option key={pm} value={pm}>{pm}</option>)}
                           <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
                         </select>

@@ -577,8 +577,8 @@ export default function QuotationEntry() {
       </div>
 
       {/* ── Quotation / Vendor Table ── */}
-      <div className="card overflow-hidden flex-1 flex flex-col mt-4">
-        <div className="px-5 py-3 border-b border-slate-50 flex justify-between items-center gap-4 bg-slate-50/40">
+      <div className="card" style={{ marginBottom: 24, marginTop: 16 }}>
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
           <div className="relative w-72">
             <Search className="absolute left-3 top-2.5 text-slate-400" size={16} />
             <input
@@ -587,7 +587,7 @@ export default function QuotationEntry() {
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               className="form-control"
-              style={{ paddingLeft: '36px' }}
+              style={{ paddingLeft: '36px', margin: 0 }}
             />
           </div>
           <button onClick={loadData} title="Refresh" className="btn btn-secondary p-2">
@@ -611,28 +611,28 @@ export default function QuotationEntry() {
                 <span className="text-xs text-slate-400">Click "Place Quotation" to create a quotation.</span>
               </div>
             ) : (
-              <table className="w-full text-left">
+              <table className="data-table">
                 <thead>
-                  <tr className="bg-slate-50/80 text-slate-500 uppercase text-xs font-bold tracking-wider border-b border-slate-100">
-                    <th className="px-5 py-3">Quotation ID</th>
-                    <th className="px-5 py-3">Company Name</th>
-                    <th className="px-5 py-3">Vendor</th>
-                    <th className="px-5 py-3">Date Created</th>
-                    <th className="px-5 py-3 text-right">Grand Total (incl. GST)</th>
-                    <th className="px-5 py-3 text-center">Actions</th>
+                  <tr>
+                    <th>Quotation ID</th>
+                    <th>Company Name</th>
+                    <th>Vendor</th>
+                    <th>Date Created</th>
+                    <th>Grand Total (incl. GST)</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-sm text-slate-600">
+                <tbody>
                   {filteredQuotations.map(q => (
-                    <tr key={q.quotation_id} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="px-5 py-3 font-bold text-slate-800 font-mono">QTN-{q.quotation_id}</td>
-                      <td className="px-5 py-3 font-semibold text-indigo-600">{q.company_name}</td>
-                      <td className="px-5 py-3 font-semibold text-slate-700">{q.vendor?.vendor_name || '—'}</td>
-                      <td className="px-5 py-3">{new Date(q.date_created).toLocaleDateString('en-IN')}</td>
-                      <td className="px-5 py-3 text-right font-bold text-slate-800">
+                    <tr key={q.quotation_id}>
+                      <td>QTN-{q.quotation_id}</td>
+                      <td>{q.company_name}</td>
+                      <td>{q.vendor?.vendor_name || '—'}</td>
+                      <td>{new Date(q.date_created).toLocaleDateString('en-IN')}</td>
+                      <td>
                         ₹{(q.grand_total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="px-5 py-3 text-center">
+                      <td>
                         <button
                           onClick={async () => {
                             const detailedQuote = await storesService.getProcurementQuotation(q.quotation_id);
@@ -652,15 +652,16 @@ export default function QuotationEntry() {
                             setIsModalOpen(true);
                           }}
                           className="btn btn-secondary py-1 px-3.5 text-xs mr-2 font-semibold"
+                          title="Print Preview"
                         >
                           Print Preview
                         </button>
                         <button
                           onClick={(e) => handleDeleteQuotation(q.quotation_id, e)}
-                          className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors inline-flex align-middle"
+                          className="icon-btn delete-btn"
                           title="Delete Quotation"
                         >
-                          <Trash2 size={15} />
+                          <Trash2 size={16} />
                         </button>
                       </td>
                     </tr>
@@ -678,22 +679,22 @@ export default function QuotationEntry() {
                 <span className="text-xs text-slate-400">Click "Register New Vendor" to add the first one.</span>
               </div>
             ) : (
-              <table className="w-full text-left">
+              <table className="data-table">
                 <thead>
-                  <tr className="bg-slate-50/80 text-slate-500 uppercase text-xs font-bold tracking-wider border-b border-slate-100">
-                    <th className="px-5 py-3" style={{ width: 120 }}>Vendor ID</th>
-                    <th className="px-5 py-3">Vendor Name</th>
-                    <th className="px-5 py-3">Contact Info / Email</th>
-                    <th className="px-5 py-3 text-center" style={{ width: 180 }}>Actions</th>
+                  <tr>
+                    <th style={{ width: 120 }}>Vendor ID</th>
+                    <th>Vendor Name</th>
+                    <th>Contact Info / Email</th>
+                    <th style={{ width: 180 }}>Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-sm text-slate-600">
+                <tbody>
                   {filteredVendors.map(v => (
-                    <tr key={v.vendor_id} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="px-5 py-3 font-bold text-slate-800 font-mono">VEN-{v.vendor_id}</td>
-                      <td className="px-5 py-3 font-bold text-slate-800">{v.vendor_name}</td>
-                      <td className="px-5 py-3 text-slate-500">{v.contact_info || '—'}</td>
-                      <td className="px-5 py-3 text-center">
+                    <tr key={v.vendor_id}>
+                      <td>VEN-{v.vendor_id}</td>
+                      <td>{v.vendor_name}</td>
+                      <td>{v.contact_info || '—'}</td>
+                      <td>
                         <button
                           onClick={() => {
                             setEditingVendorId(v.vendor_id);
@@ -706,9 +707,10 @@ export default function QuotationEntry() {
                         </button>
                         <button
                           onClick={(e) => handleDeleteVendor(v.vendor_id, e)}
-                          className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
+                          className="icon-btn delete-btn"
+                          title="Delete Vendor"
                         >
-                          <Trash2 size={15} />
+                          <Trash2 size={16} />
                         </button>
                       </td>
                     </tr>
@@ -1199,3 +1201,4 @@ export default function QuotationEntry() {
     </div>
   );
 }
+

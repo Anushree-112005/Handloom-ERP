@@ -969,7 +969,7 @@ export default function SalesInvoice() {
                             if (e.target.value === 'ADD_CUSTOM') setIsCustomPaymentMode(true);
                             else handleInputChange(e);
                           }}>
-                            <option value="">-- Select --</option>
+                            <option value="">---select----</option>
                             {(options.masters?.payment_mode_master || []).map(p => <option key={p} value={p}>{p}</option>)}
                             <option value="Credit">Credit</option>
                             <option value="Advance">Advance</option>
@@ -1000,7 +1000,7 @@ export default function SalesInvoice() {
                             if (e.target.value === 'ADD_CUSTOM') setIsCustomTransport(true);
                             else handleInputChange(e);
                           }}>
-                            <option value="">-- Select --</option>
+                            <option value="">---select----</option>
                             {options.transporters.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
                             {(options.masters?.transport_name_master || []).map(t => <option key={`custom-${t}`} value={t}>{t}</option>)}
                             <option value="ADD_CUSTOM" style={{ color: '#4f46e5', fontWeight: 'bold' }}>+ Add Custom Transport</option>
@@ -1035,7 +1035,7 @@ export default function SalesInvoice() {
                             if (e.target.value === 'ADD_CUSTOM') setIsCustomTransportMode(true);
                             else handleInputChange(e);
                           }}>
-                            <option value="">-- Select --</option>
+                            <option value="">---select----</option>
                             {(options.masters?.transport_mode_master || []).map(t => <option key={t} value={t}>{t}</option>)}
                             <option value="Road">Road</option><option value="Rail">Rail</option><option value="Air">Air</option><option value="Ship">Ship</option>
                             <option value="ADD_CUSTOM" style={{ color: '#4f46e5', fontWeight: 'bold' }}>+ Add Custom Mode</option>
@@ -1055,7 +1055,7 @@ export default function SalesInvoice() {
                             if (e.target.value === 'ADD_CUSTOM') setIsCustomFreightMode(true);
                             else handleInputChange(e);
                           }}>
-                            <option value="">-- Select --</option>
+                            <option value="">---select----</option>
                             {(options.masters?.freight_mode_master || []).map(f => <option key={f} value={f}>{f}</option>)}
                             <option value="To Pay">To Pay</option><option value="Paid">Paid</option>
                             <option value="ADD_CUSTOM" style={{ color: '#4f46e5', fontWeight: 'bold' }}>+ Add Custom Mode</option>
@@ -1083,7 +1083,7 @@ export default function SalesInvoice() {
                             if (e.target.value === 'ADD_CUSTOM') setIsCustomLrTerms(true);
                             else handleInputChange(e);
                           }} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'design_no')}>
-                            <option value="">-- Select --</option>
+                            <option value="">---select----</option>
                             {(options.masters?.lr_terms || []).map(l => <option key={l} value={l}>{l}</option>)}
                             <option value="Primary Logistics">Primary Logistics</option>
                             <option value="Secondary Delivery">Secondary Delivery</option>
@@ -1141,7 +1141,7 @@ export default function SalesInvoice() {
                                     }
                                   }}
                                 >
-                                  <option value="">-- Select --</option>
+                                  <option value="">---select----</option>
                                   {(options.masters?.hsn_code_master || []).map(h => <option key={h} value={h}>{h}</option>)}
                                   <option value="ADD_CUSTOM" style={{ color: '#4f46e5', fontWeight: 'bold' }}>+ Add Custom HSN</option>
                                 </select>
@@ -1179,7 +1179,7 @@ export default function SalesInvoice() {
                                     }
                                   }}
                                 >
-                                  <option value="">-- Select --</option>
+                                  <option value="">---select----</option>
                                   <option value="MTR">MTR</option>
                                   <option value="YDS">YDS</option>
                                   <option value="KG">KG</option>

@@ -10,6 +10,14 @@ import {
 import * as XLSX from 'xlsx';
 import MasterDropdown from '../../components/MasterDropdown';
 
+const InfoRow2 = ({ label, value }) => (
+  <div style={{ display: 'flex', padding: '8px 0', borderBottom: '1px dashed #e2e8f0', fontSize: 11 }}>
+    <div style={{ width: '40%', color: '#0f172a', fontWeight: 600 }}>{label}</div>
+    <div style={{ width: '5%', color: '#0f172a', textAlign: 'center' }}>:</div>
+    <div style={{ width: '55%', color: '#0f172a', fontWeight: 500 }}>{value || '-'}</div>
+  </div>
+);
+
 const TripPlanning = () => {
   const [trips, setTrips] = useState([]);
   const [vehicles, setVehicles] = useState([]);
@@ -226,8 +234,18 @@ const TripPlanning = () => {
 
   // ── FORM VIEW ──
   if (view === 'form') {
-    return (
-      <div className="animate-fade">
+    
+  const profilePreviewRef = React.useRef(null);
+  const generateProfilePDF = async (item) => {
+    if (profilePreviewRef.current) {
+      const safeName = (item?.id || 'Trip').toString().replace(/[^a-zA-Z0-9_-]/g, '_');
+      await downloadElementAsPdf(profilePreviewRef.current, `Trip_Profile_${safeName}.pdf`);
+    }
+  };
+
+  return (
+    <div className="animate-fade">
+
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
           <button 
             type="button"
@@ -257,7 +275,7 @@ const TripPlanning = () => {
                     value={formData.vehicle_id}
                     onChange={(val) => setFormData({ ...formData, vehicle_id: val })}
                     options={vehicles.map(v => ({ value: v.id, label: v.vehicle_number }))}
-                    placeholder="Select Vehicle"
+                    placeholder="--- Select Vehicle ---"
                   />
                 </div>
                 <div className="form-group">
@@ -266,7 +284,7 @@ const TripPlanning = () => {
                     value={formData.driver_id}
                     onChange={(val) => setFormData({ ...formData, driver_id: val })}
                     options={drivers.map(d => ({ value: d.id, label: d.driver_name }))}
-                    placeholder="Select Driver"
+                    placeholder="--- Select Driver ---"
                   />
                 </div>
 
@@ -407,7 +425,7 @@ const TripPlanning = () => {
                 { value: 'Completed', label: 'Completed' },
                 { value: 'Cancelled', label: 'Cancelled' }
               ]}
-              placeholder="Filter Status"
+              placeholder="--- Filter Status ---"
               allowClear={false}
             />
           </div>
@@ -477,11 +495,14 @@ const TripPlanning = () => {
                         </td>
                         <td onClick={e => e.stopPropagation()} style={{ textAlign: 'center' }}>
                           <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                            <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={() => handleOpenForm(trip)} title="Edit">
+                            <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setViewingTrip(trip)} title="Preview Profile">
+                              <Eye size={16} color="var(--primary)" />
+                            </button>
+                            <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => handleOpenForm(trip)} title="Edit">
                               <Edit2 size={16} />
                             </button>
-                            <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={(e) => handleDelete(trip.id, e)} title="Delete">
-                              <Trash2 size={16} color="#ef4444" />
+                            <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => handleDelete(trip.id, e)} title="Delete">
+                              <Trash2 size={16} color="var(--danger, #ef4444)" />
                             </button>
                           </div>
                         </td>
@@ -495,115 +516,123 @@ const TripPlanning = () => {
         </div>
       </div>
       
-      {/* View Modal */}
-      {viewingTrip && (() => {
-        const info = parseTripNotes(viewingTrip);
-        return (
-          <div style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(0, 0, 0, 0.4)',
-            backdropFilter: 'blur(4px)',
-            padding: 16
-          }}>
-            <div className="card" style={{ maxWidth: 600, width: '100%', padding: 0, overflow: 'hidden', borderRadius: 12 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
-                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-                  Trip Details — #{viewingTrip.id}
-                </h3>
-                <button onClick={() => setViewingTrip(null)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }}>
-                  <X size={18} />
-                </button>
+      
+        {/* Profile View Modal */}
+        {viewingTrip && (() => {
+          const info = parseTripNotes(viewingTrip);
+          return (
+          <div className="fixed inset-0" style={{ zIndex: 100, display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(4px)' }}>
+            <div className="animate-scale-up" style={{ background: '#f8fafc', width: '95%', maxWidth: 900, height: '90vh', borderRadius: 12, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+              
+              <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', zIndex: 10, flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Eye size={18} style={{ color: '#4f46e5' }} /> 
+                  <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1e293b' }}>Trip Profile Preview</h3>
+                </div>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <button onClick={() => generateProfilePDF(viewingTrip)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#e2e8f0', border: 'none', color: '#1e293b', padding: '6px 12px', fontSize: 12, fontWeight: 600 }}>
+                    <Download size={14} /> Download PDF
+                  </button>
+                  <button onClick={() => setViewingTrip(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b' }}><X size={20} /></button>
+                </div>
               </div>
 
-              <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                  <div>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>VEHICLE & DRIVER</span>
-                    <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
-                      <Truck size={16} color="var(--primary)" /> {getVehicleName(viewingTrip.vehicle_id)}
-                    </div>
-                    <div style={{ marginTop: 2, display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-muted)' }}>
-                      <User size={14} /> {getDriverName(viewingTrip.driver_id)}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div ref={profilePreviewRef} style={{ width: '100%', maxWidth: 794, background: '#ffffff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', borderRadius: 4, position: 'relative', marginBottom: 20, overflow: 'hidden' }}>
+                  
+                  <div style={{ padding: '32px 40px 20px 40px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                        <div><img src={logoImg} alt="Dinesh Exports" style={{ width: 56, height: 56, objectFit: 'contain' }} /></div>
+                        <div>
+                           <h1 style={{ margin: 0, color: '#0f172a', fontSize: 28, fontWeight: 900, letterSpacing: '-0.02em' }}>DINESH EXPORTS</h1>
+                           <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em' }}>THE HOUSE OF FABRICS</p>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'left', width: 300 }}>
+                        <h2 style={{ margin: '0 0 16px 0', color: '#0f172a', fontSize: 18, fontWeight: 800, letterSpacing: '0.05em', textAlign: 'right' }}>TRIP DETAILS</h2>
+                        <div style={{ display: 'flex', fontSize: 11, marginBottom: 6, alignItems: 'center' }}>
+                          <div style={{ width: 100, fontWeight: 600, color: '#0f172a' }}>Status</div>
+                          <div style={{ width: 20, textAlign: 'center' }}>:</div>
+                          <div><span style={{ background: '#22c55e', color: 'white', padding: '2px 8px', borderRadius: 12, fontSize: 9, fontWeight: 700 }}>{(viewingTrip.status || 'SCHEDULED').toUpperCase()}</span></div>
+                        </div>
+                        <div style={{ display: 'flex', fontSize: 11, marginBottom: 6 }}>
+                          <div style={{ width: 100, fontWeight: 600, color: '#0f172a' }}>Trip Date</div>
+                          <div style={{ width: 20, textAlign: 'center' }}>:</div>
+                          <div style={{ fontWeight: 500, color: '#0f172a' }}>{viewingTrip.trip_date ? viewingTrip.trip_date.split('T')[0] : '-'}</div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>STATUS</span>
-                    <div style={{ marginTop: 4 }}>
-                      {getStatusBadge(viewingTrip.status)}
+
+                  <div style={{ borderBottom: '3px solid #0f172a' }}></div>
+
+                  <div style={{ padding: '10px 40px 40px 40px' }}>
+                    
+                    <div style={{ position: 'relative', border: '1px solid #e2e8f0', borderRadius: 6, padding: '24px 20px 12px 20px', marginTop: 24 }}>
+                      <div style={{ position: 'absolute', top: -14, left: -1, background: '#0f172a', color: 'white', padding: '6px 16px', borderRadius: '6px 6px 6px 0', display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>
+                        <User size={14} /> 1. VEHICLE & DRIVER
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40 }}>
+                        <div>
+                          <InfoRow2 label="Vehicle" value={getVehicleName(viewingTrip.vehicle_id)} />
+                        </div>
+                        <div>
+                          <InfoRow2 label="Driver" value={getDriverName(viewingTrip.driver_id)} />
+                        </div>
+                      </div>
                     </div>
+
+                    <div style={{ position: 'relative', border: '1px solid #e2e8f0', borderRadius: 6, padding: '24px 20px 12px 20px', marginTop: 24 }}>
+                      <div style={{ position: 'absolute', top: -14, left: -1, background: '#0f172a', color: 'white', padding: '6px 16px', borderRadius: '6px 6px 6px 0', display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>
+                        <MapPin size={14} /> 2. ROUTE DETAILS
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40 }}>
+                        <div>
+                          <InfoRow2 label="Start Location" value={viewingTrip.start_location} />
+                        </div>
+                        <div>
+                          <InfoRow2 label="End Location" value={viewingTrip.end_location} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ position: 'relative', border: '1px solid #e2e8f0', borderRadius: 6, padding: '24px 20px 12px 20px', marginTop: 24 }}>
+                      <div style={{ position: 'absolute', top: -14, left: -1, background: '#0f172a', color: 'white', padding: '6px 16px', borderRadius: '6px 6px 6px 0', display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>
+                        <IndianRupee size={14} /> 3. MATERIAL & CUSTOMER
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40 }}>
+                        <div>
+                          <InfoRow2 label="Material" value={info.material} />
+                          <InfoRow2 label="Quantity" value={info.quantity} />
+                        </div>
+                        <div>
+                          <InfoRow2 label="Customer" value={info.customer} />
+                          <InfoRow2 label="Estimated Revenue" value={`₹${viewingTrip.revenue ? viewingTrip.revenue.toLocaleString() : '0'}`} />
+                        </div>
+                      </div>
+                    </div>
+
+                    {viewingTrip.voice_note_path && (
+                      <div style={{ marginTop: 24, background: 'var(--bg-secondary)', border: '1px solid var(--border)', padding: 12, borderRadius: 8 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                          <Volume2 size={14} /> DRIVER VOICE NOTE
+                        </span>
+                        <audio 
+                          src={viewingTrip.voice_note_path.startsWith('http') ? viewingTrip.voice_note_path : `/${viewingTrip.voice_note_path}`} 
+                          controls 
+                          style={{ width: '100%', height: 32 }}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
-
-                <div style={{ borderTop: '1px dashed var(--border)', paddingTop: 16 }}>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>ROUTE DETAILS</span>
-                  <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ flex: 1, padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>START LOCATION</div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginTop: 2 }}>{viewingTrip.start_location}</div>
-                    </div>
-                    <ArrowLeft size={16} color="var(--text-muted)" style={{ transform: 'rotate(180deg)' }} />
-                    <div style={{ flex: 1, padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>END LOCATION</div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginTop: 2 }}>{viewingTrip.end_location}</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ borderTop: '1px dashed var(--border)', paddingTop: 16 }}>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>MATERIAL & CUSTOMER</span>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 8 }}>
-                    <div>
-                      <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Material</div>
-                      <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{info.material}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Quantity</div>
-                      <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{info.quantity}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Customer</div>
-                      <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{info.customer}</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ borderTop: '1px dashed var(--border)', paddingTop: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                  <div>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>RATE PER TON</span>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <DollarSign size={16} color="var(--text-muted)" /> {info.rate}
-                    </div>
-                  </div>
-                  <div>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>ESTIMATED REVENUE</span>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#10b981', marginTop: 4 }}>
-                      ₹{viewingTrip.revenue ? viewingTrip.revenue.toLocaleString() : '0'}
-                    </div>
-                  </div>
-                </div>
-
-                {viewingTrip.voice_note_path && (
-                  <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', padding: 12, borderRadius: 8 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                      <Volume2 size={14} /> DRIVER VOICE NOTE
-                    </span>
-                    <audio 
-                      src={viewingTrip.voice_note_path.startsWith('http') ? viewingTrip.voice_note_path : `/${viewingTrip.voice_note_path}`} 
-                      controls 
-                      style={{ width: '100%', height: 32 }}
-                    />
-                  </div>
-                )}
               </div>
             </div>
           </div>
-        );
-      })()}
+          );
+        })()}
+
     </div>
   );
 };

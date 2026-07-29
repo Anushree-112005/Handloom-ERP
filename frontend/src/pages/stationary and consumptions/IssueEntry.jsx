@@ -302,55 +302,44 @@ export default function IssueEntry() {
             </div>
 
             <div className="overflow-x-auto flex-1">
-              {loading ? (
-                <div className="p-16 text-center text-slate-400 flex flex-col items-center gap-2">
-                  <Loader2 size={28} className="animate-spin text-blue-400" />
-                  <span className="text-xs">Loading issue records…</span>
-                </div>
-              ) : filteredIssues.length === 0 ? (
-                <div className="p-16 text-center text-slate-400 flex flex-col items-center gap-3">
-                  <FileText size={44} className="text-slate-200" />
-                  <span className="text-sm font-semibold">No issues logged yet.</span>
-                  <span className="text-xs text-slate-300">Click "New Issue Entry" to get started.</span>
-                </div>
-              ) : (
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="bg-slate-50/80 text-slate-500 uppercase text-xs font-bold tracking-wider border-b border-slate-100">
-                      <th className="px-5 py-3">Issue No</th>
-                      <th className="px-5 py-3">Issue Date</th>
-                      <th className="px-5 py-3">Department</th>
-                      <th className="px-5 py-3">Issued By</th>
-                      <th className="px-5 py-3 text-center">Status</th>
-                      <th className="px-5 py-3 text-center">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-sm text-slate-600">
-                    {filteredIssues.map(i => (
-                      <tr key={i.id} className="hover:bg-slate-50/60 transition-colors">
-                        <td className="px-5 py-3 font-bold text-slate-800 font-mono">{i.issue_no}</td>
-                        <td className="px-5 py-3">{i.issue_date ? new Date(i.issue_date).toLocaleDateString('en-IN') : '—'}</td>
-                        <td className="px-5 py-3 font-semibold text-slate-700">{i.requesting_department_name || '—'}</td>
-                        <td className="px-5 py-3">{i.issued_by_name || '—'}</td>
-                        <td className="px-5 py-3 text-center">
-                          <span className={`px-3 py-1 rounded-full font-bold text-xs ${statusColors[i.status] || 'bg-slate-100 text-slate-500'}`}>
-                            {i.status}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3 text-center">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Issue No</th>
+                    <th>Issue Date</th>
+                    <th>Department</th>
+                    <th>Issued By</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr><td colSpan="6" style={{ textAlign: 'center', padding: 20 }}>Loading...</td></tr>
+                  ) : filteredIssues.length === 0 ? (
+                    <tr><td colSpan="6" style={{ textAlign: 'center', padding: 20 }}>No issues found matching criteria.</td></tr>
+                  ) : (
+                    filteredIssues.map(i => (
+                      <tr key={i.id}>
+                        <td>{i.issue_no}</td>
+                        <td>{i.issue_date ? new Date(i.issue_date).toLocaleDateString('en-IN') : '-'}</td>
+                        <td>{i.requesting_department_name || '-'}</td>
+                        <td>{i.issued_by_name || '-'}</td>
+                        <td>{i.status}</td>
+                        <td>
                           <button
                             onClick={() => handleDelete(i.id)}
-                            className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
+                            className="icon-btn delete-btn"
                             title="Cancel Issue"
                           >
-                            <Trash2 size={14} />
+                            <Trash2 size={16} />
                           </button>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </>
@@ -359,9 +348,9 @@ export default function IssueEntry() {
       ) : (
         <div className="animate-fade">
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
-            <button 
+            <button
               type="button"
-              onClick={() => setView('list')} 
+              onClick={() => setView('list')}
               style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
               onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
               onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
@@ -399,7 +388,7 @@ export default function IssueEntry() {
                           label=""
                           name="requesting_department_id"
                           value={formData.requesting_department_id}
-                          options={filteredDepts.map(dept => ({...dept, name: `${dept.department_name}${dept.department_code ? ` (${dept.department_code})` : ''}`}))}
+                          options={filteredDepts.map(dept => ({ ...dept, name: `${dept.department_name}${dept.department_code ? ` (${dept.department_code})` : ''}` }))}
                           required={true}
                           onChange={(name, val) => setFormData({ ...formData, [name]: val })}
                         />
@@ -486,7 +475,7 @@ export default function IssueEntry() {
                                       label=""
                                       name="item_id"
                                       value={item.item_id}
-                                      options={itemsList.map(i => ({...i, name: `${i.item_code} — ${i.item_name}`}))}
+                                      options={itemsList.map(i => ({ ...i, name: `${i.item_code} — ${i.item_name}` }))}
                                       required={true}
                                       onChange={(name, val) => handleItemChange(idx, val)}
                                     />
@@ -518,7 +507,7 @@ export default function IssueEntry() {
                                       label=""
                                       name="warehouse_id"
                                       value={item.warehouse_id}
-                                      options={warehouses.map(w => ({...w, name: w.warehouse_name}))}
+                                      options={warehouses.map(w => ({ ...w, name: w.warehouse_name }))}
                                       onChange={(name, val) => {
                                         const updated = [...formData.items];
                                         updated[idx].warehouse_id = val;

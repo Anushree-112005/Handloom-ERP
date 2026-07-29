@@ -34,8 +34,7 @@ export default function ReturnEntry() {
   });
 
   const showToast = (msg, ok = true) => {
-    setToast({ show: true, msg, ok });
-    setTimeout(() => setToast({ show: false, msg: '', ok: true }), 3500);
+    if (!ok) alert(msg);
   };
 
   useEffect(() => { loadData(); }, [view]);
@@ -207,56 +206,53 @@ export default function ReturnEntry() {
             </div>
 
             <div className="overflow-x-auto flex-1">
-              {loading ? (
-                <div className="p-16 flex flex-col items-center gap-3 text-slate-400">
-                  <Loader2 size={28} className="animate-spin text-orange-400" />
-                  <span className="text-xs">Loading return records…</span>
-                </div>
-              ) : filteredReturns.length === 0 ? (
-                <div className="p-16 flex flex-col items-center gap-3 text-slate-400">
-                  <div className="p-5 bg-orange-50 rounded-2xl"><RotateCcw size={38} className="text-orange-300" /></div>
-                  <span className="text-sm font-bold text-slate-600">No returns logged yet.</span>
-                  <span className="text-xs text-slate-400">Click "New Return Entry" to record materials returned to store.</span>
-                </div>
-              ) : (
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="bg-slate-50/80 text-slate-500 uppercase text-xs font-bold tracking-wider border-b border-slate-100">
-                      <th className="px-5 py-3">Return No</th>
-                      <th className="px-5 py-3">Return Date</th>
-                      <th className="px-5 py-3">Returned By</th>
-                      <th className="px-5 py-3">Received By</th>
-                      <th className="px-5 py-3 text-center">Status</th>
-                      <th className="px-5 py-3 text-center">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-sm text-slate-600">
-                    {filteredReturns.map(r => (
-                      <tr key={r.id} className="hover:bg-slate-50/60 transition-colors">
-                        <td className="px-5 py-3 font-bold text-slate-800 font-mono">{r.return_no}</td>
-                        <td className="px-5 py-3">{r.return_date ? new Date(r.return_date).toLocaleDateString('en-IN') : '—'}</td>
-                        <td className="px-5 py-3 font-semibold text-slate-700">{r.returned_by_name || '—'}</td>
-                        <td className="px-5 py-3 text-slate-500">{r.received_by_name || '—'}</td>
-                        <td className="px-5 py-3 text-center">
-                          <span className={`px-3 py-1 rounded-full font-bold text-xs ${statusColors[r.status] || 'bg-slate-100 text-slate-500'}`}>{r.status || 'Received'}</span>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Return No</th>
+                    <th>Return Date</th>
+                    <th>Returned By</th>
+                    <th>Received By</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr><td colSpan="6" style={{ textAlign: 'center', padding: 20 }}>Loading...</td></tr>
+                  ) : filteredReturns.length === 0 ? (
+                    <tr><td colSpan="6" style={{ textAlign: 'center', padding: 20 }}>No returns logged yet.</td></tr>
+                  ) : (
+                    filteredReturns.map(r => (
+                      <tr key={r.id}>
+                        <td>{r.return_no}</td>
+                        <td>{r.return_date ? new Date(r.return_date).toLocaleDateString('en-IN') : '-'}</td>
+                        <td>{r.returned_by_name || '-'}</td>
+                        <td>{r.received_by_name || '-'}</td>
+                        <td>
+                          <span className={`status-badge ${r.status?.toLowerCase().replace(' ', '-') || 'received'}`}>
+                            {r.status || 'Received'}
+                          </span>
                         </td>
-                        <td className="px-5 py-3 text-center">
-                          <button onClick={() => handleDelete(r.id)} className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"><Trash2 size={14} /></button>
+                        <td>
+                          <button onClick={() => handleDelete(r.id)} className="icon-btn delete-btn">
+                            <Trash2 size={16} />
+                          </button>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </>
       ) : (
         <div className="animate-fade">
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
-            <button 
+            <button
               type="button"
-              onClick={() => setView('list')} 
+              onClick={() => setView('list')}
               style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
               onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
               onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
@@ -294,7 +290,7 @@ export default function ReturnEntry() {
                           label=""
                           name="issue_id"
                           value={formData.issue_id}
-                          options={issuesList.map(iss => ({...iss, name: `${iss.issue_no} — ${iss.requesting_department_name || 'Unknown'}`, id: iss.id.toString()}))}
+                          options={issuesList.map(iss => ({ ...iss, name: `${iss.issue_no} — ${iss.requesting_department_name || 'Unknown'}`, id: iss.id.toString() }))}
                           onChange={(name, val) => handleIssueChange(val)}
                         />
                         {linkedIssue && (
@@ -369,9 +365,9 @@ export default function ReturnEntry() {
                                         name="condition"
                                         value={item.condition}
                                         options={[
-                                          {id: 'Good', name: 'Good (Restockable)'},
-                                          {id: 'Damaged', name: 'Damaged'},
-                                          {id: 'Partial', name: 'Partial'}
+                                          { id: 'Good', name: 'Good (Restockable)' },
+                                          { id: 'Damaged', name: 'Damaged' },
+                                          { id: 'Partial', name: 'Partial' }
                                         ]}
                                         onChange={(name, val) => setItemField(idx, name, val)}
                                       />
