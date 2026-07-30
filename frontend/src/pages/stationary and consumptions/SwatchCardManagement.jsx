@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../services/api';
-import { Plus, Save, Trash2, X, FileText, Image, ImageIcon, Search, Filter, Upload, Download } from 'lucide-react';
-import MasterDropdown from '../../components/MasterDropdown';
+import { Download, FileText, Filter, Image, ImageIcon, Plus, Save, Search, Trash2, Upload, X } from 'lucide-react';
 
+import api from '../../services/api';
+
+import MasterDropdown from '../../components/MasterDropdown';
 
 export default function SwatchCardManagement() {
   const [view, setView] = useState('list'); // 'list' or 'form'
@@ -128,7 +129,6 @@ export default function SwatchCardManagement() {
       (item?.count_spec || '').toLowerCase().includes(searchTerm.toLowerCase());
     return matchesTab && matchesSearch;
   });
-
 
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>

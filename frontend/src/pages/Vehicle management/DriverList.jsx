@@ -1,10 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Users, Search, Filter, Edit2, Trash2, X, Save, Phone, Award, ArrowLeft } from 'lucide-react';
+import { Plus, Users, Search, Filter, Edit2, Trash2, X, Save, Phone, Award, ArrowLeft, Eye, Download, User, Globe, Mail, FileText, MapPin } from 'lucide-react';
 import api from '../../services/api';
 import MasterDropdown from '../../components/MasterDropdown';
 import { showError, showSuccess } from '../../utils/notifications';
 import { showConfirm } from '../../components/ConfirmDialog';
 import { fetchEmployees } from '../../services/hrService';
+import { downloadElementAsPdf } from '../../components/A4DocumentPreview';
+import jsPDF from 'jspdf';
+import logoImg from '../../assets/logo.png';
+import ExportButton from '../../components/ExportButton';
+
+const InfoRow2 = ({ label, value }) => (
+  <div style={{ display: 'flex', padding: '8px 0', borderBottom: '1px dashed #e2e8f0', fontSize: 11 }}>
+    <div style={{ width: '40%', color: '#0f172a', fontWeight: 600 }}>{label}</div>
+    <div style={{ width: '5%', color: '#0f172a', textAlign: 'center' }}>:</div>
+    <div style={{ width: '55%', color: '#0f172a', fontWeight: 500 }}>{value}</div>
+  </div>
+);
 
 const DetailRow = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
@@ -17,12 +29,15 @@ export default function DriverList() {
   const [view, setView] = useState('list');
   const [drivers, setDrivers] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const profilePreviewRef = React.useRef(null);
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
   const [selectedViewDriver, setSelectedViewDriver] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
 
   const initialForm = {
     driver_name: '',
@@ -87,7 +102,7 @@ export default function DriverList() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       const payload = {
         ...formData,
@@ -144,11 +159,6 @@ export default function DriverList() {
   const activeCount = drivers.filter(d => d.status === 'Active').length;
   const inactiveCount = drivers.filter(d => d.status === 'Inactive').length;
   const avgExperience = drivers.length > 0 ? (drivers.reduce((sum, d) => sum + (Number(d.years_of_experience || 0)), 0) / drivers.length).toFixed(1) : 0;
-
-  // FORM VIEW
-  if (view === 'form') {
-    
-  const profilePreviewRef = useRef(null);
   const generateProfilePDF = async (item) => {
     if (profilePreviewRef.current) {
       const safeName = (item?.driver_name || 'Driver').toString().replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -156,12 +166,14 @@ export default function DriverList() {
     }
   };
 
-  return (
-    <div className="animate-fade">
+  // FORM VIEW
+  if (view === 'form') {
+    return (
+      <div className="animate-fade">
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
-          <button 
+          <button
             type="button"
-            onClick={() => setView('list')} 
+            onClick={() => setView('list')}
             style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
             onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
             onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
@@ -175,72 +187,72 @@ export default function DriverList() {
 
         <div className="card" style={{ padding: 32 }}>
           <form id="driverForm" onSubmit={handleSubmit}>
-              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Driver Information</h4>
-              <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-                <div className="form-group">
-                  <label>Driver Name *</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    name="driver_name"
-                    value={formData.driver_name}
-                    placeholder="Enter driver name"
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Phone Number *</label>
-                  <input type="tel" className="form-control" name="phone_number" value={formData.phone_number} onChange={handleInputChange} required />
-                </div>
-                <div className="form-group">
-                  <label>Status *</label>
-                  <MasterDropdown
-                    entity="driver_status"
-                    value={formData.status}
-                    onChange={(val) => setFormData({ ...formData, status: val })}
-                    options={statuses.map(s => ({ value: s, label: s }))}
-                    placeholder="--- Select Status ---"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>License Number *</label>
-                  <input type="text" className="form-control" name="driver_license" value={formData.driver_license} onChange={handleInputChange} required />
-                </div>
-                <div className="form-group">
-                  <label>License Expiry Date *</label>
-                  <input type="date" className="form-control" name="license_expiry_date" value={formData.license_expiry_date} onChange={handleInputChange} required />
-                </div>
-                <div className="form-group">
-                  <label>Assigned Vehicle</label>
-                  <MasterDropdown
-                    value={formData.assigned_vehicle_id}
-                    onChange={(val) => setFormData({ ...formData, assigned_vehicle_id: val })}
-                    options={vehicles.map(v => ({
-                      value: v.id,
-                      label: `${v.vehicle_number} (${v.make || ''} ${v.model || ''})`.trim()
-                    }))}
-                    placeholder="--- Select a Vehicle ---"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Years of Experience</label>
-                  <input type="number" className="form-control" name="years_of_experience" value={formData.years_of_experience} onChange={handleInputChange} min="0" />
-                </div>
+            <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Driver Information</h4>
+            <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+              <div className="form-group">
+                <label>Driver Name *</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="driver_name"
+                  value={formData.driver_name}
+                  placeholder="Enter driver name"
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Phone Number *</label>
+                <input type="tel" className="form-control" name="phone_number" value={formData.phone_number} onChange={handleInputChange} required />
+              </div>
+              <div className="form-group">
+                <label>Status *</label>
+                <MasterDropdown
+                  entity="driver_status"
+                  value={formData.status}
+                  onChange={(val) => setFormData({ ...formData, status: val })}
+                  options={statuses.map(s => ({ value: s, label: s }))}
+                  placeholder="--- Select Status ---"
+                />
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
-                  <X size={16} /> Close
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  <Save size={16} /> {editingId ? 'Update Driver' : 'Save Driver'}
-                </button>
+              <div className="form-group">
+                <label>License Number *</label>
+                <input type="text" className="form-control" name="driver_license" value={formData.driver_license} onChange={handleInputChange} required />
               </div>
-            </form>
-          </div>
+              <div className="form-group">
+                <label>License Expiry Date *</label>
+                <input type="date" className="form-control" name="license_expiry_date" value={formData.license_expiry_date} onChange={handleInputChange} required />
+              </div>
+              <div className="form-group">
+                <label>Assigned Vehicle</label>
+                <MasterDropdown
+                  value={formData.assigned_vehicle_id}
+                  onChange={(val) => setFormData({ ...formData, assigned_vehicle_id: val })}
+                  options={vehicles.map(v => ({
+                    value: v.id,
+                    label: `${v.vehicle_number} (${v.make || ''} ${v.model || ''})`.trim()
+                  }))}
+                  placeholder="--- Select a Vehicle ---"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Years of Experience</label>
+                <input type="number" className="form-control" name="years_of_experience" value={formData.years_of_experience} onChange={handleInputChange} min="0" />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
+                <X size={16} /> Close
+              </button>
+              <button type="submit" className="btn btn-primary">
+                <Save size={16} /> {editingId ? 'Update Driver' : 'Save Driver'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     );
   }
@@ -256,9 +268,24 @@ export default function DriverList() {
           </h2>
           <p style={{ color: 'var(--text-muted)' }}>Manage vehicle drivers and their qualifications</p>
         </div>
-        <button className="btn btn-primary" onClick={() => handleOpenForm()}>
-          <Plus size={18} /> Add Driver
-        </button>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <ExportButton 
+            data={filteredDrivers}
+            filename="Vehicle_Assignment_Report"
+            pdfTitle="Vehicle Assignment Report"
+            columns={[
+              { header: 'Name', key: 'driver_name' },
+              { header: 'Phone', key: 'phone_number' },
+              { header: 'License', key: 'driver_license' },
+              { header: 'Assigned Vehicle', key: 'assigned_vehicle_id', render: (row) => vehicles.find(v => v.id === row.assigned_vehicle_id)?.vehicle_number || '-' },
+              { header: 'Experience (yrs)', key: 'years_of_experience', render: (row) => Number(row.years_of_experience || 0) },
+              { header: 'Status', key: 'status' }
+            ]}
+          />
+          <button className="btn btn-primary" onClick={() => handleOpenForm()}>
+            <Plus size={18} /> Add Driver
+          </button>
+        </div>
       </div>
 
       {/* Stat Cards */}
@@ -305,27 +332,35 @@ export default function DriverList() {
       </div>
 
       {/* Filter Bar */}
-      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', background: 'var(--bg-secondary)' }}>
+      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+        
+        {/* Left Side: Search */}
         <div style={{ position: 'relative', flex: 1, minWidth: 250, maxWidth: 350 }}>
           <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input type="text" className="form-control" placeholder="Search by name, phone or license..." style={{ paddingLeft: 38, width: '100%', margin: 0 }} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
-          <Filter size={16} />
-          <span style={{ fontSize: 13, fontWeight: 600 }}>Status:</span>
-        </div>
-        <div style={{ width: 180 }}>
-          <MasterDropdown
-            value={statusFilter}
-            onChange={(val) => setStatusFilter(val || 'All')}
-            options={[
-              { value: 'All', label: 'All Status' },
-              ...statuses.map(s => ({ value: s, label: s }))
-            ]}
-            placeholder="--- Filter Status ---"
-            allowClear={false}
-          />
+        {/* Right Side: Filters */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
+            <Filter size={16} />
+            <span style={{ fontSize: 13, fontWeight: 600 }}>Status:</span>
+          </div>
+          
+          <select className="form-control" style={{ width: 150, margin: 0 }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+            <option value="All">All Status</option>
+            {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>From:</span>
+            <input type="date" className="form-control" style={{ width: 140, margin: 0 }} value={fromDate} onChange={e => setFromDate(e.target.value)} />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>To:</span>
+            <input type="date" className="form-control" style={{ width: 140, margin: 0 }} value={toDate} onChange={e => setToDate(e.target.value)} />
+          </div>
         </div>
       </div>
 
@@ -366,13 +401,13 @@ export default function DriverList() {
                       </td>
                       <td onClick={e => e.stopPropagation()} style={{ textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); setSelectedViewDriver(v); }} title="Preview Profile">
+                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); setSelectedViewDriver(d); }} title="Preview Profile">
                             <Eye size={16} color="var(--primary)" />
                           </button>
-                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); handleOpenForm(v)(); }} title="Edit">
+                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); handleOpenForm(d); }} title="Edit">
                             <Edit2 size={16} />
                           </button>
-                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); handleDelete(v.id, e); }} title="Delete">
+                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); handleDelete(d.id, e); }} title="Delete">
                             <Trash2 size={16} color="var(--danger, #ef4444)" />
                           </button>
                         </div>
@@ -385,15 +420,15 @@ export default function DriverList() {
           </div>
         </div>
 
-        
+
         {/* Profile View Modal */}
         {selectedViewDriver && (
-          <div className="fixed inset-0" style={{ zIndex: 100, display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(4px)' }}>
-            <div className="animate-scale-up" style={{ background: '#f8fafc', width: '95%', maxWidth: 900, height: '90vh', borderRadius: 12, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
-              
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }}>
+            <div className="card animate-fade" style={{ background: '#cbd5e1', width: '100%', maxWidth: 900, height: '90vh', overflow: 'hidden', padding: 0, display: 'flex', flexDirection: 'column', borderRadius: 8, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+
               <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', zIndex: 10, flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Eye size={18} style={{ color: '#4f46e5' }} /> 
+                  <Eye size={18} style={{ color: '#4f46e5' }} />
                   <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1e293b' }}>Driver Profile Preview</h3>
                 </div>
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
@@ -404,16 +439,16 @@ export default function DriverList() {
                 </div>
               </div>
 
-              <div style={{ flex: 1, overflowY: 'auto', padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div ref={profilePreviewRef} style={{ width: '100%', maxWidth: 794, background: '#ffffff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', borderRadius: 4, position: 'relative', marginBottom: 20, overflow: 'hidden' }}>
-                  
+              <div style={{ padding: '40px 20px', background: '#cbd5e1', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', flex: 1, overflowY: 'auto' }}>
+                <div ref={profilePreviewRef} style={{ background: '#fff', width: '100%', maxWidth: 850, padding: 0, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', borderRadius: 4, position: 'relative', marginBottom: 20, overflow: 'hidden', flexShrink: 0 }}>
+
                   <div style={{ padding: '32px 40px 20px 40px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
                         <div><img src={logoImg} alt="Dinesh Exports" style={{ width: 56, height: 56, objectFit: 'contain' }} /></div>
                         <div>
-                           <h1 style={{ margin: 0, color: '#0f172a', fontSize: 28, fontWeight: 900, letterSpacing: '-0.02em' }}>DINESH EXPORTS</h1>
-                           <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em' }}>THE HOUSE OF FABRICS</p>
+                          <h1 style={{ margin: 0, color: '#0f172a', fontSize: 28, fontWeight: 900, letterSpacing: '-0.02em' }}>DINESH EXPORTS</h1>
+                          <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em' }}>THE HOUSE OF FABRICS</p>
                         </div>
                       </div>
                       <div style={{ textAlign: 'left', width: 300 }}>
@@ -441,11 +476,34 @@ export default function DriverList() {
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 0 }}>
                         <div>
-                          <InfoRow2 label="Name" value={selectedViewDriver.driver_name} />\n                          <InfoRow2 label="Phone" value={selectedViewDriver.phone_number} />\n                          <InfoRow2 label="License" value={selectedViewDriver.driver_license} />\n                          <InfoRow2 label="License Expiry" value={selectedViewDriver.license_expiry_date} />\n                          <InfoRow2 label="Assigned Vehicle" value={vehicles.find(v => v.id === selectedViewDriver.assigned_vehicle_id)?.vehicle_number || '-'} />
+                          <InfoRow2 label="Name" value={selectedViewDriver.driver_name} />
+                          <InfoRow2 label="Phone" value={selectedViewDriver.phone_number} />
+                          <InfoRow2 label="License" value={selectedViewDriver.driver_license} />
+                          <InfoRow2 label="License Expiry" value={selectedViewDriver.license_expiry_date} />
+                          <InfoRow2 label="Assigned Vehicle" value={vehicles.find(v => v.id === selectedViewDriver.assigned_vehicle_id)?.vehicle_number || '-'} />
                         </div>
                       </div>
                     </div>
                   </div>
+
+                  <div style={{ borderTop: '2px solid #0f172a', background: '#f8fafc', padding: '16px 40px', display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: 16, fontSize: 10, color: '#0f172a' }}>
+                    <div style={{ display: 'flex', gap: 12 }}>
+                      <MapPin size={16} strokeWidth={2.5} style={{ flexShrink: 0, marginTop: 2, color: '#1e3a8a' }} />
+                      <div>
+                        <div style={{ fontWeight: 800, marginBottom: 2 }}>Dinesh Exports</div>
+                        <div style={{ color: '#475569', fontWeight: 500, lineHeight: '16px' }}>No. 123, Textile Street,<br/>Erode, Tamil Nadu - 638001, India</div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Phone size={14} color="#1e3a8a" strokeWidth={2.5}/> 0424-1234567</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Mail size={14} color="#1e3a8a" strokeWidth={2.5}/> info@dineshexports.com</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Globe size={14} color="#1e3a8a" strokeWidth={2.5}/> www.dineshexports.com</div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end', fontWeight: 700 }}>
+                        <FileText size={16} color="#1e3a8a" strokeWidth={2.5}/> GSTIN : 33ABCDE1234F1Z5
+                    </div>
+                  </div>
+
                 </div>
               </div>
             </div>

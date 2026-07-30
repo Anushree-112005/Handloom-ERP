@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import api from '../../services/api';
 import { showError, showSuccess } from '../../utils/notifications';
 import { showConfirm } from '../../components/ConfirmDialog';
-import { Plus, MapPin, Navigation, Clock, DollarSign, Save, X, Edit2, Trash2, Eye, Search, Filter, Download, ArrowLeft } from 'lucide-react';
+import { Plus, MapPin, Compass, Clock, DollarSign, Save, X, Edit2, Trash2, Eye, Search, Filter, Download, ArrowLeft, User, FileText, Globe, Mail, Phone, IndianRupee } from 'lucide-react';
 import MasterDropdown from '../../components/MasterDropdown';
 import { getDispatches } from '../../services/dispatchService';
 import * as XLSX from 'xlsx';
-
+import { downloadElementAsPdf } from '../../components/A4DocumentPreview';
+import jsPDF from 'jspdf';
+import logoImg from '../../assets/logo.png';
+import ExportButton from '../../components/ExportButton';
 const InfoRow2 = ({ label, value }) => (
   <div style={{ display: 'flex', padding: '8px 0', borderBottom: '1px dashed #e2e8f0', fontSize: 11 }}>
     <div style={{ width: '40%', color: '#0f172a', fontWeight: 600 }}>{label}</div>
@@ -23,10 +26,14 @@ const RouteList = () => {
   const [dispatches, setDispatches] = useState([]);
   const [stations, setStations] = useState([]);
   const [vehicles, setVehicles] = useState([]);
+  const profilePreviewRef = React.useRef(null);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All Status');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+  const fileInputRef = useRef(null);
 
   const initialForm = {
     routeName: '',
@@ -254,24 +261,7 @@ const RouteList = () => {
   };
 
   const handleExportExcel = () => {
-    const data = filteredRoutes.map(route => ({
-      'Route Name': route.route_name,
-      'From': route.origin,
-      'To': route.destination,
-      'Distance (KM)': route.distance_km,
-      'Est. Time (Hours)': (route.estimated_duration_hours || 0).toFixed(2),
-      'Avg Speed (KM/H)': route.avg_speed || 0,
-      'Fuel Cost (₹)': route.fuel_cost_estimate || 0,
-      'Toll (₹)': route.toll_charges || 0,
-      'Condition': route.road_condition || 'Good',
-      'Type': route.route_type,
-      'Difficulty': route.difficulty || 'Medium',
-      'Status': route.status || 'Active'
-    }));
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Routes");
-    XLSX.writeFile(wb, "Routes_List.xlsx");
+    // Replaced by ExportButton component
   };
 
   const filteredRoutes = routes.filter(route => {
@@ -296,16 +286,15 @@ const RouteList = () => {
     else setStatusFilter(status);
   };
 
-  // ── FORM VIEW ──
-  if (view === 'form') {
-    
-  const profilePreviewRef = React.useRef(null);
   const generateProfilePDF = async (item) => {
     if (profilePreviewRef.current) {
       const safeName = (item?.route_name || 'Route').toString().replace(/[^a-zA-Z0-9_-]/g, '_');
       await downloadElementAsPdf(profilePreviewRef.current, `Route_Profile_${safeName}.pdf`);
     }
   };
+
+  // ── FORM VIEW ──
+  if (view === 'form') {
 
   return (
     <div className="animate-fade">
@@ -480,20 +469,41 @@ const RouteList = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Navigation size={24} color="var(--primary)" /> Route Management
+            <Compass size={24} color="var(--primary)" /> Route Management
           </h2>
           <p style={{ color: 'var(--text-muted)' }}>Manage routes, cost estimates and route conditions</p>
         </div>
-        <button className="btn btn-primary" onClick={() => handleOpenForm()}>
-          <Plus size={18} /> Add New Route
-        </button>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <ExportButton 
+            data={filteredRoutes}
+            filename="Route_List_Report"
+            pdfTitle="Route List Report"
+            columns={[
+              { header: 'Route Name', key: 'route_name' },
+              { header: 'From', key: 'origin' },
+              { header: 'To', key: 'destination' },
+              { header: 'Distance (KM)', key: 'distance_km' },
+              { header: 'Est. Time (Hours)', key: 'estimated_duration_hours', render: (row) => (row.estimated_duration_hours || 0).toFixed(2) },
+              { header: 'Avg Speed (KM/H)', key: 'avg_speed' },
+              { header: 'Fuel Cost (₹)', key: 'fuel_cost_estimate' },
+              { header: 'Toll (₹)', key: 'toll_charges' },
+              { header: 'Condition', key: 'road_condition' },
+              { header: 'Type', key: 'route_type' },
+              { header: 'Difficulty', key: 'difficulty' },
+              { header: 'Status', key: 'status' }
+            ]}
+          />
+          <button className="btn btn-primary" onClick={() => handleOpenForm()}>
+            <Plus size={18} /> Add New Route
+          </button>
+        </div>
       </div>
 
       {/* Stat Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
         <div className="card stat-card" onClick={() => handleCardClick('Total')} style={{ cursor: 'pointer', transition: 'all 0.2s' }}>
           <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
-            <Navigation size={24} />
+            <Compass size={24} />
           </div>
           <div className="stat-details">
             <h3>Total Routes</h3>
@@ -523,7 +533,7 @@ const RouteList = () => {
 
         <div className="card stat-card" style={{ transition: 'all 0.2s' }}>
           <div className="stat-icon" style={{ background: 'rgba(139,92,246,0.1)', color: '#8b5cf6' }}>
-            <Navigation size={24} />
+            <Compass size={24} />
           </div>
           <div className="stat-details">
             <h3>Avg Distance</h3>
@@ -534,41 +544,42 @@ const RouteList = () => {
 
       {/* Filter Row */}
       <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+        
+        {/* Left Side: Search */}
         <div style={{ position: 'relative', flex: 1, minWidth: 250, maxWidth: 350 }}>
           <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input
             type="text"
             className="form-control"
-            placeholder="Search by route name or location..."
+            placeholder="Search by Route Name, Source, Destination..."
             style={{ paddingLeft: 38, width: '100%', margin: 0 }}
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
           />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        {/* Right Side: Filters */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
             <Filter size={16} />
             <span style={{ fontSize: 13, fontWeight: 600 }}>Filter:</span>
           </div>
 
-          <div style={{ width: 180 }}>
-            <MasterDropdown
-              value={statusFilter}
-              onChange={(val) => setStatusFilter(val || 'All Status')}
-              options={[
-                { value: 'All Status', label: 'All Status' },
-                { value: 'Active', label: 'Active' },
-                { value: 'Inactive', label: 'Inactive' }
-              ]}
-              placeholder="--- Filter Status ---"
-              allowClear={false}
-            />
+          <select className="form-control" style={{ width: 150, margin: 0 }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+            <option value="All Status">All Routes</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>From:</span>
+            <input type="date" className="form-control" style={{ width: 140, margin: 0 }} value={fromDate} onChange={e => setFromDate(e.target.value)} />
           </div>
 
-          <button className="btn btn-secondary" onClick={handleExportExcel} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Download size={16} /> Export Excel
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>To:</span>
+            <input type="date" className="form-control" style={{ width: 140, margin: 0 }} value={toDate} onChange={e => setToDate(e.target.value)} />
+          </div>
         </div>
       </div>
 
@@ -579,64 +590,34 @@ const RouteList = () => {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Route Name & Status</th>
-                  <th>Path Details</th>
-                  <th>Distance & Time</th>
-                  <th>Costs Estimate</th>
-                  <th>Conditions</th>
+                  <th>Route Code</th>
+                  <th>Route Name</th>
+                  <th>Source</th>
+                  <th>Destination</th>
+                  <th>Distance (KM)</th>
+                  <th style={{ textAlign: 'center' }}>Status</th>
                   <th style={{ textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: 20 }}>Loading routes...</td></tr>
+                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>Loading routes...</td></tr>
                 ) : filteredRoutes.length === 0 ? (
-                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: 20 }}>No routes found</td></tr>
+                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>No routes found</td></tr>
                 ) : (
                   filteredRoutes.map(route => {
                     const isActive = route.status !== 'Inactive';
                     return (
                       <tr key={route.id} onClick={() => setViewingRoute(route)} style={{ cursor: 'pointer', background: viewingRoute?.id === route.id ? 'var(--bg-secondary)' : 'transparent', transition: 'background 0.2s' }}>
-                        <td>
-                          <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{route.route_name}</div>
-                          <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: isActive ? '#d1fae5' : '#f3f4f6', color: isActive ? '#065f46' : '#374151', display: 'inline-block', marginTop: 4 }}>
+                        <td style={{ fontWeight: 600 }}>{route.route_code || route.id}</td>
+                        <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{route.route_name}</td>
+                        <td>{route.origin}</td>
+                        <td>{route.destination}</td>
+                        <td>{route.distance_km || 0}</td>
+                        <td style={{ textAlign: 'center' }}>
+                          <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: isActive ? '#d1fae5' : '#f3f4f6', color: isActive ? '#065f46' : '#374151', display: 'inline-block' }}>
                             {isActive ? 'ACTIVE' : 'INACTIVE'}
                           </span>
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-primary)' }}>
-                            <MapPin size={14} color="var(--text-muted)" /> {route.origin}
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-primary)', marginTop: 4 }}>
-                            <MapPin size={14} color="var(--text-muted)" /> {route.destination}
-                          </div>
-                        </td>
-                        <td>
-                          <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{route.distance_km || 0} KM</div>
-                          <div style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
-                            <Clock size={12} /> {Math.round((route.estimated_duration_hours || 0) * 60)} min
-                          </div>
-                          <div style={{ fontSize: 11, color: '#059669', marginTop: 2 }}>{route.avg_speed || 0} KM/H avg</div>
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontWeight: 600, color: 'var(--text-primary)' }}>
-                            <DollarSign size={14} color="var(--text-muted)" /> ₹{route.fuel_cost_estimate || 0} fuel
-                          </div>
-                          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>₹{route.toll_charges || 0} toll</div>
-                          <div style={{ fontSize: 11, color: '#2563eb', marginTop: 2 }}>₹{((route.fuel_cost_estimate || 0) + (route.toll_charges || 0)).toFixed(2)} total</div>
-                        </td>
-                        <td>
-                          <div>
-                            <span style={{ padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 600, border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
-                              {route.road_condition || 'Good'}
-                            </span>
-                          </div>
-                          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{route.route_type || 'State Highway'}</div>
-                          <div style={{ marginTop: 4 }}>
-                            <span style={{ padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 600, border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
-                              {route.difficulty || 'Medium'}
-                            </span>
-                          </div>
                         </td>
                         <td onClick={e => e.stopPropagation()} style={{ textAlign: 'center' }}>
                           <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
@@ -682,7 +663,7 @@ const RouteList = () => {
               </div>
 
               <div style={{ flex: 1, overflowY: 'auto', padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div ref={profilePreviewRef} style={{ width: '100%', maxWidth: 794, background: '#ffffff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', borderRadius: 4, position: 'relative', marginBottom: 20, overflow: 'hidden' }}>
+                <div ref={profilePreviewRef} style={{ width: '100%', maxWidth: 794, background: '#ffffff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', borderRadius: 4, position: 'relative', marginBottom: 20, overflow: 'hidden', flexShrink: 0 }}>
                   
                   <div style={{ padding: '32px 40px 20px 40px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

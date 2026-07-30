@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { AlertCircle, ArrowLeft, ArrowLeftRight, Briefcase, Building2, CalendarClock, CheckCircle, ClipboardList, Clock, Download, Edit2, Eye, FileText, IndianRupee, Loader2, MapPin, Package, Phone, Plus, RefreshCw, Save, Search, Tag, Trash2, User, Users, X, Filter, Globe, Mail } from 'lucide-react';
+
 import storesService from '../../services/storesService';
-import {
-  Plus, Trash2, Search, RefreshCw, FileText, CheckCircle,
-  AlertCircle, Loader2, CalendarClock, Building2, Users,
-  ClipboardList, ArrowLeftRight, Clock, Package, Tag, Save, X, ArrowLeft
-} from 'lucide-react';
+
 import MasterDropdown from '../../components/MasterDropdown';
+import ExportButton from '../../components/ExportButton';
 
 /* ── status colour mapping ── */
 const statusColor = {
@@ -22,8 +21,28 @@ function daysUntil(dateStr) {
   return diff;
 }
 
+import { downloadElementAsPdf } from '../../components/A4DocumentPreview';
+import logoImg from '../../assets/logo.png';
+
+const InfoRow2 = ({ label, value }) => (
+  <div style={{ display: 'flex', padding: '8px 0', borderBottom: '1px dashed #e2e8f0', fontSize: 11 }}>
+    <div style={{ width: '40%', color: '#0f172a', fontWeight: 600 }}>{label}</div>
+    <div style={{ width: '5%', color: '#0f172a', textAlign: 'center' }}>:</div>
+    <div style={{ width: '55%', color: '#0f172a', fontWeight: 500 }}>{value}</div>
+  </div>
+);
+
 export default function ReturnableDCManagement() {
   const [view, setView] = useState('list');
+
+  const [selectedViewItem, setSelectedViewItem] = useState(null);
+  const printRef = useRef(null);
+  const generatePDF = async () => {
+    if (printRef.current) {
+      await downloadElementAsPdf(printRef.current, `Profile_${selectedViewItem?.id || selectedViewItem?.quotation_id || selectedViewItem?.vendor_id || selectedViewItem?.req_id || 'Doc'}.pdf`);
+    }
+  };
+
   const [loading, setLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [dcs, setDcs] = useState([]);
@@ -186,84 +205,76 @@ export default function ReturnableDCManagement() {
 
       {/* ── Page Header ── */}
       {/* ── Page Header ── */}
+      {/* Header */}
       {view === 'list' && (
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: "24px",
-          background: "linear-gradient(135deg, var(--bg-surface) 0%, rgba(99, 102, 241, 0.05) 100%)",
-          border: "1px solid var(--border)",
-          borderRadius: "12px",
-          marginBottom: "24px"
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{
-              background: 'rgba(99, 102, 241, 0.1)',
-              color: 'rgb(99, 102, 241)',
-              padding: '12px',
-              borderRadius: '12px'
-            }}>
-              <ArrowLeftRight size={24} />
-            </div>
-            <div>
-              <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>Returnable Delivery Challan (DC)</h2>
-              <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Track returnable assets, tools, or materials dispatched to departments with an expected return date.</p>
-            </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <div>
+            <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <ArrowLeftRight size={24} color="var(--primary)" /> Returnable Delivery Challan (DC)
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Track returnable assets, tools, or materials dispatched to departments with an expected return date.</p>
           </div>
 
-          <button
-            onClick={() => {
-              setFormData({ issue_id: '', expected_return_date: '', issued_to_department_id: '', issued_by_id: '', items: [] });
-              setView('form');
-            }}
-            className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px' }}
-          >
-            <Plus size={16} /> New Returnable DC
-          </button>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <ExportButton
+              data={filteredDcs}
+              filename="Returnable_DC_Report"
+              pdfTitle="Returnable Delivery Challan Report"
+              columns={[
+                { header: 'DC No', key: 'dc_no' },
+                { header: 'Date', key: 'date_issued', render: (row) => new Date(row.date_issued).toLocaleDateString() },
+                { header: 'Department', key: 'issued_to_department_name' },
+                { header: 'Expected Return', key: 'expected_return_date', render: (row) => new Date(row.expected_return_date).toLocaleDateString() },
+                { header: 'Status', key: 'status' }
+              ]}
+            />
+            <button
+              onClick={() => {
+                setFormData({ issue_id: '', expected_return_date: '', issued_to_department_id: '', issued_by_id: '', items: [] });
+                setView('form');
+              }}
+              className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px' }}
+            >
+              <Plus size={16} /> New Returnable DC
+            </button>
+          </div>
         </div>
       )}
 
       {/* ══════════ LIST VIEW ══════════ */}
       {view === 'list' ? (
         <>
-          {/* Stat cards */}
-          <div className="stats-grid">
-            {stats.map((s, i) => (
-              <div key={i} className="stat-card" style={{ border: 'none', boxShadow: 'none' }}>
-                <div className="stat-icon" style={{ background: `${s.color}1a`, color: s.color }}>
-                  {s.icon}
+          <div className="card" style={{ padding: 0, border: 'none', boxShadow: 'none' }}>
+            {/* Search Card */}
+            <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+              <div style={{ position: 'relative', flex: 1, minWidth: 250, maxWidth: 350 }}>
+                <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input type="text" className="form-control" placeholder="Search DC No or Department…" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={{ paddingLeft: 38, width: '100%', margin: 0 }} />
+                {loading && <Loader2 className="animate-spin" size={18} style={{ color: 'var(--primary)', position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)' }} />}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
+                  <Filter size={16} />
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>Filter:</span>
                 </div>
-                <div className="stat-info">
-                  <h3>{loading ? '—' : s.value}</h3>
-                  <p>{s.label}</p>
+                <select className="form-control" style={{ width: 150, margin: 0 }}>
+                  <option>All Statuses</option>
+                </select>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>From:</span>
+                  <input type="date" className="form-control" style={{ width: 140, margin: 0 }} />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>To:</span>
+                  <input type="date" className="form-control" style={{ width: 140, margin: 0 }} />
                 </div>
               </div>
-            ))}
-          </div>
-
-          {/* Table card */}
-          {/* Filters Card */}
-          <div className="card" style={{ marginBottom: 24, marginTop: 16 }}>
-            {/* Toolbar */}
-            <div style={{ display: 'flex', gap: 16, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-              <div className="relative w-72">
-                <Search className="absolute left-3 top-2.5 text-slate-400" size={16} />
-                <input
-                  type="text"
-                  placeholder="Search DC No or Department…"
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="form-control" style={{ paddingLeft: '36px', margin: 0 }}
-                />
-              </div>
-              <button onClick={loadData} title="Refresh" className="btn btn-secondary p-2">
-                <RefreshCw size={16} />
-              </button>
             </div>
+          </div>
 
             {/* Body */}
             <div className="overflow-x-auto flex-1">
+              <div className="card" style={{ padding: 0, overflowX: "auto" }}>
               <table className="data-table">
                 <thead>
                   <tr>
@@ -286,10 +297,17 @@ export default function ReturnableDCManagement() {
                       const days = daysUntil(dc.expected_return_date);
                       const isOver = days !== null && days < 0 && dc.status !== 'Returned';
                       return (
-                        <tr key={dc.id} style={isOver ? { background: 'rgba(254, 226, 226, 0.5)' } : {}}>
-                          <td>{dc.dc_no}</td>
+                        <tr 
+                          key={dc.id}
+                          onClick={async () => {
+                            const detailedDC = await storesService.getReturnableDC(dc.id);
+                            setSelectedViewItem(detailedDC);
+                          }}
+                          style={{ cursor: 'pointer', transition: 'background 0.2s', background: selectedViewItem?.id === dc.id ? 'var(--bg-secondary)' : isOver ? 'rgba(254, 226, 226, 0.5)' : 'transparent' }}
+                        >
+                          <td style={{ fontFamily: "monospace", color: '#4f46e5', fontWeight: 700 }}>{dc.dc_no}</td>
                           <td>{dc.issued_to_department_name || '-'}</td>
-                          <td>{dc.issued_by_name || '-'}</td>
+                          <td style={{ fontWeight: 600 }}>{dc.issued_by_name || '-'}</td>
                           <td>
                             {dc.expected_return_date ? new Date(dc.expected_return_date).toLocaleDateString('en-IN') : '-'}
                           </td>
@@ -307,14 +325,23 @@ export default function ReturnableDCManagement() {
                               {dc.status || 'Active'}
                             </span>
                           </td>
-                          <td>
-                            <button
-                              onClick={() => handleDelete(dc.id)}
-                              className="icon-btn delete-btn"
-                              title="Cancel DC"
-                            >
-                              <Trash2 size={16} />
-                            </button>
+                          <td onClick={e => e.stopPropagation()}>
+                            <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                              <button
+                                className="btn btn-secondary"
+                                style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                onClick={async () => {
+                                  const detailedDC = await storesService.getReturnableDC(dc.id);
+                                  setSelectedViewItem(detailedDC);
+                                }}
+                                title="Preview"
+                              >
+                                <Eye size={16} color="var(--primary)" />
+                              </button>
+                              <button onClick={() => handleDelete(dc.id)} className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Delete DC">
+                                <Trash2 size={16} color="var(--danger, #ef4444)" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -322,213 +349,306 @@ export default function ReturnableDCManagement() {
                   )}
                 </tbody>
               </table>
+              </div>
+            </div>
+        </>
+      ) : (
+        <div className="animate-fade">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+            <button
+              type="button"
+              onClick={() => setView('list')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+              onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
+              <ArrowLeft size={24} />
+            </button>
+            <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+              New Returnable Delivery Challan
+            </h2>
+          </div>
+
+          <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 0 }}>
+            <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
+              <button
+                type="button"
+                style={{
+                  padding: '16px 24px', background: '#fff',
+                  border: 'none', borderBottom: '3px solid var(--primary)',
+                  fontWeight: 600, color: 'var(--primary)',
+                  cursor: 'pointer', whiteSpace: 'nowrap'
+                }}
+              >
+                Challan Details
+              </button>
+            </div>
+
+            <div style={{ padding: 24, background: '#fff' }}>
+              <form onSubmit={handleSubmit}>
+                <fieldset style={{ border: 'none', padding: 0, margin: 0 }}>
+                  <div className="animate-fade">
+
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                      <div className="form-group">
+                        <label>Link Dept. Issue (optional)</label>
+                        <MasterDropdown
+                          label=""
+                          name="issue_id"
+                          value={formData.issue_id}
+                          options={issuesList.map(iss => ({ ...iss, name: `${iss.issue_no} — ${iss.requesting_department_name || 'Unknown Dept'}`, id: iss.id.toString() }))}
+                          onChange={(name, val) => handleIssueChange(val)}
+                        />
+                        {linkedIssue && (
+                          <p style={{ marginTop: '8px', fontSize: '12px', color: '#0d9488', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <CheckCircle size={14} />
+                            {linkedIssue.items?.length || 0} item(s) loaded from issue
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="form-group">
+                        <label>Issued To Department *</label>
+                        <MasterDropdown
+                          label=""
+                          name="issued_to_department_id"
+                          value={formData.issued_to_department_id}
+                          options={departments.map(d => ({ ...d, name: d.department_name }))}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
+                        {selectedDept && (
+                          <p style={{ marginTop: '8px', fontSize: '12px', color: '#0d9488', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <CheckCircle size={14} /> {selectedDept.department_name}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="form-group">
+                        <label>Issued By *</label>
+                        <MasterDropdown
+                          label=""
+                          name="issued_by_id"
+                          value={formData.issued_by_id}
+                          options={employees}
+                          required={true}
+                          onChange={(name, val) => setFormData({ ...formData, [name]: val })}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Expected Return Date *</label>
+                        <input
+                          type="date"
+                          value={formData.expected_return_date}
+                          onChange={e => setFormData({ ...formData, expected_return_date: e.target.value })}
+                          required
+                          min={new Date().toISOString().split('T')[0]}
+                          className="form-control"
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
+                      <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
+                        Returnable Items
+                      </h4>
+                    </div>
+
+                    <div style={{ overflowX: 'auto', margin: '16px 0' }}>
+                      {formData.items.length === 0 ? (
+                        <div style={{ padding: 40, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, border: '1px dashed var(--border)', borderRadius: 12, background: 'var(--bg-secondary)' }}>
+                          <Tag size={36} style={{ color: 'var(--text-muted)' }} />
+                          <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-muted)' }}>
+                            {formData.issue_id
+                              ? 'No items found in selected issue.'
+                              : 'Select a Department Issue above to auto-populate returnable items, or manually add items.'}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="card" style={{ padding: 0, overflowX: "auto" }}>
+                        <table className="data-table" style={{ width: '100%', marginBottom: 0 }}>
+                          <thead>
+                            <tr>
+                              <th style={{ width: 40 }}>#</th>
+                              <th>Item</th>
+                              <th style={{ textAlign: 'center', width: 140 }}>Qty Dispatched</th>
+                              <th style={{ width: 160 }}>Serial / Batch No</th>
+                              <th style={{ width: 180 }}>Return Terms</th>
+                              <th>Remarks</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {formData.items.map((item, idx) => {
+                              const obj = itemsList.find(i => i.id === item.item_id);
+                              return (
+                                <tr key={idx}>
+                                  <td style={{ fontWeight: 600, color: 'var(--text-muted)' }}>{idx + 1}</td>
+                                  <td>
+                                    <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{obj?.item_name || `Item #${item.item_id}`}</div>
+                                    {obj?.item_code && <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'monospace' }}>{obj.item_code}</div>}
+                                  </td>
+                                  <td style={{ textAlign: 'center' }}>
+                                    <input
+                                      type="number" min="0" value={item.quantity}
+                                      onChange={e => setItemField(idx, 'quantity', parseFloat(e.target.value) || 0)}
+                                      className="form-control" style={{ width: 100, margin: 0, display: 'inline-block' }}
+                                    />
+                                  </td>
+                                  <td>
+                                    <input
+                                      type="text" value={item.serial_batch_no}
+                                      onChange={e => setItemField(idx, 'serial_batch_no', e.target.value)}
+                                      placeholder=""
+                                      className="form-control" style={{ margin: 0 }}
+                                    />
+                                  </td>
+                                  <td>
+                                    <MasterDropdown
+                                      label=""
+                                      name="return_terms"
+                                      value={item.return_terms}
+                                      options={['Returnable in 7 Days', 'Returnable in 15 Days', 'Returnable in 30 Days', 'Return on Demand', 'Permanent Transfer'].map(t => ({ id: t, name: t }))}
+                                      onChange={(name, val) => setItemField(idx, name, val)}
+                                    />
+                                  </td>
+                                  <td>
+                                    <input
+                                      type="text" value={item.remarks}
+                                      onChange={e => setItemField(idx, 'remarks', e.target.value)}
+                                      placeholder=""
+                                      className="form-control" style={{ margin: 0 }}
+                                    />
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                          <tfoot>
+                            <tr style={{ background: 'rgba(20, 184, 166, 0.05)', borderTop: '2px solid rgba(20, 184, 166, 0.2)' }}>
+                              <td colSpan={2} style={{ fontSize: 12, fontWeight: 700, color: '#0f766e', padding: '12px 16px' }}>
+                                Total items dispatched on returnable basis
+                              </td>
+                              <td style={{ textAlign: 'center', fontWeight: 800, color: '#0f766e', padding: '12px 16px' }}>
+                                {formData.items.reduce((s, i) => s + (i.quantity || 0), 0)} units
+                              </td>
+                              <td colSpan={4} />
+                            </tr>
+                          </tfoot>
+                        </table>
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, borderTop: '1px solid var(--border)', paddingTop: 24 }}>
+                      <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
+                        Close
+                      </button>
+                      <button type="submit" className="btn btn-primary" disabled={submitLoading || formData.items.length === 0}>
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                </fieldset>
+              </form>
             </div>
           </div>
-    </>
-  ) : (
-    <div className="animate-fade">
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
-        <button
-          type="button"
-          onClick={() => setView('list')}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
-          onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
-          onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
-        >
-          <ArrowLeft size={24} />
-        </button>
-        <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-          New Returnable Delivery Challan
-        </h2>
-      </div>
-
-      <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 0 }}>
-        <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
-          <button
-            type="button"
-            style={{
-              padding: '16px 24px', background: '#fff',
-              border: 'none', borderBottom: '3px solid var(--primary)',
-              fontWeight: 600, color: 'var(--primary)',
-              cursor: 'pointer', whiteSpace: 'nowrap'
-            }}
-          >
-            Challan Details
-          </button>
         </div>
+      )
+      }
 
-        <div style={{ padding: 24, background: '#fff' }}>
-          <form onSubmit={handleSubmit}>
-            <fieldset style={{ border: 'none', padding: 0, margin: 0 }}>
-              <div className="animate-fade">
+      {/* Preview Modal */}
+      {selectedViewItem && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }}>
+          <div className="card animate-fade" style={{ background: '#cbd5e1', width: '100%', maxWidth: 900, height: '90vh', overflow: 'hidden', padding: 0, display: 'flex', flexDirection: 'column', borderRadius: 8, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
 
-                <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                  <div className="form-group">
-                    <label>Link Dept. Issue (optional)</label>
-                    <MasterDropdown
-                      label=""
-                      name="issue_id"
-                      value={formData.issue_id}
-                      options={issuesList.map(iss => ({ ...iss, name: `${iss.issue_no} — ${iss.requesting_department_name || 'Unknown Dept'}`, id: iss.id.toString() }))}
-                      onChange={(name, val) => handleIssueChange(val)}
-                    />
-                    {linkedIssue && (
-                      <p style={{ marginTop: '8px', fontSize: '12px', color: '#0d9488', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <CheckCircle size={14} />
-                        {linkedIssue.items?.length || 0} item(s) loaded from issue
-                      </p>
-                    )}
-                  </div>
+            <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', zIndex: 10, flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Eye size={18} style={{ color: '#4f46e5' }} />
+                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1e293b' }}>Returnable DC Preview</h3>
+              </div>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <button onClick={generatePDF} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#e2e8f0', border: 'none', color: '#1e293b', padding: '6px 12px', fontSize: 12, fontWeight: 600 }}>
+                  <Download size={14} /> Download PDF
+                </button>
+                <button onClick={() => setSelectedViewItem(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b' }}><X size={20} /></button>
+              </div>
+            </div>
 
-                  <div className="form-group">
-                    <label>Issued To Department *</label>
-                    <MasterDropdown
-                      label=""
-                      name="issued_to_department_id"
-                      value={formData.issued_to_department_id}
-                      options={departments.map(d => ({ ...d, name: d.department_name }))}
-                      required={true}
-                      onChange={(name, val) => setFormData({ ...formData, [name]: val })}
-                    />
-                    {selectedDept && (
-                      <p style={{ marginTop: '8px', fontSize: '12px', color: '#0d9488', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <CheckCircle size={14} /> {selectedDept.department_name}
-                      </p>
-                    )}
-                  </div>
+            <div style={{ padding: '40px 20px', background: '#cbd5e1', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', flex: 1, overflowY: 'auto' }}>
+              <div ref={printRef} style={{ background: '#fff', width: '100%', maxWidth: 850, padding: 0, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', borderRadius: 4, position: 'relative', marginBottom: 20, overflow: 'hidden' }}>
 
-                  <div className="form-group">
-                    <label>Issued By *</label>
-                    <MasterDropdown
-                      label=""
-                      name="issued_by_id"
-                      value={formData.issued_by_id}
-                      options={employees}
-                      required={true}
-                      onChange={(name, val) => setFormData({ ...formData, [name]: val })}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Expected Return Date *</label>
-                    <input
-                      type="date"
-                      value={formData.expected_return_date}
-                      onChange={e => setFormData({ ...formData, expected_return_date: e.target.value })}
-                      required
-                      min={new Date().toISOString().split('T')[0]}
-                      className="form-control"
-                    />
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
-                  <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
-                    Returnable Items
-                  </h4>
-                </div>
-
-                <div style={{ overflowX: 'auto', margin: '16px 0' }}>
-                  {formData.items.length === 0 ? (
-                    <div style={{ padding: 40, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, border: '1px dashed var(--border)', borderRadius: 12, background: 'var(--bg-secondary)' }}>
-                      <Tag size={36} style={{ color: 'var(--text-muted)' }} />
-                      <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-muted)' }}>
-                        {formData.issue_id
-                          ? 'No items found in selected issue.'
-                          : 'Select a Department Issue above to auto-populate returnable items, or manually add items.'}
-                      </p>
+                <div style={{ padding: '32px 40px 20px 40px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                      <div>
+                        <img src={logoImg} alt="Logo" style={{ width: 56, height: 56, objectFit: 'contain' }} />
+                      </div>
+                      <div>
+                        <h1 style={{ margin: 0, color: '#0f172a', fontSize: 28, fontWeight: 900, letterSpacing: '-0.02em' }}>DINESH EXPORTS</h1>
+                        <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em' }}>THE HOUSE OF FABRICS</p>
+                      </div>
                     </div>
-                  ) : (
-                    <table className="data-table" style={{ width: '100%', marginBottom: 0 }}>
-                      <thead>
-                        <tr>
-                          <th style={{ width: 40 }}>#</th>
-                          <th>Item</th>
-                          <th style={{ textAlign: 'center', width: 140 }}>Qty Dispatched</th>
-                          <th style={{ width: 160 }}>Serial / Batch No</th>
-                          <th style={{ width: 180 }}>Return Terms</th>
-                          <th>Remarks</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {formData.items.map((item, idx) => {
-                          const obj = itemsList.find(i => i.id === item.item_id);
-                          return (
-                            <tr key={idx}>
-                              <td style={{ fontWeight: 600, color: 'var(--text-muted)' }}>{idx + 1}</td>
-                              <td>
-                                <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{obj?.item_name || `Item #${item.item_id}`}</div>
-                                {obj?.item_code && <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'monospace' }}>{obj.item_code}</div>}
-                              </td>
-                              <td style={{ textAlign: 'center' }}>
-                                <input
-                                  type="number" min="0" value={item.quantity}
-                                  onChange={e => setItemField(idx, 'quantity', parseFloat(e.target.value) || 0)}
-                                  className="form-control" style={{ width: 100, margin: 0, display: 'inline-block' }}
-                                />
-                              </td>
-                              <td>
-                                <input
-                                  type="text" value={item.serial_batch_no}
-                                  onChange={e => setItemField(idx, 'serial_batch_no', e.target.value)}
-                                  placeholder=""
-                                  className="form-control" style={{ margin: 0 }}
-                                />
-                              </td>
-                              <td>
-                                <MasterDropdown
-                                  label=""
-                                  name="return_terms"
-                                  value={item.return_terms}
-                                  options={['Returnable in 7 Days', 'Returnable in 15 Days', 'Returnable in 30 Days', 'Return on Demand', 'Permanent Transfer'].map(t => ({ id: t, name: t }))}
-                                  onChange={(name, val) => setItemField(idx, name, val)}
-                                />
-                              </td>
-                              <td>
-                                <input
-                                  type="text" value={item.remarks}
-                                  onChange={e => setItemField(idx, 'remarks', e.target.value)}
-                                  placeholder=""
-                                  className="form-control" style={{ margin: 0 }}
-                                />
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                      <tfoot>
-                        <tr style={{ background: 'rgba(20, 184, 166, 0.05)', borderTop: '2px solid rgba(20, 184, 166, 0.2)' }}>
-                          <td colSpan={2} style={{ fontSize: 12, fontWeight: 700, color: '#0f766e', padding: '12px 16px' }}>
-                            Total items dispatched on returnable basis
-                          </td>
-                          <td style={{ textAlign: 'center', fontWeight: 800, color: '#0f766e', padding: '12px 16px' }}>
-                            {formData.items.reduce((s, i) => s + (i.quantity || 0), 0)} units
-                          </td>
-                          <td colSpan={4} />
-                        </tr>
-                      </tfoot>
-                    </table>
-                  )}
+                    <div style={{ textAlign: 'right', width: 300 }}>
+                      <h2 style={{ margin: '0 0 16px 0', color: '#0f172a', fontSize: 18, fontWeight: 800, letterSpacing: '0.05em' }}>RETURNABLE DC</h2>
+                      <div style={{ display: 'flex', fontSize: 11, marginBottom: 6, justifyContent: 'flex-end' }}>
+                        <div style={{ width: 100, fontWeight: 600, color: '#0f172a', textAlign: 'left' }}>Status</div>
+                        <div style={{ width: 20, textAlign: 'center' }}>:</div>
+                        <div><span style={{ background: '#22c55e', color: 'white', padding: '2px 8px', borderRadius: 12, fontSize: 9, fontWeight: 700 }}>{(selectedViewItem.status || 'ACTIVE').toUpperCase()}</span></div>
+                      </div>
+                      <div style={{ display: 'flex', fontSize: 11, justifyContent: 'flex-end' }}>
+                        <div style={{ width: 100, fontWeight: 600, color: '#0f172a', textAlign: 'left' }}>Generated On</div>
+                        <div style={{ width: 20, textAlign: 'center' }}>:</div>
+                        <div style={{ fontWeight: 500, color: '#0f172a' }}>{new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, borderTop: '1px solid var(--border)', paddingTop: 24 }}>
-                  <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
-                    Close
-                  </button>
-                  <button type="submit" className="btn btn-primary" disabled={submitLoading || formData.items.length === 0}>
-                    Save
-                  </button>
+                <div style={{ borderBottom: '3px solid #0f172a' }}></div>
+
+                <div style={{ padding: '10px 40px 40px 40px' }}>
+                  <div style={{ position: 'relative', border: '1px solid #e2e8f0', borderRadius: 6, padding: '24px 20px 12px 20px', marginTop: 24 }}>
+                    <div style={{ position: 'absolute', top: -14, left: -1, background: '#0f172a', color: 'white', padding: '6px 16px', borderRadius: '6px 6px 6px 0', display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>
+                      <FileText size={14} /> 1. RECORD DETAILS
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40 }}>
+                      <div>
+                        {Object.entries(selectedViewItem).slice(0, 10).map(([k, v]) => (
+                          k !== 'id' && typeof v !== 'object' && <InfoRow2 key={k} label={k.replace(/_/g, ' ').toUpperCase()} value={String(v) || '-'} />
+                        ))}
+                      </div>
+                      <div>
+                        {Object.entries(selectedViewItem).slice(10, 20).map(([k, v]) => (
+                          k !== 'id' && typeof v !== 'object' && <InfoRow2 key={k} label={k.replace(/_/g, ' ').toUpperCase()} value={String(v) || '-'} />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ borderTop: '2px solid #0f172a', background: '#f8fafc', padding: '16px 40px', display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: 16, fontSize: 10, color: '#0f172a' }}>
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <MapPin size={16} strokeWidth={2.5} style={{ flexShrink: 0, marginTop: 2, color: '#1e3a8a' }} />
+                    <div>
+                      <div style={{ fontWeight: 800, marginBottom: 2 }}>Dinesh Exports</div>
+                      <div style={{ color: '#475569', fontWeight: 500, lineHeight: '16px' }}>No. 123, Textile Street,<br/>Erode, Tamil Nadu - 638001, India</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Phone size={14} color="#1e3a8a" strokeWidth={2.5}/> 0424-1234567</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Mail size={14} color="#1e3a8a" strokeWidth={2.5}/> info@dineshexports.com</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Globe size={14} color="#1e3a8a" strokeWidth={2.5}/> www.dineshexports.com</div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end', fontWeight: 700 }}>
+                      <FileText size={16} color="#1e3a8a" strokeWidth={2.5}/> GSTIN : 33ABCDE1234F1Z5
+                  </div>
                 </div>
               </div>
-            </fieldset>
-          </form>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  )
-}
+      )}
     </div >
   );
 }
-
 

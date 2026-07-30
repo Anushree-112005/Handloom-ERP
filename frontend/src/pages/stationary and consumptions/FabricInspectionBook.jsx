@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { AlertCircle, CheckSquare, FileText, Layers, Plus, Save, Search, Trash2, X } from 'lucide-react';
+
 import api from '../../services/api';
-import { Plus, Save, Trash2, X, FileText, CheckSquare, Layers, AlertCircle, Search } from 'lucide-react';
+
 export default function FabricInspectionBook() {
   const [inwardId, setInwardId] = useState('');
   const [rolls, setRolls] = useState([]);

@@ -5,10 +5,14 @@ import { showConfirm } from '../../components/ConfirmDialog';
 import { 
   Plus, MapPin, Truck, User, Package, DollarSign, Clock, 
   ArrowLeft, Save, X, Edit2, Trash2, Eye, Volume2, Search,
-  Filter, Download
+  Filter, Download, IndianRupee, Phone, Globe, Mail, FileText, Compass
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import MasterDropdown from '../../components/MasterDropdown';
+import { downloadElementAsPdf } from '../../components/A4DocumentPreview';
+import jsPDF from 'jspdf';
+import logoImg from '../../assets/logo.png';
+import ExportButton from '../../components/ExportButton';
 
 const InfoRow2 = ({ label, value }) => (
   <div style={{ display: 'flex', padding: '8px 0', borderBottom: '1px dashed #e2e8f0', fontSize: 11 }}>
@@ -25,10 +29,12 @@ const TripPlanning = () => {
   const [view, setView] = useState('list'); // 'list' | 'form'
   const [editingTrip, setEditingTrip] = useState(null);
   const [viewingTrip, setViewingTrip] = useState(null);
-  
+  const profilePreviewRef = React.useRef(null);
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All Status');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
   
   const initialForm = {
     date: new Date().toISOString().split('T')[0],
@@ -183,27 +189,7 @@ const TripPlanning = () => {
   };
 
   const handleExportExcel = () => {
-    const data = filteredTrips.map(trip => {
-      const info = parseTripNotes(trip);
-      return {
-        'Trip ID': trip.id,
-        'Date': trip.trip_date ? trip.trip_date.split('T')[0] : '',
-        'Vehicle': getVehicleName(trip.vehicle_id),
-        'Driver': getDriverName(trip.driver_id),
-        'Start Location': trip.start_location,
-        'End Location': trip.end_location,
-        'Material': info.material,
-        'Quantity': info.quantity,
-        'Customer': info.customer,
-        'Rate': info.rate,
-        'Status': trip.status,
-        'Revenue': trip.revenue
-      };
-    });
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Trips");
-    XLSX.writeFile(wb, "Trip_Planning.xlsx");
+    // Replaced by ExportButton component
   };
 
   const filteredTrips = trips.filter(trip => {
@@ -232,10 +218,6 @@ const TripPlanning = () => {
     else setStatusFilter(status);
   };
 
-  // ── FORM VIEW ──
-  if (view === 'form') {
-    
-  const profilePreviewRef = React.useRef(null);
   const generateProfilePDF = async (item) => {
     if (profilePreviewRef.current) {
       const safeName = (item?.id || 'Trip').toString().replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -243,6 +225,8 @@ const TripPlanning = () => {
     }
   };
 
+  // ── FORM VIEW ──
+  if (view === 'form') {
   return (
     <div className="animate-fade">
 
@@ -342,13 +326,34 @@ const TripPlanning = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <MapPin size={24} color="var(--primary)" /> Trip Planning
+            <Compass size={24} color="var(--primary)" /> Trip Planning
           </h2>
-          <p style={{ color: 'var(--text-muted)' }}>Plan and schedule vehicle transport trips</p>
+          <p style={{ color: 'var(--text-muted)' }}>Plan and schedule vehicle trips</p>
         </div>
-        <button className="btn btn-primary" onClick={() => handleOpenForm()}>
-          <Plus size={18} /> Plan New Trip
-        </button>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <ExportButton 
+            data={filteredTrips}
+            filename="Trip_Planning_Report"
+            pdfTitle="Trip Planning Report"
+            columns={[
+              { header: 'Trip ID', key: 'id' },
+              { header: 'Date', key: 'trip_date', render: (row) => row.trip_date ? row.trip_date.split('T')[0] : '' },
+              { header: 'Vehicle', key: 'vehicle_id', render: (row) => getVehicleName(row.vehicle_id) },
+              { header: 'Driver', key: 'driver_id', render: (row) => getDriverName(row.driver_id) },
+              { header: 'Start Location', key: 'start_location' },
+              { header: 'End Location', key: 'end_location' },
+              { header: 'Material', key: 'material', render: (row) => parseTripNotes(row).material },
+              { header: 'Quantity', key: 'quantity', render: (row) => parseTripNotes(row).quantity },
+              { header: 'Customer', key: 'customer', render: (row) => parseTripNotes(row).customer },
+              { header: 'Rate', key: 'rate', render: (row) => parseTripNotes(row).rate },
+              { header: 'Status', key: 'status' },
+              { header: 'Revenue', key: 'revenue' }
+            ]}
+          />
+          <button className="btn btn-primary" onClick={() => handleOpenForm()}>
+            <Plus size={18} /> Plan New Trip
+          </button>
+        </div>
       </div>
 
       {/* Stat Cards */}
@@ -396,43 +401,44 @@ const TripPlanning = () => {
 
       {/* Filter Row */}
       <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+        
+        {/* Left Side: Search */}
         <div style={{ position: 'relative', flex: 1, minWidth: 250, maxWidth: 350 }}>
           <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input
             type="text"
             className="form-control"
-            placeholder="Search trips, vehicles, locations..."
+            placeholder="Search by Trip No, Vehicle, Driver..."
             style={{ paddingLeft: 38, width: '100%', margin: 0 }}
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
           />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        {/* Right Side: Filters */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
             <Filter size={16} />
             <span style={{ fontSize: 13, fontWeight: 600 }}>Filter:</span>
           </div>
 
-          <div style={{ width: 180 }}>
-            <MasterDropdown
-              value={statusFilter}
-              onChange={(val) => setStatusFilter(val || 'All Status')}
-              options={[
-                { value: 'All Status', label: 'All Status' },
-                { value: 'Planned', label: 'Planned' },
-                { value: 'In Progress', label: 'In Progress' },
-                { value: 'Completed', label: 'Completed' },
-                { value: 'Cancelled', label: 'Cancelled' }
-              ]}
-              placeholder="--- Filter Status ---"
-              allowClear={false}
-            />
+          <select className="form-control" style={{ width: 150, margin: 0 }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+            <option value="All Status">All Trips</option>
+            <option value="Planned">Planned</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>From:</span>
+            <input type="date" className="form-control" style={{ width: 140, margin: 0 }} value={fromDate} onChange={e => setFromDate(e.target.value)} />
           </div>
 
-          <button className="btn btn-secondary" onClick={handleExportExcel} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Download size={16} /> Export Excel
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>To:</span>
+            <input type="date" className="form-control" style={{ width: 140, margin: 0 }} value={toDate} onChange={e => setToDate(e.target.value)} />
+          </div>
         </div>
       </div>
 
@@ -443,53 +449,32 @@ const TripPlanning = () => {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Trip Details</th>
-                  <th>Vehicle & Driver</th>
+                  <th>Trip No</th>
+                  <th>Vehicle</th>
+                  <th>Driver</th>
                   <th>Route</th>
-                  <th>Material & Customer</th>
+                  <th>Start Date</th>
+                  <th>End Date</th>
                   <th style={{ textAlign: 'center' }}>Status</th>
                   <th style={{ textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: 20 }}>Loading trips...</td></tr>
+                  <tr><td colSpan="8" style={{ textAlign: 'center', padding: 20 }}>Loading trips...</td></tr>
                 ) : filteredTrips.length === 0 ? (
-                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: 20 }}>No trips found</td></tr>
+                  <tr><td colSpan="8" style={{ textAlign: 'center', padding: 20 }}>No trips found</td></tr>
                 ) : (
                   filteredTrips.map(trip => {
                     const info = parseTripNotes(trip);
                     return (
                       <tr key={trip.id} onClick={() => setViewingTrip(trip)} style={{ cursor: 'pointer', background: viewingTrip?.id === trip.id ? 'var(--bg-secondary)' : 'transparent', transition: 'background 0.2s' }}>
-                        <td>
-                          <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Trip #{trip.id}</div>
-                          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{trip.trip_date ? trip.trip_date.split('T')[0] : ''}</div>
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            <div style={{ fontSize: 13, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <Truck size={14} style={{ color: 'var(--text-muted)' }} /> {getVehicleName(trip.vehicle_id)}
-                            </div>
-                            <div style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <User size={14} style={{ color: 'var(--text-muted)' }} /> {getDriverName(trip.driver_id)}
-                            </div>
-                          </div>
-                        </td>
-                        <td>
-                          <div style={{ fontSize: 13, color: 'var(--text-primary)' }}>
-                            {trip.start_location} &rarr; {trip.end_location}
-                          </div>
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            <div style={{ fontSize: 13, color: 'var(--text-primary)' }}>
-                              {info.material} ({info.quantity})
-                            </div>
-                            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                              {info.customer}
-                            </div>
-                          </div>
-                        </td>
+                        <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{trip.id}</td>
+                        <td>{getVehicleName(trip.vehicle_id)}</td>
+                        <td>{getDriverName(trip.driver_id)}</td>
+                        <td>{trip.start_location} &rarr; {trip.end_location}</td>
+                        <td>{trip.trip_date ? trip.trip_date.split('T')[0] : '-'}</td>
+                        <td>-</td>
                         <td style={{ textAlign: 'center' }}>
                           {getStatusBadge(trip.status)}
                         </td>
@@ -521,12 +506,12 @@ const TripPlanning = () => {
         {viewingTrip && (() => {
           const info = parseTripNotes(viewingTrip);
           return (
-          <div className="fixed inset-0" style={{ zIndex: 100, display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(4px)' }}>
-            <div className="animate-scale-up" style={{ background: '#f8fafc', width: '95%', maxWidth: 900, height: '90vh', borderRadius: 12, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
-              
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }}>
+            <div className="card animate-fade" style={{ background: '#cbd5e1', width: '100%', maxWidth: 900, height: '90vh', overflow: 'hidden', padding: 0, display: 'flex', flexDirection: 'column', borderRadius: 8, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+
               <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', zIndex: 10, flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Eye size={18} style={{ color: '#4f46e5' }} /> 
+                  <Eye size={18} style={{ color: '#4f46e5' }} />
                   <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1e293b' }}>Trip Profile Preview</h3>
                 </div>
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
@@ -537,16 +522,16 @@ const TripPlanning = () => {
                 </div>
               </div>
 
-              <div style={{ flex: 1, overflowY: 'auto', padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div ref={profilePreviewRef} style={{ width: '100%', maxWidth: 794, background: '#ffffff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', borderRadius: 4, position: 'relative', marginBottom: 20, overflow: 'hidden' }}>
-                  
+              <div style={{ padding: '40px 20px', background: '#cbd5e1', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', flex: 1, overflowY: 'auto' }}>
+                <div ref={profilePreviewRef} style={{ background: '#fff', width: '100%', maxWidth: 850, padding: 0, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', borderRadius: 4, position: 'relative', marginBottom: 20, overflow: 'hidden', flexShrink: 0 }}>
+
                   <div style={{ padding: '32px 40px 20px 40px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
                         <div><img src={logoImg} alt="Dinesh Exports" style={{ width: 56, height: 56, objectFit: 'contain' }} /></div>
                         <div>
-                           <h1 style={{ margin: 0, color: '#0f172a', fontSize: 28, fontWeight: 900, letterSpacing: '-0.02em' }}>DINESH EXPORTS</h1>
-                           <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em' }}>THE HOUSE OF FABRICS</p>
+                          <h1 style={{ margin: 0, color: '#0f172a', fontSize: 28, fontWeight: 900, letterSpacing: '-0.02em' }}>DINESH EXPORTS</h1>
+                          <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em' }}>THE HOUSE OF FABRICS</p>
                         </div>
                       </div>
                       <div style={{ textAlign: 'left', width: 300 }}>
@@ -614,8 +599,8 @@ const TripPlanning = () => {
                     </div>
 
                     {viewingTrip.voice_note_path && (
-                      <div style={{ marginTop: 24, background: 'var(--bg-secondary)', border: '1px solid var(--border)', padding: 12, borderRadius: 8 }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                      <div style={{ marginTop: 24, background: '#f8fafc', border: '1px solid #e2e8f0', padding: 12, borderRadius: 8 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: '#4f46e5', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                           <Volume2 size={14} /> DRIVER VOICE NOTE
                         </span>
                         <audio 
@@ -626,6 +611,25 @@ const TripPlanning = () => {
                       </div>
                     )}
                   </div>
+
+                  <div style={{ borderTop: '2px solid #0f172a', background: '#f8fafc', padding: '16px 40px', display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: 16, fontSize: 10, color: '#0f172a' }}>
+                    <div style={{ display: 'flex', gap: 12 }}>
+                      <MapPin size={16} strokeWidth={2.5} style={{ flexShrink: 0, marginTop: 2, color: '#1e3a8a' }} />
+                      <div>
+                        <div style={{ fontWeight: 800, marginBottom: 2 }}>Dinesh Exports</div>
+                        <div style={{ color: '#475569', fontWeight: 500, lineHeight: '16px' }}>No. 123, Textile Street,<br/>Erode, Tamil Nadu - 638001, India</div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Phone size={14} color="#1e3a8a" strokeWidth={2.5}/> 0424-1234567</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Mail size={14} color="#1e3a8a" strokeWidth={2.5}/> info@dineshexports.com</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Globe size={14} color="#1e3a8a" strokeWidth={2.5}/> www.dineshexports.com</div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end', fontWeight: 700 }}>
+                        <FileText size={16} color="#1e3a8a" strokeWidth={2.5}/> GSTIN : 33ABCDE1234F1Z5
+                    </div>
+                  </div>
+
                 </div>
               </div>
             </div>

@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { AlertTriangle, ArrowLeft, ArrowLeftRight, Award, Box, Briefcase, Building, Calendar, Check, CheckCircle2, ChevronRight, ClipboardList, Clock, Download, Edit2, Eye, FileSpreadsheet, FileText, IndianRupee, Loader, MapPin, Phone, Plus, Printer, RefreshCw, Save, Search, Shield, ShieldAlert, Sparkles, Trash2, TrendingUp, User, Users, X, XCircle, Filter, Globe, Mail } from 'lucide-react';
+
 import storesService from '../../services/storesService';
-import {
-  ClipboardList, Plus, Trash2, Calendar, AlertTriangle, FileText, CheckCircle2, XCircle,
-  Clock, TrendingUp, Search, Eye, Edit2, ShieldAlert, Award, FileSpreadsheet, ArrowLeftRight,
-  MapPin, Printer, Download, Sparkles, Building, Box, Users, ChevronRight, Check, X, Shield, RefreshCw,
-  Save, Loader, ArrowLeft
-} from 'lucide-react';
+
 import MasterDropdown from '../../components/MasterDropdown';
+import ExportButton from '../../components/ExportButton';
 import { alertDialog } from '../../utils/dialogs';
 
 const DetailRow = ({ label, value }) => (
@@ -16,9 +14,29 @@ const DetailRow = ({ label, value }) => (
   </div>
 );
 
+import { downloadElementAsPdf } from '../../components/A4DocumentPreview';
+import logoImg from '../../assets/logo.png';
+
+const InfoRow2 = ({ label, value }) => (
+  <div style={{ display: 'flex', padding: '8px 0', borderBottom: '1px dashed #e2e8f0', fontSize: 11 }}>
+    <div style={{ width: '40%', color: '#0f172a', fontWeight: 600 }}>{label}</div>
+    <div style={{ width: '5%', color: '#0f172a', textAlign: 'center' }}>:</div>
+    <div style={{ width: '55%', color: '#0f172a', fontWeight: 500 }}>{value}</div>
+  </div>
+);
+
 export default function PurchaseRequisition() {
   // Navigation tabs: 'list', 'new', 'view', 'analytics'
   const [activeTab, setActiveTab] = useState('list');
+
+  const [selectedViewItem, setSelectedViewItem] = useState(null);
+  const printRef = useRef(null);
+  const generatePDF = async () => {
+    if (printRef.current) {
+      await downloadElementAsPdf(printRef.current, `Profile_${selectedViewItem?.id || selectedViewItem?.quotation_id || selectedViewItem?.vendor_id || selectedViewItem?.req_id || 'Doc'}.pdf`);
+    }
+  };
+
   const [loading, setLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [prList, setPrList] = useState([]);
@@ -565,40 +583,33 @@ export default function PurchaseRequisition() {
         </div>
       )}
 
-      {/* Requisition Title Header */}
       {activeTab === 'list' && (
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: "24px",
-          background: "linear-gradient(135deg, var(--bg-surface) 0%, rgba(99, 102, 241, 0.05) 100%)",
-          border: "1px solid var(--border)",
-          borderRadius: "12px",
-          marginBottom: "24px"
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{
-              background: 'rgba(99, 102, 241, 0.1)',
-              color: 'rgb(99, 102, 241)',
-              padding: '12px',
-              borderRadius: '12px'
-            }}>
-              <ClipboardList size={24} />
-            </div>
-            <div>
-              <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>Purchase Requisition (PR)</h2>
-              <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Manage, approve and analyze internal garment factory purchase requisitions.</p>
-            </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <div>
+            <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Users size={24} color="var(--primary)" /> Purchase Requisition (PR)
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Manage, approve and analyze internal garment factory purchase requisitions.</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <ExportButton
+              data={filteredPRs}
+              filename="Purchase_Requisition_Report"
+              pdfTitle="Purchase Requisition Report"
+              columns={[
+                { header: 'PR No', key: 'pr_number' },
+                { header: 'Date', key: 'required_date' },
+                { header: 'Requester', key: 'requester_name' },
+                { header: 'Priority', key: 'priority' },
+                { header: 'Status', key: 'status' }
+              ]}
+            />
             <button
               onClick={() => setActiveTab('new')}
               className="btn btn-primary"
-              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 8 }}
             >
-              <Plus size={16} />
-              New Request
+              <Plus size={16} /> New Request
             </button>
           </div>
         </div>
@@ -652,290 +663,161 @@ export default function PurchaseRequisition() {
       {/* ────────────────────────────────── TAB 1: LIST VIEW ────────────────────────────────── */}
       {activeTab === 'list' && (
         <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
-          
+
           {/* LEFT SIDE: TABLE */}
           <div style={{ flex: 1, overflowX: 'auto' }}>
             <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-          {/* Filters Bar */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', padding: '16px 20px', alignItems: 'center', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', gap: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>All Requisitions ({filteredPRs.length})</h3>
-              <div className="search-bar" style={{ position: 'relative', width: 280 }}>
-                <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} size={16} />
-                <input
-                  type="text"
-                  placeholder="Search PR No or Requester..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="form-control"
-                  style={{ paddingLeft: 38 }}
-                />
-              </div>
+          {/* Search Card */}
+          <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+            <div style={{ position: 'relative', flex: 1, minWidth: 250, maxWidth: 350 }}>
+              <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Search PR No or Requester..."
+                style={{ paddingLeft: 38, width: '100%', margin: 0 }}
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+              />
+              {loading && <Loader className="animate-spin" size={18} style={{ color: 'var(--primary)', position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)' }} />}
             </div>
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12 }}>
-              <select
-                value={filterPriority}
-                onChange={(e) => setFilterPriority(e.target.value)}
-                className="form-control"
-                style={{ width: 'auto', minWidth: 130 }}
-              >
-                <option value="">All Priorities</option>
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-                <option value="Critical">Critical</option>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
+                <Filter size={16} />
+                <span style={{ fontSize: 13, fontWeight: 600 }}>Filter:</span>
+              </div>
+              
+              <select className="form-control" style={{ width: 150, margin: 0 }}>
+                <option>All Types</option>
               </select>
 
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="form-control"
-                style={{ width: 'auto', minWidth: 130 }}
-              >
-                <option value="">All Statuses</option>
-                <option value="Requested">Requested</option>
-                <option value="Pending">Pending</option>
-                <option value="Approved">Approved</option>
-                <option value="Rejected">Rejected</option>
-              </select>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>From:</span>
+                <input type="date" className="form-control" style={{ width: 140, margin: 0 }} />
+              </div>
 
-              <select
-                value={filterDept}
-                onChange={(e) => setFilterDept(e.target.value)}
-                className="form-control"
-                style={{ width: 'auto', minWidth: 160 }}
-              >
-                <option value="">All Departments</option>
-                {masters.departments.map(d => (
-                  <option key={d.id} value={d.id}>{d.department_name}</option>
-                ))}
-              </select>
-
-              <button
-                onClick={loadPRData}
-                style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'white', color: 'var(--text-muted)', cursor: 'pointer' }}
-                title="Refresh Table"
-              >
-                <RefreshCw size={16} />
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>To:</span>
+                <input type="date" className="form-control" style={{ width: 140, margin: 0 }} />
+              </div>
             </div>
           </div>
 
-          {/* Table Container */}
-          <div className="table-responsive" style={{ flex: 1 }}>
-            {loading ? (
-              <div className="p-16 flex flex-col items-center gap-3 text-slate-400">
-                <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#3b82f6' }}><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
-                <span className="text-xs">Loading requisitions…</span>
-              </div>
-            ) : filteredPRs.length === 0 ? (
-              <div className="p-16 text-center text-slate-400 flex flex-col items-center justify-center gap-3">
-                <ClipboardList size={48} className="text-slate-200" />
-                <span className="text-slate-500 font-semibold">No purchase requisitions found matching the filters.</span>
-              </div>
-            ) : (
-              <table className="data-table" style={{ width: '100%' }}>
-                <thead>
-                  <tr>
-                    <th>PR Number</th>
-                    <th>Requester</th>
-                    <th>Department</th>
-                    <th>Required Date</th>
-                    <th style={{ textAlign: "center" }}>Priority</th>
-                    <th style={{ textAlign: "center" }}>Status</th>
-                    <th style={{ textAlign: "right" }}>Grand Total</th>
-                    <th style={{ textAlign: "center" }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredPRs.map((pr) => {
-                    const totalCost = pr.items.reduce((acc, item) => acc + (item.quantity * item.estimated_unit_price), 0);
-                    return (
-                      <tr 
-                        key={pr.id}
-                        onClick={async () => {
-                          const detail = await storesService.getPRDetail(pr.id);
-                          setSelectedPr(detail);
-                        }}
-                        style={{
-                          cursor: 'pointer',
-                          background: selectedPr?.id === pr.id ? 'var(--bg-secondary)' : 'transparent',
-                          transition: 'background 0.2s'
-                        }}
-                      >
-                        <td style={{ fontFamily: "monospace", color: '#4f46e5', fontWeight: 700 }}>{pr.pr_number}</td>
-                        <td style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#eff6ff', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: 11, textTransform: 'uppercase' }}>
-                            {pr.requester_name ? pr.requester_name.substring(0, 2) : 'EM'}
-                          </div>
-                          <span style={{ fontWeight: 600 }}>{pr.requester_name}</span>
-                        </td>
-                        <td>{pr.department_name}</td>
-                        <td>{new Date(pr.required_date).toLocaleDateString()}</td>
-                        <td style={{ textAlign: "center" }}>
-                          <span className={`badge ${pr.priority === 'Critical' ? 'bg-red-100 text-red-800' :
-                            pr.priority === 'High' ? 'bg-orange-100 text-orange-800' :
-                              pr.priority === 'Medium' ? 'bg-blue-100 text-blue-800' :
-                                'bg-gray-100 text-gray-800'
-                            }`}>
-                            {pr.priority}
-                          </span>
-                        </td>
-                        <td style={{ textAlign: "center" }}>
-                          <span style={{
-                            color: pr.status.includes('Approved') ? '#047857' : pr.status.includes('Rejected') ? '#ef4444' : '#d97706',
-                            fontWeight: 700,
-                            backgroundColor: pr.status.includes('Approved') ? '#d1fae5' : pr.status.includes('Rejected') ? '#fef2f2' : '#fef3c7',
-                            padding: '4px 10px', borderRadius: 12, fontSize: 12
-                          }}>
-                            {pr.status}
-                          </span>
-                        </td>
-                        <td style={{ textAlign: "right", fontWeight: 700 }}>{totalCost.toLocaleString()} INR</td>
-                        <td style={{ textAlign: "center" }}>
-                          <button
+              {/* Table Container */}
+              <div className="table-responsive" style={{ flex: 1 }}>
+                {loading ? (
+                  <div className="p-16 flex flex-col items-center gap-3 text-slate-400">
+                    <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#3b82f6' }}><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
+                    <span className="text-xs">Loading requisitions…</span>
+                  </div>
+                ) : filteredPRs.length === 0 ? (
+                  <div className="p-16 text-center text-slate-400 flex flex-col items-center justify-center gap-3">
+                    <ClipboardList size={48} className="text-slate-200" />
+                    <span className="text-slate-500 font-semibold">No purchase requisitions found matching the filters.</span>
+                  </div>
+                ) : (
+                  <table className="data-table" style={{ width: '100%' }}>
+                    <thead>
+                      <tr>
+                        <th>PR Number</th>
+                        <th>Requester</th>
+                        <th>Department</th>
+                        <th>Required Date</th>
+                        <th style={{ textAlign: "center" }}>Priority</th>
+                        <th style={{ textAlign: "center" }}>Status</th>
+                        <th style={{ textAlign: "right" }}>Grand Total</th>
+                        <th style={{ textAlign: "center" }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredPRs.map((pr) => {
+                        const totalCost = pr.items.reduce((acc, item) => acc + (item.quantity * item.estimated_unit_price), 0);
+                        return (
+                          <tr
+                            key={pr.id}
                             onClick={async () => {
                               const detail = await storesService.getPRDetail(pr.id);
-                              setSelectedPr(detail);
+                              setSelectedViewItem(detail);
                             }}
-                            style={{ padding: 6, borderRadius: 8, color: '#3b82f6', background: '#eff6ff', cursor: "pointer", border: "none", marginRight: pr.status === 'Requested' ? 8 : 0 }}
-                            title="View details"
+                            style={{
+                              cursor: 'pointer',
+                              background: selectedViewItem?.id === pr.id ? 'var(--bg-secondary)' : 'transparent',
+                              transition: 'background 0.2s'
+                            }}
                           >
-                            <Eye size={13} />
-                          </button>
-                          {pr.status === 'Requested' && (
-                            <button
-                              onClick={async () => {
-                                if (confirm("Are you sure you want to cancel/delete this requisition?")) {
-                                  await storesService.deletePR(pr.id);
-                                  showToast("PR deleted successfully.");
-                                  loadPRData();
-                                }
-                              }}
-                              style={{ padding: 6, borderRadius: 8, color: '#ef4444', background: '#fef2f2', cursor: "pointer", border: "none" }}
-                              title="Cancel Requisition"
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
-            </div>
-          </div>
-        </div>
-
-          {/* RIGHT SIDE: DETAILS PANE */}
-          {selectedPr && (
-            <div style={{ flex: '0 0 450px' }}>
-              <div className="card animate-slide" style={{ position: 'sticky', top: 24, padding: '24px 20px' }}>
-                
-                {/* Header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
-                  <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--primary)', fontWeight: 700 }}>
-                    <ClipboardList size={18} /> {selectedPr.pr_number}
-                  </h3>
-                  <div style={{ display: 'flex', gap: 4 }}>
-                    <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => window.print()} title="Print"><Printer size={14} /></button>
-                    {!selectedPr.status.includes('Approved') && !selectedPr.status.includes('Rejected') && (
-                      <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: 12 }} onClick={() => setApprovalModal({ open: true, prId: selectedPr.id, stage: 'Department Manager Approval', status: 'Approved', comments: '' })}>
-                        Approve
-                      </button>
-                    )}
-                    <button onClick={() => setSelectedPr(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}><X size={18} /></button>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, maxHeight: '65vh', overflowY: 'auto', paddingRight: 8 }}>
-                  <DetailRow label="Requester" value={`${selectedPr.requester_name} (${selectedPr.department_name})`} />
-                  <DetailRow label="Branch/Factory" value={selectedPr.branch_factory} />
-                  <DetailRow label="Delivery Warehouse" value={selectedPr.delivery_warehouse_name} />
-                  <DetailRow label="Required Date" value={new Date(selectedPr.required_date).toLocaleDateString()} />
-                  <DetailRow label="Budget Code" value={selectedPr.budget_code || 'N/A'} />
-                  <DetailRow label="Priority" value={<span className={`badge ${selectedPr.priority === 'Critical' ? 'bg-red-100 text-red-800' : selectedPr.priority === 'High' ? 'bg-orange-100 text-orange-800' : selectedPr.priority === 'Medium' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>{selectedPr.priority}</span>} />
-                  <DetailRow label="Status" value={<span style={{ color: selectedPr.status.includes('Approved') ? '#047857' : selectedPr.status.includes('Rejected') ? '#ef4444' : '#d97706', fontWeight: 700 }}>{selectedPr.status}</span>} />
-
-                  {/* Notes */}
-                  {selectedPr.description && (
-                    <div style={{ marginTop: 12, padding: 12, background: 'var(--bg-secondary)', borderRadius: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
-                      <strong style={{ display: 'block', marginBottom: 4, color: 'var(--text-primary)' }}>Notes:</strong>
-                      {selectedPr.description}
-                    </div>
-                  )}
-
-                  {/* Items Table Compact */}
-                  <div style={{ marginTop: 16 }}>
-                    <h4 style={{ margin: '0 0 8px 0', fontSize: 13, color: 'var(--text-primary)' }}>Line Items</h4>
-                    <div style={{ border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
-                      <table style={{ width: '100%', fontSize: 11, textAlign: 'left', borderCollapse: 'collapse' }}>
-                        <thead style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>
-                          <tr>
-                            <th style={{ padding: '6px 8px' }}>Item</th>
-                            <th style={{ padding: '6px 8px', textAlign: 'right' }}>Qty</th>
-                            <th style={{ padding: '6px 8px', textAlign: 'right' }}>Total (INR)</th>
+                            <td style={{ fontFamily: "monospace", color: '#4f46e5', fontWeight: 700 }}>{pr.pr_number}</td>
+                            <td style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#eff6ff', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: 11, textTransform: 'uppercase' }}>
+                                {pr.requester_name ? pr.requester_name.substring(0, 2) : 'EM'}
+                              </div>
+                              <span style={{ fontWeight: 600 }}>{pr.requester_name}</span>
+                            </td>
+                            <td>{pr.department_name}</td>
+                            <td>{new Date(pr.required_date).toLocaleDateString()}</td>
+                            <td style={{ textAlign: "center" }}>
+                              <span className={`badge ${pr.priority === 'Critical' ? 'bg-red-100 text-red-800' :
+                                pr.priority === 'High' ? 'bg-orange-100 text-orange-800' :
+                                  pr.priority === 'Medium' ? 'bg-blue-100 text-blue-800' :
+                                    'bg-gray-100 text-gray-800'
+                                }`}>
+                                {pr.priority}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: "center" }}>
+                              <span style={{
+                                color: pr.status.includes('Approved') ? '#047857' : pr.status.includes('Rejected') ? '#ef4444' : '#d97706',
+                                fontWeight: 700,
+                                backgroundColor: pr.status.includes('Approved') ? '#d1fae5' : pr.status.includes('Rejected') ? '#fef2f2' : '#fef3c7',
+                                padding: '4px 10px', borderRadius: 12, fontSize: 12
+                              }}>
+                                {pr.status}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: "right", fontWeight: 700 }}>{totalCost.toLocaleString()} INR</td>
+                            <td onClick={e => e.stopPropagation()}>
+                              <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                                <button
+                                  className="btn btn-secondary"
+                                  style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                  onClick={async () => {
+                                    const detail = await storesService.getPRDetail(pr.id);
+                                    setSelectedViewItem(detail);
+                                  }}
+                                  title="Preview"
+                                >
+                                  <Eye size={16} color="var(--primary)" />
+                                </button>
+                                {pr.status === 'Requested' && (
+                                  <button
+                                    className="btn btn-secondary"
+                                    style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                    onClick={async () => {
+                                      if (confirm("Are you sure you want to cancel/delete this requisition?")) {
+                                        await storesService.deletePR(pr.id);
+                                        showToast("PR deleted successfully.");
+                                        loadPRData();
+                                      }
+                                    }}
+                                    title="Cancel Requisition"
+                                  >
+                                    <Trash2 size={16} color="var(--danger, #ef4444)" />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
                           </tr>
-                        </thead>
-                        <tbody style={{ divideY: '1px solid var(--border)' }}>
-                          {selectedPr.items.map((item, idx) => (
-                            <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
-                              <td style={{ padding: '6px 8px' }}>
-                                <div style={{ fontWeight: 600 }}>{item.item_name}</div>
-                                <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{item.item_code}</div>
-                              </td>
-                              <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 500 }}>{item.quantity} {item.uom_name}</td>
-                              <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 600 }}>{(item.quantity * item.estimated_unit_price).toLocaleString()}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  {/* Timeline */}
-                  <div style={{ marginTop: 20 }}>
-                    <h4 style={{ margin: '0 0 12px 0', fontSize: 13, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <Shield size={14} className="text-blue-500" /> Approval Timeline
-                    </h4>
-                    <div className="relative border-l-2 border-blue-100 ml-4 pl-6 space-y-4">
-                      {/* Seed Step */}
-                      <div className="relative">
-                        <div className="absolute top-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white" style={{ left: '-31px' }}></div>
-                        <div className="text-xs font-bold text-slate-700">Submitted</div>
-                        <div className="text-[10px] text-slate-400">by {selectedPr.requester_name}</div>
-                      </div>
-
-                      {/* Database Approvals */}
-                      {selectedPr.approvals.map((app, index) => (
-                        <div key={index} className="relative">
-                          <div className={`absolute top-0 w-3 h-3 rounded-full border-2 border-white ${app.status === 'Approved' ? 'bg-emerald-500' : 'bg-rose-500'}`} style={{ left: '-31px' }}></div>
-                          <div className="text-xs font-bold text-slate-700">{app.stage} - <span className={app.status === 'Approved' ? 'text-emerald-600' : 'text-rose-600'}>{app.status}</span></div>
-                          <div className="text-[10px] text-slate-500 font-semibold">{app.approver_name}</div>
-                          {app.comments && (
-                            <div className="text-[10px] text-slate-500 italic mt-1 bg-slate-50 p-1.5 rounded border border-slate-100">"{app.comments}"</div>
-                          )}
-                        </div>
-                      ))}
-
-                      {/* Final Status */}
-                      <div className="relative">
-                        <div className={`absolute top-0 w-3 h-3 rounded-full border-2 border-white ${selectedPr.status === 'Approved' ? 'bg-emerald-500' : selectedPr.status === 'Rejected' ? 'bg-rose-500' : 'bg-slate-200'}`} style={{ left: '-31px' }}></div>
-                        <div className="text-xs font-bold text-slate-500">Status: <span className="font-bold text-blue-600">{selectedPr.status}</span></div>
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
               </div>
             </div>
-          )}
+          </div>
+          </div>
 
-        </div>
       )}
       {/* ────────────────────────────────── TAB 2: MULTI-SECTION REQUEST FORM ────────────────────────────────── */}
       {activeTab === 'new' && (
@@ -1354,8 +1236,6 @@ export default function PurchaseRequisition() {
         </div>
       )}
 
-
-
       {/* ────────────────────────────────── TAB 4: ANALYTICS & CHARTS ────────────────────────────────── */}
       {activeTab === 'analytics' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, animation: 'fadeIn 0.3s ease' }}>
@@ -1512,6 +1392,103 @@ export default function PurchaseRequisition() {
         </div>
       )}
 
+      {/* Preview Modal */}
+      {selectedViewItem && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }}>
+          <div className="card animate-fade" style={{ background: '#cbd5e1', width: '100%', maxWidth: 900, height: '90vh', overflow: 'hidden', padding: 0, display: 'flex', flexDirection: 'column', borderRadius: 8, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+
+            <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', zIndex: 10, flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Eye size={18} style={{ color: '#4f46e5' }} />
+                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1e293b' }}>Purchase Requisition Preview</h3>
+              </div>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                {selectedViewItem && !selectedViewItem.status?.includes('Approved') && !selectedViewItem.status?.includes('Rejected') && (
+                  <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: 12, background: '#10b981', color: 'white', border: 'none' }} onClick={() => setApprovalModal({ open: true, prId: selectedViewItem.id, stage: 'Department Manager Approval', status: 'Approved', comments: '' })}>
+                    Approve
+                  </button>
+                )}
+                <button onClick={generatePDF} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#e2e8f0', border: 'none', color: '#1e293b', padding: '6px 12px', fontSize: 12, fontWeight: 600 }}>
+                  <Download size={14} /> Download PDF
+                </button>
+                <button onClick={() => setSelectedViewItem(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b' }}><X size={20} /></button>
+              </div>
+            </div>
+
+            <div style={{ padding: '40px 20px', background: '#cbd5e1', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', flex: 1, overflowY: 'auto' }}>
+              <div ref={printRef} style={{ background: '#fff', width: '100%', maxWidth: 850, padding: 0, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', borderRadius: 4, position: 'relative', marginBottom: 20, overflow: 'hidden' }}>
+
+                <div style={{ padding: '32px 40px 20px 40px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                      <div>
+                        <img src={logoImg} alt="Logo" style={{ width: 56, height: 56, objectFit: 'contain' }} />
+                      </div>
+                      <div>
+                        <h1 style={{ margin: 0, color: '#0f172a', fontSize: 28, fontWeight: 900, letterSpacing: '-0.02em' }}>DINESH EXPORTS</h1>
+                        <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em' }}>THE HOUSE OF FABRICS</p>
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right', width: 300 }}>
+                      <h2 style={{ margin: '0 0 16px 0', color: '#0f172a', fontSize: 18, fontWeight: 800, letterSpacing: '0.05em' }}>PURCHASE REQUISITION</h2>
+                      <div style={{ display: 'flex', fontSize: 11, marginBottom: 6, justifyContent: 'flex-end' }}>
+                        <div style={{ width: 100, fontWeight: 600, color: '#0f172a', textAlign: 'left' }}>Status</div>
+                        <div style={{ width: 20, textAlign: 'center' }}>:</div>
+                        <div><span style={{ background: '#22c55e', color: 'white', padding: '2px 8px', borderRadius: 12, fontSize: 9, fontWeight: 700 }}>{(selectedViewItem.status || 'ACTIVE').toUpperCase()}</span></div>
+                      </div>
+                      <div style={{ display: 'flex', fontSize: 11, justifyContent: 'flex-end' }}>
+                        <div style={{ width: 100, fontWeight: 600, color: '#0f172a', textAlign: 'left' }}>Generated On</div>
+                        <div style={{ width: 20, textAlign: 'center' }}>:</div>
+                        <div style={{ fontWeight: 500, color: '#0f172a' }}>{new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ borderBottom: '3px solid #0f172a' }}></div>
+
+                <div style={{ padding: '10px 40px 40px 40px' }}>
+                  <div style={{ position: 'relative', border: '1px solid #e2e8f0', borderRadius: 6, padding: '24px 20px 12px 20px', marginTop: 24 }}>
+                    <div style={{ position: 'absolute', top: -14, left: -1, background: '#0f172a', color: 'white', padding: '6px 16px', borderRadius: '6px 6px 6px 0', display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>
+                      <FileText size={14} /> 1. RECORD DETAILS
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40 }}>
+                      <div>
+                        {Object.entries(selectedViewItem).slice(0, 10).map(([k, v]) => (
+                          k !== 'id' && typeof v !== 'object' && <InfoRow2 key={k} label={k.replace(/_/g, ' ').toUpperCase()} value={String(v) || '-'} />
+                        ))}
+                      </div>
+                      <div>
+                        {Object.entries(selectedViewItem).slice(10, 20).map(([k, v]) => (
+                          k !== 'id' && typeof v !== 'object' && <InfoRow2 key={k} label={k.replace(/_/g, ' ').toUpperCase()} value={String(v) || '-'} />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ borderTop: '2px solid #0f172a', background: '#f8fafc', padding: '16px 40px', display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: 16, fontSize: 10, color: '#0f172a' }}>
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <MapPin size={16} strokeWidth={2.5} style={{ flexShrink: 0, marginTop: 2, color: '#1e3a8a' }} />
+                    <div>
+                      <div style={{ fontWeight: 800, marginBottom: 2 }}>Dinesh Exports</div>
+                      <div style={{ color: '#475569', fontWeight: 500, lineHeight: '16px' }}>No. 123, Textile Street,<br/>Erode, Tamil Nadu - 638001, India</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Phone size={14} color="#1e3a8a" strokeWidth={2.5}/> 0424-1234567</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Mail size={14} color="#1e3a8a" strokeWidth={2.5}/> info@dineshexports.com</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Globe size={14} color="#1e3a8a" strokeWidth={2.5}/> www.dineshexports.com</div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end', fontWeight: 700 }}>
+                      <FileText size={16} color="#1e3a8a" strokeWidth={2.5}/> GSTIN : 33ABCDE1234F1Z5
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

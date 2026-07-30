@@ -662,6 +662,9 @@ class IssueItemResponse(BaseModel):
     warehouse_name: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
 
+class IssueStatusUpdate(BaseModel):
+    status: str
+
 class IssueCreate(BaseModel):
     requesting_department_id: int
     issued_by_id: int
@@ -926,3 +929,11 @@ class CalculationResponse(BaseModel):
 
 
 
+
+
+class ProcurementQuotationHeaderUpdate(BaseModel):
+    company_name: Optional[str] = None
+    date: Optional[datetime] = None
+    vendor_id: Optional[int] = None
+    status: Optional[str] = None
+    items: Optional[List[ProcurementQuotationLineItemCreate]] = None

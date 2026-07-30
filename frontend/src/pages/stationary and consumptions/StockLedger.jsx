@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { ArrowDownLeft, ArrowUpRight, FileText, Package, Search } from 'lucide-react';
+
 import { mockDb } from './mockDb';
-import { Search, FileText, ArrowDownLeft, ArrowUpRight, Package } from 'lucide-react';
 
 export default function StockLedger() {
   const [ledger, setLedger] = useState([]);

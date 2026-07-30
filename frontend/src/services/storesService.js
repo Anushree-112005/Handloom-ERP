@@ -333,6 +333,10 @@ export const storesService = {
     const response = await api.post('/stores-consumables/issues', data);
     return response.data;
   },
+  updateDepartmentIssueStatus: async (id, status) => {
+    const response = await api.patch(`/stores-consumables/issues/${id}/status`, { status });
+    return response.data;
+  },
   deleteDepartmentIssue: async (id) => {
     await api.delete(`/stores-consumables/issues/${id}`);
   },
@@ -434,6 +438,10 @@ export const storesService = {
     const response = await api.get('/stores-consumables/reports/stock', { params });
     return response.data;
   }
+};
+
+export default storesService;
+
 };
 
 export default storesService;

@@ -1,14 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Wrench, Search, Filter, Edit2, Trash2, X, Save, Calendar, DollarSign, ArrowLeft } from 'lucide-react';
+import { Plus, Wrench, Search, Filter, Edit2, Trash2, X, Save, Calendar, DollarSign, ArrowLeft, Download, Eye, User, FileText, Globe, Mail, Phone, IndianRupee } from 'lucide-react';
 import api from '../../services/api';
 import MasterDropdown from '../../components/MasterDropdown';
 import { showError, showSuccess } from '../../utils/notifications';
 import { showConfirm } from '../../components/ConfirmDialog';
+import { downloadElementAsPdf } from '../../components/A4DocumentPreview';
+import jsPDF from 'jspdf';
+import logoImg from '../../assets/logo.png';
+import ExportButton from '../../components/ExportButton';
 
 const DetailRow = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
     <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>{label}</span>
     <span style={{ fontWeight: 600, color: 'var(--text-primary)', textAlign: 'right', maxWidth: '60%' }}>{value || '-'}</span>
+  </div>
+);
+
+const InfoRow2 = ({ label, value }) => (
+  <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', paddingBottom: 10, marginBottom: 10, fontSize: 13, alignItems: 'center' }}>
+    <div style={{ width: 150, color: '#64748b', fontWeight: 600 }}>{label}</div>
+    <div style={{ flex: 1, color: '#0f172a', fontWeight: 700 }}>{value || '-'}</div>
   </div>
 );
 
@@ -21,6 +32,8 @@ export default function MaintenanceLog() {
   const [selectedViewLog, setSelectedViewLog] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All Status');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
 
   const initialForm = {
     vehicle_id: '',
@@ -133,16 +146,16 @@ export default function MaintenanceLog() {
   const inProgressCount = logs.filter(l => l.status === 'In Progress').length;
   const totalCost = logs.reduce((sum, l) => sum + (Number(l.labor_cost || 0) + Number(l.parts_cost || 0)), 0);
 
-  // FORM VIEW
-  if (view === 'form') {
-    
-  const profilePreviewRef = useRef(null);
+  const profilePreviewRef = React.useRef(null);
   const generateProfilePDF = async (item) => {
     if (profilePreviewRef.current) {
       const safeName = (item?.maintenance_type || 'Maintenance Log').toString().replace(/[^a-zA-Z0-9_-]/g, '_');
       await downloadElementAsPdf(profilePreviewRef.current, `Maintenance Log_Profile_${safeName}.pdf`);
     }
   };
+
+  // FORM VIEW
+  if (view === 'form') {
 
   return (
     <div className="animate-fade">
@@ -239,9 +252,25 @@ export default function MaintenanceLog() {
           </h2>
           <p style={{ color: 'var(--text-muted)' }}>Track all vehicle maintenance and repairs</p>
         </div>
-        <button className="btn btn-primary" onClick={() => handleOpenForm()}>
-          <Plus size={18} /> Add Log
-        </button>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <ExportButton 
+            data={filteredLogs}
+            filename="Maintenance_Log_Report"
+            pdfTitle="Maintenance Log Report"
+            columns={[
+              { header: 'Vehicle ID', key: 'vehicle_id' },
+              { header: 'Service Date', key: 'service_date' },
+              { header: 'Maintenance Type', key: 'maintenance_type' },
+              { header: 'Work Description', key: 'work_description' },
+              { header: 'Labor Cost', key: 'labor_cost', render: (row) => `₹${Number(row.labor_cost || 0).toFixed(2)}` },
+              { header: 'Parts Cost', key: 'parts_cost', render: (row) => `₹${Number(row.parts_cost || 0).toFixed(2)}` },
+              { header: 'Status', key: 'status' }
+            ]}
+          />
+          <button className="btn btn-primary" onClick={() => handleOpenForm()}>
+            <Plus size={18} /> Add Log
+          </button>
+        </div>
       </div>
 
       {/* Stat Cards */}
@@ -288,27 +317,35 @@ export default function MaintenanceLog() {
       </div>
 
       {/* Filter Bar */}
-      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', background: 'var(--bg-secondary)' }}>
+      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+        
+        {/* Left Side: Search */}
         <div style={{ position: 'relative', flex: 1, minWidth: 250, maxWidth: 350 }}>
           <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input type="text" className="form-control" placeholder="Search by type or description..." style={{ paddingLeft: 38, width: '100%', margin: 0 }} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
-          <Filter size={16} />
-          <span style={{ fontSize: 13, fontWeight: 600 }}>Status:</span>
-        </div>
-        <div style={{ width: 180 }}>
-          <MasterDropdown
-            value={statusFilter}
-            onChange={(val) => setStatusFilter(val || 'All Status')}
-            options={[
-              { value: 'All Status', label: 'All Status' },
-              ...statuses.map(s => ({ value: s, label: s }))
-            ]}
-            placeholder="--- Filter Status ---"
-            allowClear={false}
-          />
+        {/* Right Side: Filters */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
+            <Filter size={16} />
+            <span style={{ fontSize: 13, fontWeight: 600 }}>Status:</span>
+          </div>
+          
+          <select className="form-control" style={{ width: 150, margin: 0 }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+            <option value="All Status">All Logs</option>
+            {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>From:</span>
+            <input type="date" className="form-control" style={{ width: 140, margin: 0 }} value={fromDate} onChange={e => setFromDate(e.target.value)} />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>To:</span>
+            <input type="date" className="form-control" style={{ width: 140, margin: 0 }} value={toDate} onChange={e => setToDate(e.target.value)} />
+          </div>
         </div>
       </div>
 
@@ -320,9 +357,10 @@ export default function MaintenanceLog() {
             <table className="data-table">
               <thead>
                 <tr>
+                  <th>Log ID</th>
+                  <th>Vehicle</th>
+                  <th>Maintenance Type</th>
                   <th>Date</th>
-                  <th>Type</th>
-                  <th>Description</th>
                   <th style={{ textAlign: 'right' }}>Cost</th>
                   <th style={{ textAlign: 'center' }}>Status</th>
                   <th style={{ textAlign: 'center' }}>Actions</th>
@@ -330,15 +368,16 @@ export default function MaintenanceLog() {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: 20 }}>Loading...</td></tr>
+                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>Loading...</td></tr>
                 ) : filteredLogs.length === 0 ? (
-                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: 20 }}>No logs found</td></tr>
+                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>No logs found</td></tr>
                 ) : (
                   filteredLogs.map(l => (
                     <tr key={l.id} onClick={() => setSelectedViewLog(l)} style={{ cursor: 'pointer', background: selectedViewLog?.id === l.id ? 'var(--bg-secondary)' : 'transparent' }}>
-                      <td style={{ fontWeight: 600 }}>{l.service_date}</td>
+                      <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{l.id}</td>
+                      <td>{vehicles.find(v => v.id === l.vehicle_id)?.vehicle_number || '-'}</td>
                       <td>{l.maintenance_type}</td>
-                      <td>{l.work_description ? l.work_description.substring(0, 30) + '...' : '-'}</td>
+                      <td style={{ fontWeight: 600 }}>{l.service_date}</td>
                       <td style={{ textAlign: 'right' }}>₹{(Number(l.labor_cost || 0) + Number(l.parts_cost || 0)).toFixed(2)}</td>
                       <td style={{ textAlign: 'center' }}>
                         <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: l.status === 'Completed' ? '#d1fae5' : l.status === 'Verified' ? '#d1fae5' : '#fef3c7', color: l.status === 'Completed' ? '#065f46' : l.status === 'Verified' ? '#065f46' : '#92400e' }}>
@@ -347,13 +386,13 @@ export default function MaintenanceLog() {
                       </td>
                       <td onClick={e => e.stopPropagation()} style={{ textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); setSelectedViewLog(v); }} title="Preview Profile">
+                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); setSelectedViewLog(l); }} title="Preview Profile">
                             <Eye size={16} color="var(--primary)" />
                           </button>
-                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); handleOpenForm(v)(); }} title="Edit">
+                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); handleOpenForm(l); }} title="Edit">
                             <Edit2 size={16} />
                           </button>
-                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); handleDelete(v.id, e); }} title="Delete">
+                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); handleDelete(l.id, e); }} title="Delete">
                             <Trash2 size={16} color="var(--danger, #ef4444)" />
                           </button>
                         </div>
@@ -386,7 +425,7 @@ export default function MaintenanceLog() {
               </div>
 
               <div style={{ flex: 1, overflowY: 'auto', padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div ref={profilePreviewRef} style={{ width: '100%', maxWidth: 794, background: '#ffffff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', borderRadius: 4, position: 'relative', marginBottom: 20, overflow: 'hidden' }}>
+                <div ref={profilePreviewRef} style={{ width: '100%', maxWidth: 794, background: '#ffffff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', borderRadius: 4, position: 'relative', marginBottom: 20, overflow: 'hidden', flexShrink: 0 }}>
                   
                   <div style={{ padding: '32px 40px 20px 40px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -422,7 +461,9 @@ export default function MaintenanceLog() {
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 0 }}>
                         <div>
-                          <InfoRow2 label="Service Date" value={selectedViewLog.service_date} />\n                          <InfoRow2 label="Type" value={selectedViewLog.maintenance_type} />\n                          <InfoRow2 label="Work Description" value={selectedViewLog.work_description} />
+                          <InfoRow2 label="Service Date" value={selectedViewLog.service_date} />
+                          <InfoRow2 label="Type" value={selectedViewLog.maintenance_type} />
+                          <InfoRow2 label="Work Description" value={selectedViewLog.work_description} />
                         </div>
                       </div>
                     </div>

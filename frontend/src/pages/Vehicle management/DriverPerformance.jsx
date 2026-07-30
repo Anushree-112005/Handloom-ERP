@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   User, Award, TrendingUp, Filter, Calendar, Truck, 
-  MapPin, Clock, Navigation, CheckCircle2, AlertTriangle, 
+  Search, MapPin, Clock, Compass, CheckCircle2, AlertTriangle, 
   ChevronRight, Download, RefreshCw, BarChart3, Star, Zap,
   DollarSign, Gauge, ShieldAlert, FileText, Eye, X, FileSpreadsheet
 } from 'lucide-react';
@@ -25,6 +25,7 @@ const DriverPerformance = () => {
   const [viewType, setViewType] = useState('driver'); // 'driver' or 'vehicle'
   const [vehicles, setVehicles] = useState([]);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [filters, setFilters] = useState({
     driverId: '',
@@ -165,6 +166,14 @@ const DriverPerformance = () => {
     });
   };
 
+  const filteredDetails = (data.details || []).filter(entry => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    const matchName = entry.driver_name && entry.driver_name.toLowerCase().includes(term);
+    const matchVehicle = entry.vehicle_number && entry.vehicle_number.toLowerCase().includes(term);
+    return matchName || matchVehicle;
+  });
+
   return (
     <div className="animate-fade">
       {/* Header Action Row */}
@@ -255,12 +264,18 @@ const DriverPerformance = () => {
 
       {/* Filter Row matching Sales Invoice */}
       <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
-          <Filter size={16} />
-          <span style={{ fontSize: 13, fontWeight: 600 }}>Filter:</span>
+        
+        {/* Left Side: Search */}
+        <div style={{ position: 'relative', flex: 1, minWidth: 250, maxWidth: 350 }}>
+          <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <input type="text" className="form-control" placeholder="Search by name or vehicle..." style={{ paddingLeft: 38, width: '100%', margin: 0, height: 38 }} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
         </div>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', flex: 1, justifyContent: 'flex-end' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
+            <Filter size={16} />
+            <span style={{ fontSize: 13, fontWeight: 600 }}>Filter:</span>
+          </div>
           {viewType === 'driver' ? (
             <div style={{ width: 180 }}>
               <MasterDropdown
@@ -351,9 +366,9 @@ const DriverPerformance = () => {
               </tr>
             </thead>
             <tbody>
-              {data.details.map((entry, idx) => (
+              {filteredDetails.map((entry, idx) => (
                 <tr key={idx} style={{ transition: 'background 0.2s' }}>
-                  <td>
+                    <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <div style={{
                         padding: 8,
@@ -386,7 +401,7 @@ const DriverPerformance = () => {
                   <td>
                     <div style={{ display: 'flex', flexDirection: 'column', width: 120 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                        <Navigation size={14} style={{ color: 'var(--primary)' }} />
+                        <Compass size={14} style={{ color: 'var(--primary)' }} />
                         <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 13 }}>
                           {entry.total_trips} <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600 }}>TRIPS</span>
                         </span>
@@ -452,7 +467,7 @@ const DriverPerformance = () => {
                   </td>
                 </tr>
               ))}
-              {data.details.length === 0 && !loading && (
+              {filteredDetails.length === 0 && !loading && (
                 <tr>
                    <td colSpan="6" style={{ padding: 48, textAlign: 'center' }}>
                      <div style={{ maxWidth: 300, margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
@@ -571,7 +586,7 @@ const DriverPerformance = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <h4 style={{ margin: 0, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Navigation size={14} style={{ color: 'var(--primary)' }} /> Recent Activity Log
+                    <Compass size={14} style={{ color: 'var(--primary)' }} /> Recent Activity Log
                   </h4>
                   <span className="badge badge-active" style={{ fontSize: 10 }}>LAST {selectedRecord.recent_trips?.length || 0} ENTRIES</span>
                 </div>

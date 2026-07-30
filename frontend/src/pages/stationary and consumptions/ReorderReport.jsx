@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { mockDb } from './mockDb';
 import { AlertTriangle, PlusCircle } from 'lucide-react';
+
+import { mockDb } from './mockDb';
 
 export default function ReorderReport() {
   const [lowStockItems, setLowStockItems] = useState([]);

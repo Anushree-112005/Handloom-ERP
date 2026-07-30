@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { AlertTriangle, ArrowLeft, BarChart2, CheckCircle, ClipboardList, Edit, MapPin, Package, Plus, Receipt, RefreshCw, Save, Search, ShoppingBag, Trash2, TrendingUp, X } from 'lucide-react';
+
 import { mockDb } from './mockDb';
 import { storesService } from '../../services/storesService';
 import api from '../../services/api';
-import { 
-  Package, Receipt, ShoppingBag, ClipboardList, CheckCircle, 
-  AlertTriangle, TrendingUp, BarChart2, MapPin, Search, Plus, 
-  Trash2, Edit, X, RefreshCw, Save, ArrowLeft 
-} from 'lucide-react';
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
@@ -489,7 +486,7 @@ export default function Dashboard() {
       </div>
 
       {/* Product & Material Location Section */}
-      <div className="card" style={{ border: 'none', boxShadow: 'none', marginTop: 24, padding: 24, border: 'none' }}>
+      <div className="card" style={{ boxShadow: 'none', marginTop: 24, padding: 24, border: 'none' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, borderBottom: '1px solid var(--border)', paddingBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)', padding: 8, borderRadius: 'var(--radius-md)' }}>

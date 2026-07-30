@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { AlertTriangle, ArrowDownLeft, BarChart3, CheckSquare, ChevronRight, ClipboardList, Download, FileText, Filter, Layers, PieChart as PieIcon, PlusCircle, Printer, Receipt, RefreshCw, Search, Settings } from 'lucide-react';
+
 import { mockDb } from './mockDb';
-import {
-  FileText, Search, Download, Printer, Filter, ChevronRight,
-  AlertTriangle, RefreshCw, Layers, Settings, ArrowDownLeft, PieChart as PieIcon,
-  Receipt, ClipboardList, PlusCircle, CheckSquare, BarChart3
-} from 'lucide-react';
+
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend, PieChart, Pie, Cell

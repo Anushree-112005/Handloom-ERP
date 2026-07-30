@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Download, FileText } from 'lucide-react';
+
 import { mockDb } from './mockDb';
-import { FileText, Download } from 'lucide-react';
+
 import * as XLSX from 'xlsx';
 
 export default function StockReport() {

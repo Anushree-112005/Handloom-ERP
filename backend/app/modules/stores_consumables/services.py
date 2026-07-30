@@ -26,7 +26,7 @@ from app.modules.stores_consumables.schemas import (
     SubcategoryCreate, WarehouseCreate, CostCenterCreate, BudgetCreate,
     PRItemCreate, PRCreate, PRUpdate, PRApprovalSubmit,
     QuotationCreate, QuotationResponse, POCreate, POResponse,
-    GRNCreate, GRNResponse, IssueCreate, IssueResponse,
+    GRNCreate, GRNResponse, IssueCreate, IssueResponse, IssueStatusUpdate,
     ReturnCreate, ReturnResponse, TransferCreate, TransferResponse,
     AdjustmentCreate, AdjustmentResponse, DCCreate, DCResponse
 )
@@ -1364,6 +1364,17 @@ class StoresService:
         return i
 
     @staticmethod
+    async def update_department_issue_status(db: AsyncSession, issue_id: int, payload: IssueStatusUpdate) -> Optional[StoresIssueToDepartment]:
+        stmt = select(StoresIssueToDepartment).where(StoresIssueToDepartment.id == issue_id)
+        res = await db.execute(stmt)
+        i = res.scalar()
+        if i:
+            i.status = payload.status
+            await db.commit()
+            await db.refresh(i)
+        return await StoresService.get_department_issue(db, issue_id)
+
+    @staticmethod
     async def delete_department_issue(db: AsyncSession, issue_id: int):
         stmt = select(StoresIssueToDepartment).where(StoresIssueToDepartment.id == issue_id)
         res = await db.execute(stmt)
@@ -1707,6 +1718,34 @@ class StoresService:
 
         emp_res = await db.execute(select(Employee).where(Employee.id == d.issued_by_id))
         emp = emp_res.scalar()
+        d.issued_by_name = emp.name if emp else "Gate Issuer"
+
+        for item in d.items:
+            itm_res = await db.execute(select(StoresItem).where(StoresItem.id == item.item_id))
+            itm = itm_res.scalar()
+            item.item_code = itm.item_code if itm else "Unknown"
+            item.item_name = itm.item_name if itm else "Unknown"
+
+            cat_res = await db.execute(select(StoresCategory).where(StoresCategory.id == item.category_id))
+            cat = cat_res.scalar()
+            item.category_name = cat.category_name if cat else "Unknown"
+
+            uom_res = await db.execute(select(StoresUOM).where(StoresUOM.id == item.uom_id))
+            uom = uom_res.scalar()
+            item.uom_name = uom.uom_name if uom else "Unknown"
+        return d
+
+    @staticmethod
+    async def delete_returnable_dc(db: AsyncSession, dc_id: int):
+        stmt = select(StoresReturnableDC).where(StoresReturnableDC.id == dc_id)
+        res = await db.execute(stmt)
+        d = res.scalar()
+        if d:
+            d.is_deleted = True
+            await db.commit()
+
+
+
         d.issued_by_name = emp.name if emp else "Gate Issuer"
 
         for item in d.items:

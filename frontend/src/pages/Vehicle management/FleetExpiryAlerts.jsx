@@ -164,7 +164,7 @@ export default function FleetExpiryAlerts() {
   };
 
   
-  const profilePreviewRef = useRef(null);
+  const profilePreviewRef = React.useRef(null);
   const generateProfilePDF = async (item) => {
     if (profilePreviewRef.current) {
       const safeName = (item?.document_type || 'Fleet Expiry Alert').toString().replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -540,7 +540,7 @@ export default function FleetExpiryAlerts() {
               </div>
 
               <div style={{ flex: 1, overflowY: 'auto', padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div ref={profilePreviewRef} style={{ width: '100%', maxWidth: 794, background: '#ffffff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', borderRadius: 4, position: 'relative', marginBottom: 20, overflow: 'hidden' }}>
+                <div ref={profilePreviewRef} style={{ width: '100%', maxWidth: 794, background: '#ffffff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', borderRadius: 4, position: 'relative', marginBottom: 20, overflow: 'hidden', flexShrink: 0 }}>
                   
                   <div style={{ padding: '32px 40px 20px 40px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

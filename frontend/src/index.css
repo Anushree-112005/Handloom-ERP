@@ -472,9 +472,22 @@ textarea {
 }
 
 /* ---- Tables ---- */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  /* Allow horizontal scroll to work without breaking layout */
+  display: block;
+  max-width: 100%;
+}
+
 .data-table {
   width: 100%;
   border-collapse: collapse;
+  /* Ensure the table doesn't shrink below its content size */
+  min-width: max-content;
 }
 
 .data-table thead th {
@@ -488,6 +501,19 @@ textarea {
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
   background: var(--bg-secondary);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* Add a pseudo-element to create a top border for sticky header to prevent background bleed */
+.data-table thead th::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-bottom: 1px solid var(--border);
 }
 
 .data-table tbody tr {
@@ -503,6 +529,16 @@ textarea {
   font-size: 14px;
   border-bottom: 1px solid var(--border);
   color: var(--text-secondary);
+  /* Handle text overflow */
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.data-table tbody td.wrap-text {
+  white-space: normal;
+  word-break: break-word;
 }
 
 /* ---- Status Badges ---- */

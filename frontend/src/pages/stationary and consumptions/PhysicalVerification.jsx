@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { Clipboard, Save } from 'lucide-react';
+
 import { mockDb } from './mockDb';
-import { Save, Clipboard } from 'lucide-react';
 
 export default function PhysicalVerification() {
   const [items, setItems] = useState([]);
