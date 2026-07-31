@@ -30,15 +30,73 @@ const StockLedger = () => {
         return <ArrowDownLeft size={16} color="#10b981" />;
       case 'ISSUE':
       case 'DISPATCH':
+      case 'TRANSFER_OUT':
         return <ArrowUpRight size={16} color="#f59e0b" />;
       default:
         return <RefreshCcw size={16} color="#3b82f6" />;
     }
   };
 
+  const getStageStatus = (movement) => {
+    const tracking = (movement.tracking_id || '').toUpperCase();
+    const type = (movement.transaction_type || '').toUpperCase();
+    const status = (movement.status || '').toUpperCase();
+
+    // 1. Process / Voucher Reference matching
+    if (tracking.startsWith('GRN-Y') || tracking.startsWith('PO-Y') || tracking.includes('YARN_PURCHASE') || tracking.includes('YARN_INWARD')) {
+      return { label: 'Yarn Purchase Inward', bg: '#dcfce7', color: '#15803d', border: '#bbf7d0' };
+    }
+    if (tracking.startsWith('GYD') || tracking.startsWith('DYD') || (type === 'TRANSFER_OUT' && tracking.startsWith('DYR'))) {
+      return { label: 'Dyeing Delivery', bg: '#fef3c7', color: '#b45309', border: '#fde68a' };
+    }
+    if (tracking.startsWith('DYR') || tracking.includes('DYED_YARN_RECEIPT')) {
+      return { label: 'Dyeing Receipt', bg: '#dbeafe', color: '#1d4ed8', border: '#bfdbfe' };
+    }
+    if (tracking.startsWith('WRP') || tracking.startsWith('SIZ')) {
+      return { label: 'Warping / Sizing Delivery', bg: '#f3e8ff', color: '#6b21a8', border: '#e9d5ff' };
+    }
+    if (tracking.startsWith('WVG')) {
+      return { label: 'Weaving Delivery', bg: '#fce7f3', color: '#be185d', border: '#fbcfe8' };
+    }
+    if (tracking.startsWith('FDD')) {
+      return { label: 'Fabric Dyeing Delivery', bg: '#ffedd5', color: '#c2410c', border: '#fed7aa' };
+    }
+    if (tracking.startsWith('DFR')) {
+      return { label: 'Dyed Fabric Receipt', bg: '#d1fae5', color: '#047857', border: '#a7f3d0' };
+    }
+    if (tracking.startsWith('PRT')) {
+      return { label: 'Printing Delivery', bg: '#fef9c3', color: '#a16207', border: '#fef08a' };
+    }
+    if (tracking.startsWith('FNS')) {
+      return { label: 'Finishing Delivery', bg: '#cff4fc', color: '#055160', border: '#b6effb' };
+    }
+    if (tracking.startsWith('FAB-IN')) {
+      return { label: 'Fabric Inward', bg: '#e0e7ff', color: '#4338ca', border: '#c7d2fe' };
+    }
+
+    // 2. Status fallback
+    if (status === 'AT_JOB_WORK') {
+      return { label: 'Job Work Outward', bg: '#fef3c7', color: '#b45309', border: '#fde68a' };
+    }
+    if (status === 'AVAILABLE') {
+      if (type === 'RECEIPT') {
+        return { label: 'Inward Receipt', bg: '#dcfce7', color: '#15803d', border: '#bbf7d0' };
+      }
+      return { label: 'Available', bg: '#dcfce7', color: '#15803d', border: '#bbf7d0' };
+    }
+    if (status === 'IN_INSPECTION') {
+      return { label: 'Quality Inspection', bg: '#fef9c3', color: '#a16207', border: '#fef08a' };
+    }
+
+    return { label: status.replace(/_/g, ' ') || type.replace(/_/g, ' ') || 'Completed', bg: '#f3f4f6', color: '#374151', border: '#e5e7eb' };
+  };
+
   const filteredMovements = movements.filter(m => {
-    const matchesSearch = m.item_id?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (m.tracking_id && m.tracking_id.toLowerCase().includes(searchTerm.toLowerCase()));
+    const stage = getStageStatus(m);
+    const search = searchTerm.toLowerCase();
+    const matchesSearch = (m.item_id || '').toLowerCase().includes(search) || 
+                          (m.tracking_id || '').toLowerCase().includes(search) ||
+                          (stage.label || '').toLowerCase().includes(search);
     const matchesType = typeFilter === 'ALL' || m.transaction_type === typeFilter;
     return matchesSearch && matchesType;
   });
@@ -187,35 +245,43 @@ const StockLedger = () => {
                   </td>
                 </tr>
               ) : (
-                filteredMovements.map((movement) => (
-                  <tr key={movement.id}>
-                    <td style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-                      {new Date(movement.timestamp).toLocaleString()}
-                    </td>
-                    <td style={{ fontWeight: 600 }}>{movement.item_id}</td>
-                    <td>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        {getTransactionIcon(movement.transaction_type)}
-                        {movement.transaction_type}
-                      </span>
-                    </td>
-                    <td style={{ fontWeight: 600, color: movement.quantity > 0 ? '#10b981' : '#f59e0b' }}>
-                      {movement.quantity > 0 ? '+' : ''}{movement.quantity}
-                    </td>
-                    <td>
-                      <span className={`badge ${
-                        movement.status === 'AVAILABLE' ? 'badge-success' : 
-                        movement.status === 'IN_INSPECTION' ? 'badge-warning' : 
-                        'badge-secondary'
-                      }`}>
-                        {movement.status}
-                      </span>
-                    </td>
-                    <td style={{ color: 'var(--text-muted)' }}>
-                      {movement.tracking_id || '-'}
-                    </td>
-                  </tr>
-                ))
+                filteredMovements.map((movement) => {
+                  const stage = getStageStatus(movement);
+                  return (
+                    <tr key={movement.id}>
+                      <td style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+                        {new Date(movement.timestamp).toLocaleString()}
+                      </td>
+                      <td style={{ fontWeight: 600 }}>{movement.item_id}</td>
+                      <td>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          {getTransactionIcon(movement.transaction_type)}
+                          {movement.transaction_type}
+                        </span>
+                      </td>
+                      <td style={{ fontWeight: 600, color: movement.quantity > 0 ? '#10b981' : '#f59e0b' }}>
+                        {movement.quantity > 0 ? '+' : ''}{movement.quantity}
+                      </td>
+                      <td>
+                        <span style={{ 
+                          display: 'inline-block',
+                          padding: '4px 10px', 
+                          borderRadius: '12px', 
+                          fontSize: '12px', 
+                          fontWeight: '700',
+                          backgroundColor: stage.bg, 
+                          color: stage.color, 
+                          border: `1px solid ${stage.border}` 
+                        }}>
+                          {stage.label}
+                        </span>
+                      </td>
+                      <td style={{ color: 'var(--text-muted)', fontFamily: 'monospace', fontWeight: 600 }}>
+                        {movement.tracking_id || '-'}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

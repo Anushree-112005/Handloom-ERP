@@ -284,6 +284,7 @@ export default function YarnPurchaseOrder() {
   const [selectedViewOrder, setSelectedViewOrder] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   const [companyProfile, setCompanyProfile] = useState({
     company_name: 'Dinesh Exports Private Limited',
@@ -761,15 +762,49 @@ export default function YarnPurchaseOrder() {
     }
   };
 
+  const toggleSelectAll = (filteredData = []) => {
+    if (selectedIds.length === filteredData.length && filteredData.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredData.map(o => o.id));
+    }
+  };
+
+  const toggleSelectRow = (id, e) => {
+    if (e) e.stopPropagation();
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
   const handleDelete = async (id, po, e) => {
     if (e) e.stopPropagation();
     if (window.confirm(`Are you sure you want to delete ${po}?`)) {
       try {
         await yarnPurchaseOrderAPI.delete(id);
         if (selectedViewOrder?.id === id) setSelectedViewOrder(null);
+        setSelectedIds(prev => prev.filter(item => item !== id));
         loadData();
       } catch (err) {
         alert('Error deleting');
+      }
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (window.confirm(`Are you sure you want to delete ${selectedIds.length} selected yarn purchase order(s)?`)) {
+      try {
+        await Promise.all(selectedIds.map(id => yarnPurchaseOrderAPI.delete(id)));
+        if (selectedViewOrder && selectedIds.includes(selectedViewOrder.id)) {
+          setSelectedViewOrder(null);
+        }
+        setSelectedIds([]);
+        loadData();
+      } catch (err) {
+        alert('Error deleting selected yarn purchase orders');
+        console.error(err);
+        loadData();
       }
     }
   };
@@ -1232,22 +1267,63 @@ export default function YarnPurchaseOrder() {
             </div>
           </div>
 
+          {/* Bulk Action Bar */}
+          {selectedIds.length > 0 && (
+            <div className="card animate-fade" style={{ padding: '12px 20px', marginBottom: 16, background: '#fef2f2', border: '1px solid #fee2e2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ color: '#991b1b', fontWeight: 700, fontSize: 14 }}>
+                  {selectedIds.length} yarn purchase order{selectedIds.length > 1 ? 's' : ''} selected
+                </span>
+                <button
+                  className="btn btn-secondary"
+                  style={{ padding: '4px 10px', fontSize: 12 }}
+                  onClick={() => setSelectedIds([])}
+                >
+                  Clear Selection
+                </button>
+              </div>
+              <button
+                className="btn"
+                style={{ background: '#ef4444', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', fontWeight: 700, borderRadius: 6, cursor: 'pointer' }}
+                onClick={handleBulkDelete}
+              >
+                <Trash2 size={16} /> Delete Selected ({selectedIds.length})
+              </button>
+            </div>
+          )}
+
           <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
             <div style={{ flex: 1, overflowX: 'auto' }}>
               <div className="card" style={{ padding: 0 }}>
                 <table className="data-table">
                   <thead>
                     <tr>
+                      <th style={{ width: 40, textAlign: 'center' }}>
+                        <input
+                          type="checkbox"
+                          checked={filteredOrders.length > 0 && selectedIds.length === filteredOrders.length}
+                          onChange={() => toggleSelectAll(filteredOrders)}
+                          style={{ cursor: 'pointer', width: 16, height: 16 }}
+                        />
+                      </th>
                       <th>PO No</th><th>Date</th><th>Supplier</th><th>Amount</th><th>Status</th><th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {loading ? (
-                      <tr><td colSpan={6} style={{ textAlign: 'center', padding: 40 }}>Loading...</td></tr>
+                      <tr><td colSpan={7} style={{ textAlign: 'center', padding: 40 }}>Loading...</td></tr>
                     ) : filteredOrders.length === 0 ? (
-                      <tr><td colSpan={6} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No POs found.</td></tr>
+                      <tr><td colSpan={7} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No POs found.</td></tr>
                     ) : filteredOrders.map(o => (
-                      <tr key={o.id} onClick={() => handleRowClick(o)} style={{ cursor: 'pointer', background: selectedViewOrder?.id === o.id ? 'var(--bg-secondary)' : 'transparent' }}>
+                      <tr key={o.id} onClick={() => handleRowClick(o)} style={{ cursor: 'pointer', background: selectedIds.includes(o.id) ? 'rgba(239, 68, 68, 0.05)' : selectedViewOrder?.id === o.id ? 'var(--bg-secondary)' : 'transparent' }}>
+                        <td style={{ textAlign: 'center' }} onClick={evt => evt.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(o.id)}
+                            onChange={(evt) => toggleSelectRow(o.id, evt)}
+                            style={{ cursor: 'pointer', width: 16, height: 16 }}
+                          />
+                        </td>
                         <td style={{ fontWeight: 600, color: 'var(--primary-light)' }}>{o.po_number}</td>
                         <td>{o.po_date}</td>
                         <td style={{ fontWeight: 500 }}>{o.supplier_name || '-'}</td>

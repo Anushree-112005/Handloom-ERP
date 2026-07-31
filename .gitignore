@@ -57,6 +57,7 @@ backend/uploads/designs/*
 # OCR Data & Large Documents
 *.traineddata
 *.odt
+*.docx
 
 # Docker
 .docker/
