@@ -403,7 +403,7 @@ export default function Dashboard() {
         {/* Left Column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           {/* Department Consumption */}
-          <div className="card" style={{ border: 'none', boxShadow: 'none', boxShadow: 'none' }}>
+          <div className="card" style={{ border: 'none', boxShadow: 'none' }}>
             <div className="card-header">
               <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <BarChart2 style={{ color: 'var(--primary)' }} size={20} /> Department Wise Monthly Consumption
@@ -433,7 +433,7 @@ export default function Dashboard() {
           </div>
 
           {/* Stock Breakdown */}
-          <div className="card" style={{ border: 'none', boxShadow: 'none', boxShadow: 'none' }}>
+          <div className="card" style={{ border: 'none', boxShadow: 'none' }}>
             <div className="card-header">
               <h3 className="card-title">Stock Breakdown Status</h3>
             </div>
