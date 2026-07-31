@@ -19,7 +19,7 @@ export default function YarnStock() {
         setLoading(true);
         let stockItems = [];
         try {
-          const res = await api.get('/inventory/stock-summary');
+          const res = await api.get('/inventory/stock-summary/');
           if (res.data && res.data.length > 0) {
             stockItems = res.data.map(item => {
               const qty = item.closing_qty || 0;

@@ -496,18 +496,39 @@ export const getBackendURL = (path) => {
   return `${base}${cleanPath}`;
 };
 
-export default api;
+export const inventoryAPI = {
+  getStockDashboard: () => api.get('/inventory/stock-dashboard/'),
+  getStockSummary: (params) => api.get('/inventory/stock-summary/', { params }),
+  getStockLedger: () => api.get('/inventory/stock-ledger/'),
+  getLowStockAlerts: () => api.get('/inventory/alerts/low-stock/'),
+};
+
 export const erpStockAPI = {
-  getCurrentStock: (query = '') => api.get(`/erp/stock/current${query}`),
-  getMovements: (query = '') => api.get(`/erp/stock/movements${query}`),
-  getLowStockAlerts: () => api.get('/erp/stock/alerts'),
-  submitAudit: (data) => api.post('/erp/stock/audit', data),
+  getCurrentStock: (query = '') => {
+    let cleanQuery = query || '';
+    if (cleanQuery.startsWith('?')) {
+      return api.get(`/erp/stock/current/${cleanQuery}`);
+    }
+    return api.get('/erp/stock/current/');
+  },
+  getMovements: (query = '') => {
+    let cleanQuery = query || '';
+    if (cleanQuery.startsWith('?')) {
+      return api.get(`/erp/stock/movements/${cleanQuery}`);
+    }
+    return api.get('/erp/stock/movements/');
+  },
+  getLowStockAlerts: () => api.get('/erp/stock/alerts/'),
+  submitAudit: (data) => api.post('/erp/stock/audit/', data),
 };
 export const proformaInvoiceAPI = createAPI('/proforma-invoices');
 export const buyerOrderScheduleAPI = createAPI('/buyer-order-schedules');
 export const buyerOrderAmendmentAPI = createAPI('/buyer-order-amendments');
 export const buyerOrderCompletionAPI = createAPI('/buyer-order-completions');
 export const orderExpenseAPI = createAPI('/order-expenses');
+
+export default api;
+
 
 
 

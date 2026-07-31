@@ -18,7 +18,7 @@ export default function StockSummary() {
       setLoading(true);
       let items = [];
       try {
-        const resInv = await api.get('/inventory/stock-summary');
+        const resInv = await api.get('/inventory/stock-summary/');
         if (resInv.data && resInv.data.length > 0) {
           items = resInv.data.map(item => ({
             id: item.id,
