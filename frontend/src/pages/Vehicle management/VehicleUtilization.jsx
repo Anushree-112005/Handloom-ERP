@@ -149,7 +149,7 @@ const VehicleUtilization = () => {
                 { value: '', label: 'All Vehicles' },
                 ...vehicles.map(v => ({ value: v.id, label: v.vehicle_number }))
               ]}
-              placeholder="All Vehicles"
+              placeholder="--- All Vehicles ---"
             />
           </div>
 
@@ -162,7 +162,7 @@ const VehicleUtilization = () => {
                 { value: '', label: 'All Drivers' },
                 ...drivers.map(d => ({ value: d.id, label: d.driver_name || d.name }))
               ]}
-              placeholder="All Drivers"
+              placeholder="--- All Drivers ---"
             />
           </div>
 

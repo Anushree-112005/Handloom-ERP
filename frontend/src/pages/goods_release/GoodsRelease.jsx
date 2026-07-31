@@ -1359,7 +1359,7 @@ export default function GoodsRelease() {
         <div
           className="card stat-card"
           onClick={() => handleCardClick('Total')}
-          style={{ cursor: 'pointer', border: statusFilter === 'All Status' ? '2px solid var(--primary)' : '1px solid transparent', transition: 'all 0.2s' }}
+          style={{ cursor: 'pointer', border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
             <ClipboardList size={24} />
@@ -1373,7 +1373,7 @@ export default function GoodsRelease() {
         <div
           className="card stat-card"
           onClick={() => handleCardClick('Draft')}
-          style={{ cursor: 'pointer', border: statusFilter === 'Draft' ? '2px solid #f59e0b' : '1px solid transparent', transition: 'all 0.2s' }}
+          style={{ cursor: 'pointer', border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>
             <FileText size={24} />
@@ -1386,7 +1386,7 @@ export default function GoodsRelease() {
 
         <div
           className="card stat-card"
-          style={{ border: '1px solid transparent' }}
+          style={{ border: 'none', boxShadow: 'none' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
             <CheckCircle size={24} />
@@ -1399,7 +1399,7 @@ export default function GoodsRelease() {
 
         <div
           className="card stat-card"
-          style={{ border: '1px solid transparent' }}
+          style={{ border: 'none', boxShadow: 'none' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(139,92,246,0.1)', color: '#8b5cf6' }}>
             <ShoppingCart size={24} />
@@ -1412,7 +1412,7 @@ export default function GoodsRelease() {
       </div>
 
       {/* Filter Row */}
-      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)', border: 'none', boxShadow: 'none' }}>
         
         <div style={{ position: 'relative', flex: 1, minWidth: 250, maxWidth: 350 }}>
           <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
@@ -1456,7 +1456,7 @@ export default function GoodsRelease() {
 
         {/* LEFT SIDE: GRA TABLE */}
         <div style={{ flex: 1, overflowX: 'auto' }}>
-          <div className="card" style={{ padding: 0, maxWidth: '100%', overflowX: 'hidden' }}>
+          <div className="card" style={{ padding: 0, maxWidth: '100%', overflowX: 'hidden', border: 'none', boxShadow: 'none' }}>
             <table className="data-table">
               <thead>
                 <tr>

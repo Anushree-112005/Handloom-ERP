@@ -587,36 +587,36 @@ export default function FinishedFabricReceipt() {
       </div>
 
       {/* KPI Stat Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
-        <div className="card" style={{ padding: 20, background: '#fff', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-          <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(124, 58, 237, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7c3aed' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginBottom: 24 }}>
+        <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(124, 58, 237, 0.1)', color: '#7c3aed' }}>
             <ClipboardList size={24} />
           </div>
-          <div>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Total Receipts</div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', marginTop: 2 }}>{inwards.length}</div>
+          <div className="stat-details">
+            <h3>Total Receipts</h3>
+            <div className="value">{inwards.length}</div>
           </div>
         </div>
 
-        <div className="card" style={{ padding: 20, background: '#fff', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-          <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}>
+        <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
             <FileText size={24} />
           </div>
-          <div>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Total Pieces</div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', marginTop: 2 }}>
+          <div className="stat-details">
+            <h3>Total Pieces</h3>
+            <div className="value">
               {inwards.reduce((sum, item) => sum + (Number(item.total_pieces) || 0), 0)}
             </div>
           </div>
         </div>
 
-        <div className="card" style={{ padding: 20, background: '#fff', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-          <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(245, 158, 11, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f59e0b' }}>
+        <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
             <Layers size={24} />
           </div>
-          <div>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Total Meters</div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', marginTop: 2 }}>
+          <div className="stat-details">
+            <h3>Total Meters</h3>
+            <div className="value">
               {inwards.reduce((sum, item) => sum + (Number(item.total_meters) || 0), 0).toFixed(2)} Mtr
             </div>
           </div>
@@ -624,7 +624,7 @@ export default function FinishedFabricReceipt() {
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="card" style={{ padding: '14px 20px', background: '#fff', borderRadius: 8, marginBottom: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+      <div className="card" style={{ padding: '14px 20px', background: 'var(--bg-secondary)', marginBottom: 24, border: 'none' }}>
         <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between' }}>
           <div style={{ position: 'relative', width: 300, maxWidth: '100%' }}>
             <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
@@ -640,7 +640,7 @@ export default function FinishedFabricReceipt() {
         </div>
       </div>
 
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+      <div className="card" style={{ padding: 0, overflow: 'hidden', border: 'none' }}>
         <table className="data-table">
           <thead>
             <tr>

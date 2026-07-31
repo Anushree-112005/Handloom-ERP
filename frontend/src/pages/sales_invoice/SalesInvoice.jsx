@@ -969,7 +969,7 @@ export default function SalesInvoice() {
                             if (e.target.value === 'ADD_CUSTOM') setIsCustomPaymentMode(true);
                             else handleInputChange(e);
                           }}>
-                            <option value="">-- Select --</option>
+                            <option value="">---select----</option>
                             {(options.masters?.payment_mode_master || []).map(p => <option key={p} value={p}>{p}</option>)}
                             <option value="Credit">Credit</option>
                             <option value="Advance">Advance</option>
@@ -1000,7 +1000,7 @@ export default function SalesInvoice() {
                             if (e.target.value === 'ADD_CUSTOM') setIsCustomTransport(true);
                             else handleInputChange(e);
                           }}>
-                            <option value="">-- Select --</option>
+                            <option value="">---select----</option>
                             {options.transporters.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
                             {(options.masters?.transport_name_master || []).map(t => <option key={`custom-${t}`} value={t}>{t}</option>)}
                             <option value="ADD_CUSTOM" style={{ color: '#4f46e5', fontWeight: 'bold' }}>+ Add Custom Transport</option>
@@ -1035,7 +1035,7 @@ export default function SalesInvoice() {
                             if (e.target.value === 'ADD_CUSTOM') setIsCustomTransportMode(true);
                             else handleInputChange(e);
                           }}>
-                            <option value="">-- Select --</option>
+                            <option value="">---select----</option>
                             {(options.masters?.transport_mode_master || []).map(t => <option key={t} value={t}>{t}</option>)}
                             <option value="Road">Road</option><option value="Rail">Rail</option><option value="Air">Air</option><option value="Ship">Ship</option>
                             <option value="ADD_CUSTOM" style={{ color: '#4f46e5', fontWeight: 'bold' }}>+ Add Custom Mode</option>
@@ -1055,7 +1055,7 @@ export default function SalesInvoice() {
                             if (e.target.value === 'ADD_CUSTOM') setIsCustomFreightMode(true);
                             else handleInputChange(e);
                           }}>
-                            <option value="">-- Select --</option>
+                            <option value="">---select----</option>
                             {(options.masters?.freight_mode_master || []).map(f => <option key={f} value={f}>{f}</option>)}
                             <option value="To Pay">To Pay</option><option value="Paid">Paid</option>
                             <option value="ADD_CUSTOM" style={{ color: '#4f46e5', fontWeight: 'bold' }}>+ Add Custom Mode</option>
@@ -1083,7 +1083,7 @@ export default function SalesInvoice() {
                             if (e.target.value === 'ADD_CUSTOM') setIsCustomLrTerms(true);
                             else handleInputChange(e);
                           }} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'design_no')}>
-                            <option value="">-- Select --</option>
+                            <option value="">---select----</option>
                             {(options.masters?.lr_terms || []).map(l => <option key={l} value={l}>{l}</option>)}
                             <option value="Primary Logistics">Primary Logistics</option>
                             <option value="Secondary Delivery">Secondary Delivery</option>
@@ -1141,7 +1141,7 @@ export default function SalesInvoice() {
                                     }
                                   }}
                                 >
-                                  <option value="">-- Select --</option>
+                                  <option value="">---select----</option>
                                   {(options.masters?.hsn_code_master || []).map(h => <option key={h} value={h}>{h}</option>)}
                                   <option value="ADD_CUSTOM" style={{ color: '#4f46e5', fontWeight: 'bold' }}>+ Add Custom HSN</option>
                                 </select>
@@ -1179,7 +1179,7 @@ export default function SalesInvoice() {
                                     }
                                   }}
                                 >
-                                  <option value="">-- Select --</option>
+                                  <option value="">---select----</option>
                                   <option value="MTR">MTR</option>
                                   <option value="YDS">YDS</option>
                                   <option value="KG">KG</option>
@@ -1458,7 +1458,7 @@ export default function SalesInvoice() {
         <div
           className="card stat-card"
           onClick={() => handleCardClick('Total')}
-          style={{ cursor: 'pointer', border: statusFilter === 'All Status' ? '2px solid var(--primary)' : '1px solid transparent', transition: 'all 0.2s' }}
+          style={{ cursor: 'pointer', border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
             <Receipt size={24} />
@@ -1472,7 +1472,7 @@ export default function SalesInvoice() {
         <div
           className="card stat-card"
           onClick={() => handleCardClick('Draft')}
-          style={{ cursor: 'pointer', border: statusFilter === 'Draft' ? '2px solid #f59e0b' : '1px solid transparent', transition: 'all 0.2s' }}
+          style={{ cursor: 'pointer', border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>
             <FileText size={24} />
@@ -1486,7 +1486,7 @@ export default function SalesInvoice() {
         <div
           className="card stat-card"
           onClick={() => handleCardClick('Paid')}
-          style={{ cursor: 'pointer', border: statusFilter === 'Paid' ? '2px solid #10b981' : '1px solid transparent', transition: 'all 0.2s' }}
+          style={{ cursor: 'pointer', border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
             <CheckCircle size={24} />
@@ -1499,7 +1499,7 @@ export default function SalesInvoice() {
 
         <div
           className="card stat-card"
-          style={{ border: '1px solid transparent' }}
+          style={{ border: 'none', boxShadow: 'none' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(139,92,246,0.1)', color: '#8b5cf6' }}>
             <ShoppingCart size={24} />
@@ -1512,7 +1512,7 @@ export default function SalesInvoice() {
       </div>
 
       {/* Filter Row matching Party Master */}
-      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)', border: 'none', boxShadow: 'none' }}>
         
         {/* Left Search */}
         <div style={{ position: 'relative', flex: 1, minWidth: 250, maxWidth: 350 }}>
@@ -1558,7 +1558,7 @@ export default function SalesInvoice() {
 
         {/* LEFT SIDE: INVOICES TABLE */}
         <div style={{ flex: 1, overflowX: 'auto' }}>
-          <div className="card" style={{ padding: 0 }}>
+          <div className="card" style={{ padding: 0, border: 'none', boxShadow: 'none' }}>
             <table className="data-table">
               <thead>
                 <tr>

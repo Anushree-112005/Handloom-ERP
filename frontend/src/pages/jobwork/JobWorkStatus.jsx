@@ -308,39 +308,47 @@ export default function JobWorkStatus() {
       </div>
 
       {/* Overview Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20, marginBottom: 24 }}>
-        <div className="card stat-card" style={{ '--stat-color': 'var(--primary)' }}>
-          <div className="stat-icon" style={{ background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)' }}><Activity size={22} /></div>
-          <div className="stat-info">
-            <h3>{summary.totalJobs}</h3>
-            <p>Total Job Orders</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
+        <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(79, 70, 229, 0.1)', color: '#4f46e5' }}>
+            <Activity size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Total Job Orders</h3>
+            <div className="value">{summary.totalJobs}</div>
           </div>
         </div>
-        <div className="card stat-card" style={{ '--stat-color': 'var(--warning)' }}>
-          <div className="stat-icon" style={{ background: 'rgba(217, 119, 6, 0.1)', color: 'var(--warning)' }}><Send size={22} /></div>
-          <div className="stat-info">
-            <h3>{summary.pendingJobs}</h3>
-            <p>Active/Pending Orders</p>
+        <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(217, 119, 6, 0.1)', color: '#d97706' }}>
+            <Send size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Active/Pending Orders</h3>
+            <div className="value">{summary.pendingJobs}</div>
           </div>
         </div>
-        <div className="card stat-card" style={{ '--stat-color': 'var(--info)' }}>
-          <div className="stat-icon" style={{ background: 'rgba(37, 99, 235, 0.1)', color: 'var(--info)' }}><RefreshCw size={22} /></div>
-          <div className="stat-info">
-            <h3>{summary.totalSent.toLocaleString(undefined, { maximumFractionDigits: 2 })}</h3>
-            <p>Total Material Sent</p>
+        <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(37, 99, 235, 0.1)', color: '#2563eb' }}>
+            <RefreshCw size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Total Material Sent</h3>
+            <div className="value">{summary.totalSent.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
           </div>
         </div>
-        <div className="card stat-card" style={{ '--stat-color': 'var(--success)' }}>
-          <div className="stat-icon" style={{ background: 'rgba(5, 150, 105, 0.1)', color: 'var(--success)' }}><CheckCircle2 size={22} /></div>
-          <div className="stat-info">
-            <h3>{summary.totalRecd.toLocaleString(undefined, { maximumFractionDigits: 2 })}</h3>
-            <p>Total Material Received</p>
+        <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(5, 150, 105, 0.1)', color: '#059669' }}>
+            <CheckCircle2 size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Total Material Received</h3>
+            <div className="value">{summary.totalRecd.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
           </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', gap: 16, alignItems: 'center', background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
+      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', gap: 16, alignItems: 'center', background: 'var(--bg-secondary)', border: 'none', boxShadow: 'none' }}>
         <div style={{ position: 'relative', flex: 1 }}>
           <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input 
@@ -361,7 +369,7 @@ export default function JobWorkStatus() {
       </div>
 
       {/* Grid Directory */}
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+      <div className="card" style={{ padding: 0, overflow: 'hidden', border: 'none', boxShadow: 'none' }}>
         <table className="data-table">
           <thead>
             <tr>

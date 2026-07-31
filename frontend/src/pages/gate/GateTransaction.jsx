@@ -209,8 +209,8 @@ export default function GateTransaction() {
   return (
     <div className="animate-fade page-wrapper" style={{ paddingBottom: '60px' }}>
       
-      {/* HEADER BAR */}
-      <div className="card" style={{ padding: '16px 24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(10px)', border: '1px solid var(--border)' }}>
+      {/* HEADER TABS & MODULE SELECTOR */}
+      <div className="card" style={{ padding: '16px 24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(10px)', border: 'none', boxShadow: 'none' }}>
         <div>
           <h2 style={{ fontSize: '24px', fontWeight: '850', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
             <Shield size={26} style={{ color: '#4f46e5' }} /> Gate & Security Management
@@ -227,7 +227,7 @@ export default function GateTransaction() {
       <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: '24px', alignItems: 'start' }}>
         
         {/* LEFT COLUMN: VEHICLE LIST */}
-        <div className="card" style={{ padding: 0, overflow: 'hidden', minHeight: '600px', display: 'flex', flexDirection: 'column' }}>
+        <div className="card" style={{ padding: 0, overflow: 'hidden', minHeight: '600px', display: 'flex', flexDirection: 'column', border: 'none', boxShadow: 'none' }}>
           
           {/* List Toolbar */}
           <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', background: 'var(--bg-card)' }}>
@@ -310,7 +310,7 @@ export default function GateTransaction() {
         </div>
 
         {/* RIGHT COLUMN: DETAIL PANEL OR FORM */}
-        <div className="card" style={{ padding: '28px', minHeight: '600px' }}>
+        <div className="card" style={{ padding: '28px', minHeight: '600px', border: 'none', boxShadow: 'none' }}>
           
           {isEditing ? (
             /* ================= EDITING / CREATING FORM ================= */

@@ -83,32 +83,27 @@ const FleetDashboard = () => {
     {
       title: 'Total Vehicles',
       value: dashboardData.total_vehicles || vehicles.length || 0,
-      icon: Truck,
-      change: 'Active inventory'
+      icon: Truck
     },
     {
       title: 'Running',
       value: dashboardData.active_trips || 0,
-      icon: MapPin,
-      change: 'Currently moving'
+      icon: MapPin
     },
     {
       title: 'Idle',
       value: dashboardData.idle_vehicles || 0,
-      icon: Clock,
-      change: 'Engine on, no movement'
+      icon: Clock
     },
     {
       title: 'Stopped',
       value: dashboardData.stopped_vehicles || 0,
-      icon: Power,
-      change: 'Engine off'
+      icon: Power
     },
     {
       title: 'Expiring Docs',
       value: dashboardData.expiring_documents || 0,
-      icon: FileText,
-      change: 'Action required'
+      icon: FileText
     }
   ];
 
@@ -138,11 +133,11 @@ const FleetDashboard = () => {
       </div>
 
       {/* Operational Metrics Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 24, marginBottom: 24 }}>
         {operationalMetrics.map((metric, index) => {
           const IconComponent = metric.icon;
           return (
-            <div key={index} className="card stat-card" style={{ margin: 0, padding: 16 }}>
+            <div key={index} className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
               <div className="stat-icon" style={{ 
                 background: index === 0 ? 'rgba(59,130,246,0.1)' : index === 1 ? 'rgba(16,185,129,0.1)' : index === 2 ? 'rgba(245,158,11,0.1)' : index === 3 ? 'rgba(239,68,68,0.1)' : 'rgba(234,179,8,0.1)', 
                 color: index === 0 ? '#3b82f6' : index === 1 ? '#10b981' : index === 2 ? '#f97316' : index === 3 ? '#ef4444' : '#eab308' 
@@ -150,9 +145,8 @@ const FleetDashboard = () => {
                 <IconComponent size={24} />
               </div>
               <div className="stat-details">
-                <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>{metric.title}</span>
-                <div className="value" style={{ fontSize: 24, fontWeight: 700, margin: '4px 0 2px 0', color: 'var(--text-primary)' }}>{metric.value}</div>
-                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{metric.change}</span>
+                <h3>{metric.title}</h3>
+                <div className="value">{metric.value}</div>
               </div>
             </div>
           );
@@ -160,7 +154,7 @@ const FleetDashboard = () => {
       </div>
 
       {/* Quick Actions Panel */}
-      <div className="card" style={{ padding: 20 }}>
+      <div className="card" style={{ padding: 20, border: 'none' }}>
         <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
           <Activity size={18} color="var(--primary)" /> Quick Operational Actions
         </h3>
@@ -212,7 +206,7 @@ const FleetDashboard = () => {
       </div>
 
       {/* Live Fleet Status Section */}
-      <div className="card" style={{ padding: 20 }}>
+      <div className="card" style={{ padding: 20, border: 'none' }}>
         {/* Table Header Row with Search */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, paddingBottom: 16, borderBottom: '1px solid var(--border)', marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

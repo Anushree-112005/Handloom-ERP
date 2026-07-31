@@ -33,7 +33,7 @@ from app.modules.stores_consumables.schemas import (
     PRCreate, PRResponse, PRUpdate, PRApprovalSubmit, PRApprovalResponse,
     PRItemCreate, PRItemResponse,
     QuotationCreate, QuotationResponse, POCreate, POResponse,
-    GRNCreate, GRNResponse, IssueCreate, IssueResponse,
+    GRNCreate, GRNResponse, IssueCreate, IssueResponse, IssueStatusUpdate,
     ReturnCreate, ReturnResponse, TransferCreate, TransferResponse,
     AdjustmentCreate, AdjustmentResponse, DCCreate, DCResponse,
     ProcurementVendorCreate, ProcurementVendorResponse,
@@ -748,6 +748,13 @@ async def list_department_issues(search: Optional[str] = None, db: AsyncSession 
 @router.get("/issues/{issue_id}", response_model=IssueResponse)
 async def get_department_issue(issue_id: int, db: AsyncSession = Depends(get_db)):
     i = await StoresService.get_department_issue(db, issue_id)
+    if not i:
+        raise HTTPException(status_code=404, detail="Department Issue not found")
+    return i
+
+@router.patch("/issues/{issue_id}/status", response_model=IssueResponse)
+async def update_department_issue_status(issue_id: int, payload: IssueStatusUpdate, db: AsyncSession = Depends(get_db)):
+    i = await StoresService.update_department_issue_status(db, issue_id, payload)
     if not i:
         raise HTTPException(status_code=404, detail="Department Issue not found")
     return i

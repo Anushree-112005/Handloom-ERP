@@ -24,32 +24,45 @@ export default function StoreDashboard() {
 
   return (
     <div className="animate-fade p-6">
-      <h1 className="text-2xl font-bold mb-6">Store Dashboard (DDD)</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <LayoutDashboard size={24} color="var(--primary)" /> Store Dashboard (DDD)
+          </h2>
+          <p style={{ color: 'var(--text-muted)' }}>Overview of store metrics and pending actions.</p>
+        </div>
+      </div>
       
       {loading ? (
         <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>Loading metrics...</div>
       ) : (
-        <div className="grid-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
-          <div className="card p-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-gray-500 font-medium">Pending Requests</h3>
-              <FileText size={20} className="text-blue-500" />
+        <div className="grid-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', marginBottom: '24px' }}>
+          <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+            <div className="stat-icon" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
+              <FileText size={24} />
             </div>
-            <p className="text-2xl font-bold">{metrics.pending_requests}</p>
+            <div className="stat-details">
+              <h3>Pending Requests</h3>
+              <div className="value">{metrics.pending_requests}</div>
+            </div>
           </div>
-          <div className="card p-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-gray-500 font-medium">Items Below Reorder</h3>
-              <Package size={20} className="text-orange-500" />
+          <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+            <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+              <Package size={24} />
             </div>
-            <p className="text-2xl font-bold">{metrics.items_below_reorder}</p>
+            <div className="stat-details">
+              <h3>Items Below Reorder</h3>
+              <div className="value">{metrics.items_below_reorder}</div>
+            </div>
           </div>
-          <div className="card p-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-gray-500 font-medium">Total Store Value</h3>
-              <LayoutDashboard size={20} className="text-green-500" />
+          <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+            <div className="stat-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+              <LayoutDashboard size={24} />
             </div>
-            <p className="text-2xl font-bold">₹ {metrics.total_store_value}</p>
+            <div className="stat-details">
+              <h3>Total Store Value</h3>
+              <div className="value">₹ {metrics.total_store_value}</div>
+            </div>
           </div>
         </div>
       )}

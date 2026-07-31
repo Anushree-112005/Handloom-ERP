@@ -206,41 +206,41 @@ export default function TravelRequests() {
           </div>
 
           {/* Stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
-            <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 44, height: 44, background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Plane className="w-5 h-5" />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
+            <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+              <div className="stat-icon" style={{ background: 'rgba(99, 102, 241, 0.1)', color: '#6366f1' }}>
+                <Plane size={24} />
               </div>
-              <div>
-                <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{stats.total}</p>
-                <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Total Requests</p>
-              </div>
-            </div>
-            <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 44, height: 44, background: '#f59e0b18', color: '#b45309', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Clock className="w-5 h-5" />
-              </div>
-              <div>
-                <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{stats.pending}</p>
-                <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Pending</p>
+              <div className="stat-details">
+                <h3>Total Requests</h3>
+                <div className="value">{stats.total}</div>
               </div>
             </div>
-            <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 44, height: 44, background: '#3b82f618', color: '#1d4ed8', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <CheckCircle className="w-5 h-5" />
+            <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+              <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+                <Clock size={24} />
               </div>
-              <div>
-                <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{stats.approved}</p>
-                <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Approved</p>
+              <div className="stat-details">
+                <h3>Pending</h3>
+                <div className="value">{stats.pending}</div>
               </div>
             </div>
-            <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 44, height: 44, background: '#a855f718', color: '#7e22ce', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Hotel className="w-5 h-5" />
+            <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+              <div className="stat-icon" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
+                <CheckCircle size={24} />
               </div>
-              <div>
-                <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{stats.booked}</p>
-                <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Booked</p>
+              <div className="stat-details">
+                <h3>Approved</h3>
+                <div className="value">{stats.approved}</div>
+              </div>
+            </div>
+            <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+              <div className="stat-icon" style={{ background: 'rgba(168, 85, 247, 0.1)', color: '#a855f7' }}>
+                <Hotel size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>Booked</h3>
+                <div className="value">{stats.booked}</div>
               </div>
             </div>
           </div>
@@ -249,7 +249,7 @@ export default function TravelRequests() {
           {viewMode === 'grid' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
               {filteredRequests.map(req => (
-                <div key={req.id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div key={req.id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 12, border: 'none' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
                       <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--primary)' }}>{req.request_id}</span>
@@ -300,7 +300,7 @@ export default function TravelRequests() {
                 </div>
               ))}
               {filteredRequests.length === 0 && (
-                <div className="card" style={{ gridColumn: '1/-1', textAlign: 'center', padding: '48px 24px' }}>
+                <div className="card" style={{ gridColumn: '1/-1', textAlign: 'center', padding: '48px 24px', border: 'none' }}>
                   <Plane className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                   <p style={{ margin: 0, color: 'var(--text-muted)' }}>No travel requests found</p>
                 </div>
@@ -310,7 +310,7 @@ export default function TravelRequests() {
 
           {/* Requests List View */}
           {viewMode === 'list' && (
-            <div className="card" style={{ padding: 0 }}>
+            <div className="card" style={{ padding: 0, border: 'none' }}>
               <div className="overflow-x-auto">
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
@@ -400,7 +400,7 @@ export default function TravelRequests() {
 
       {/* Form Inline */}
       {showForm && (
-        <form className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24 }} onSubmit={(e) => e.preventDefault()}>
+        <form className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24, border: 'none' }} onSubmit={(e) => e.preventDefault()}>
           {/* Form Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 20, borderBottom: '1px solid var(--border)' }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
@@ -671,7 +671,7 @@ export default function TravelRequests() {
       {/* View Modal */}
       {viewingRequest && (
         <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50">
-          <div className="card" style={{ width: '100%', maxWidth: 500, padding: 0 }}>
+          <div className="card" style={{ width: '100%', maxWidth: 500, padding: 0, border: 'none' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
               <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Travel Request Details</h2>
               <button onClick={() => setViewingRequest(null)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }}>

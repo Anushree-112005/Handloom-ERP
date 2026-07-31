@@ -33,13 +33,13 @@ export default function ConsumptionReport() {
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen space-y-6">
-      <div className="card">
+      <div className="card" style={{ border: 'none', boxShadow: 'none', boxShadow: 'none' }}>
         <h1 style={{ fontSize: 24, fontWeight: 700 }}>Department Consumption Report</h1>
         <p style={{ color: "var(--text-muted)", fontSize: 14 }}>Breakdown of monthly consumption cost and quantities by department units</p>
       </div>
 
       <div className="form-row">
-        <div className="card">
+        <div className="card" style={{ border: 'none', boxShadow: 'none', boxShadow: 'none' }}>
           <h3 className="text-lg font-bold text-slate-950 border-b pb-2">Department-wise Consumption Value</h3>
           <div className="h-64">
             {deptSummary.length > 0 ? (
@@ -57,7 +57,7 @@ export default function ConsumptionReport() {
           </div>
         </div>
 
-        <div className="card">
+        <div className="card" style={{ border: 'none', boxShadow: 'none', boxShadow: 'none' }}>
           <h3 className="text-lg font-bold text-slate-950 border-b pb-2 mb-4">Detailed Issue Logs</h3>
           <table className="data-table">
             <thead className="bg-slate-50 border-b">

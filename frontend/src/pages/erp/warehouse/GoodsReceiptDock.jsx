@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowDownLeft, Search, Filter, Clock } from 'lucide-react';
+import { ArrowDownLeft, Search, Filter, Clock, Box, CheckCircle, AlertCircle } from 'lucide-react';
 import { warehouseInwardOutwardAPI } from '../../../services/api';
 
 export default function GoodsReceiptDock() {
@@ -29,6 +29,11 @@ export default function GoodsReceiptDock() {
     (item.item_description || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const totalItems = stagingItems.length;
+  const awaitingQC = stagingItems.filter(i => i.status === 'Awaiting QC').length;
+  const readyItems = stagingItems.filter(i => i.status === 'Ready for Put-Away').length;
+  const totalQty = stagingItems.reduce((acc, curr) => acc + (Number(curr.received_qty) || 0), 0);
+
   return (
     <div className="animate-fade p-6">
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
@@ -40,7 +45,46 @@ export default function GoodsReceiptDock() {
         </div>
       </div>
 
-      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', gap: 16, alignItems: 'center', background: 'var(--bg-secondary)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '24px' }}>
+        <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
+            <Box size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Total Staging Items</h3>
+            <div className="value">{totalItems}</div>
+          </div>
+        </div>
+        <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+            <AlertCircle size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Awaiting QC</h3>
+            <div className="value">{awaitingQC}</div>
+          </div>
+        </div>
+        <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+            <CheckCircle size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Ready for Put-Away</h3>
+            <div className="value">{readyItems}</div>
+          </div>
+        </div>
+        <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' }}>
+            <ArrowDownLeft size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Total Quantity</h3>
+            <div className="value">{totalQty}</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', gap: 16, alignItems: 'center', background: 'var(--bg-secondary)', border: 'none', boxShadow: 'none' }}>
         <div style={{ position: 'relative', flex: 1, maxWidth: 400 }}>
           <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input
@@ -62,7 +106,7 @@ export default function GoodsReceiptDock() {
         </div>
       </div>
 
-      <div className="card" style={{ padding: 0 }}>
+      <div className="card" style={{ padding: 0, border: 'none', boxShadow: 'none' }}>
         {loading ? (
           <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>Loading staging items...</div>
         ) : (

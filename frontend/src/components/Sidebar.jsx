@@ -123,66 +123,6 @@ const modules = [
 
 
 
-  { section: 'INVENTORY MANAGEMENT' },
-  {
-    label: 'Inventory Management',
-    icon: Box,
-    children: [
-       { path: '/inventory/dashboard', label: 'Stock Dashboard', icon: LayoutDashboard },
-       
-       { section: 'RAW MATERIAL' },
-       { path: '/inventory/raw/yarn', label: 'Yarn Stock', icon: Layers },
-       { path: '/inventory/raw/consumables', label: 'Chemicals & Consumables', icon: Package },
-       
-       { section: 'WIP STOCK' },
-       { path: '/inventory/wip/warping', label: 'At Warping Unit', icon: Factory },
-       { path: '/inventory/wip/sizing', label: 'At Sizing Unit', icon: Factory },
-       { path: '/inventory/wip/weaving', label: 'At Weaving Unit', icon: Factory },
-       { path: '/inventory/wip/finishing', label: 'At Finishing Unit', icon: Factory },
-       
-       { section: 'FINISHED GOODS' },
-       { path: '/inventory/finished/grey', label: 'Grey Fabric', icon: CheckSquare },
-       { path: '/inventory/finished/fabric', label: 'Finished Fabric', icon: CheckSquare },
-       
-       { section: 'SURPLUS & SPARES' },
-       { path: '/inventory/surplus-stock', label: 'Surplus Stock', icon: PieChart },
-       { path: '/inventory/spares-stock', label: 'Spares Stock', icon: Package },
-       
-       { section: 'LEDGER & REPORTS' },
-       { path: '/inventory/summary', label: 'Stock Summary', icon: FileText },
-       { path: '/inventory/ledger', label: 'Stock Ledger', icon: FileText },
-       { path: '/inventory/lot-reconciliation', label: 'Lot Reconciliation', icon: BookOpen },
-       { path: '/inventory/audit', label: 'Physical Verification', icon: ClipboardList },
-       
-       { section: 'TRACKING & ALERTS' },
-       { path: '/inventory/godown-transfer', label: 'Godown Transfer', icon: MapPin },
-       { path: '/inventory/alerts', label: 'Low Stock Alerts', icon: AlertTriangle },
-    ]
-  },
-
-  { section: 'WAREHOUSE MANAGEMENT' },
-  {
-    label: 'Warehouse Operations',
-    icon: Package,
-    children: [
-       { path: '/warehouse/dashboard', label: 'Warehouse Dashboard', icon: LayoutDashboard },
-       
-       { section: 'MASTER SETUP' },
-       { path: '/warehouse/godown-master', label: 'Godown / Bin Master', icon: Box },
-       { path: '/warehouse-stock', label: 'Warehouse Stock & Photos', icon: Package },
-       
-       { section: 'INWARD (RECEIVING)' },
-       { path: '/warehouse/goods-receipt-dock', label: 'Goods Receipt Dock', icon: ArrowDownLeft },
-       { path: '/warehouse/putaway-entry', label: 'Put-Away Entry', icon: CheckSquare },
-       
-       { section: 'OUTWARD (DISPATCH)' },
-       { path: '/warehouse/pick-list', label: 'Pick List (Staging)', icon: ArrowUpRight },
-       
-       { section: 'STORES' },
-       { path: '/stores/dashboard', label: 'Stores Dashboard', icon: LayoutGrid },
-    ]
-  },
-
   { section: 'Accounts & Finance' },
   {
     label: 'Finance',

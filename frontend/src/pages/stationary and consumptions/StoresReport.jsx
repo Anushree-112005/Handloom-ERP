@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { AlertTriangle, ArrowDownLeft, BarChart3, CheckSquare, ChevronRight, ClipboardList, Download, FileText, Filter, Layers, PieChart as PieIcon, PlusCircle, Printer, Receipt, RefreshCw, Search, Settings } from 'lucide-react';
+
 import { mockDb } from './mockDb';
-import { 
-  FileText, Search, Download, Printer, Filter, ChevronRight, 
-  AlertTriangle, RefreshCw, Layers, Settings, ArrowDownLeft, PieChart as PieIcon,
-  Receipt, ClipboardList, PlusCircle, CheckSquare, BarChart3
-} from 'lucide-react';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
-  ResponsiveContainer, Legend, PieChart, Pie, Cell 
+
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, Legend, PieChart, Pie, Cell
 } from 'recharts';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -15,7 +13,7 @@ import * as XLSX from 'xlsx';
 
 export default function StoresReport({ defaultTab = 'stock' }) {
   const [activeTab, setActiveTab] = useState(defaultTab);
-  
+
   // Data states
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -52,7 +50,7 @@ export default function StoresReport({ defaultTab = 'stock' }) {
   const filteredStock = useMemo(() => {
     return items.filter(i => {
       const matchCat = categoryFilter === '' || i.category === categoryFilter;
-      const matchSearch = searchTerm === '' || 
+      const matchSearch = searchTerm === '' ||
         i.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (i.code || i.id).toLowerCase().includes(searchTerm.toLowerCase());
       return matchCat && matchSearch;
@@ -65,7 +63,7 @@ export default function StoresReport({ defaultTab = 'stock' }) {
       const detail = items.find(x => x.id === l.itemId) || {};
       const matchCat = categoryFilter === '' || detail.category === categoryFilter;
       const matchItem = selectedItem === '' || l.itemId === selectedItem;
-      const matchSearch = searchTerm === '' || 
+      const matchSearch = searchTerm === '' ||
         (detail.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         l.refId.toLowerCase().includes(searchTerm.toLowerCase()) ||
         l.refType.toLowerCase().includes(searchTerm.toLowerCase());
@@ -82,7 +80,7 @@ export default function StoresReport({ defaultTab = 'stock' }) {
         const detail = items.find(x => x.id === line.itemId) || {};
         return detail.category === categoryFilter;
       });
-      const matchSearch = searchTerm === '' || 
+      const matchSearch = searchTerm === '' ||
         iss.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
         iss.employee.toLowerCase().includes(searchTerm.toLowerCase()) ||
         iss.id.toLowerCase().includes(searchTerm.toLowerCase());
@@ -99,7 +97,7 @@ export default function StoresReport({ defaultTab = 'stock' }) {
         const detail = items.find(x => x.id === line.itemId) || {};
         return detail.category === categoryFilter;
       });
-      const matchSearch = searchTerm === '' || 
+      const matchSearch = searchTerm === '' ||
         g.vendor.toLowerCase().includes(searchTerm.toLowerCase()) ||
         g.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (g.poId || '').toLowerCase().includes(searchTerm.toLowerCase());
@@ -115,7 +113,7 @@ export default function StoresReport({ defaultTab = 'stock' }) {
       const isLow = (i.currentStock || 0) <= i.minStock;
       if (!isLow) return false;
       const matchCat = categoryFilter === '' || i.category === categoryFilter;
-      const matchSearch = searchTerm === '' || 
+      const matchSearch = searchTerm === '' ||
         i.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (i.code || i.id).toLowerCase().includes(searchTerm.toLowerCase());
       return matchCat && matchSearch;
@@ -128,7 +126,7 @@ export default function StoresReport({ defaultTab = 'stock' }) {
     return rawAudits.filter(a => {
       const detail = items.find(x => x.id === a.itemId) || {};
       const matchCat = categoryFilter === '' || detail.category === categoryFilter;
-      const matchSearch = searchTerm === '' || 
+      const matchSearch = searchTerm === '' ||
         (detail.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         a.refId.toLowerCase().includes(searchTerm.toLowerCase()) ||
         a.refType.toLowerCase().includes(searchTerm.toLowerCase());
@@ -349,7 +347,7 @@ export default function StoresReport({ defaultTab = 'stock' }) {
     doc.text(`DINESH EXPORTS TEXTILE ERP — STORES & CONSUMABLES`, 14, 15);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
-    
+
     let title = '';
     let headers = [];
     let body = [];
@@ -468,527 +466,529 @@ export default function StoresReport({ defaultTab = 'stock' }) {
 
   return (
     <div className="animate-fade page-wrapper" style={{ paddingBottom: '60px' }}>
-      
+
       {/* HEADER BAR */}
-      <div className="card" style={{ padding: '16px 24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(10px)', border: '1px solid var(--border)' }}>
-        <div>
-          <h2 style={{ fontSize: '24px', fontWeight: '850', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
-            <BarChart3 size={26} style={{ color: '#6366f1' }} /> Stores Reports & Analytics
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: '13px', fontWeight: '500' }}>
-            Unified dashboard for stock valuation, department consumption logs, vendor purchases, reorder safety and audit logs
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button className="btn btn-secondary" onClick={handleExportExcel} style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-            <Download size={16} style={{ color: '#15803d' }} /> Export Excel
-          </button>
-          <button className="btn btn-secondary" onClick={handleExportPDF} style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-            <FileText size={16} style={{ color: '#6366f1' }} /> Export PDF
-          </button>
-        </div>
+      <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '16px 24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(10px)' }}>
+      <div>
+        <h2 style={{ fontSize: '24px', fontWeight: '850', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
+          <BarChart3 size={26} style={{ color: '#6366f1' }} /> Stores Reports & Analytics
+        </h2>
+        <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: '13px', fontWeight: '500' }}>
+          Unified dashboard for stock valuation, department consumption logs, vendor purchases, reorder safety and audit logs
+        </p>
       </div>
-
-      {/* KPI METRICS */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '24px' }}>
-        <div className="card" style={{ borderLeft: '4px solid #6366f1', padding: '16px 20px' }}>
-          <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Total Inventory Valuation</span>
-          <h3 style={{ fontSize: '22px', fontWeight: '900', color: 'var(--text-primary)', margin: '8px 0 4px 0' }}>₹{totalValuation.toLocaleString()}</h3>
-          <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>Active items in stores</span>
-        </div>
-        <div className="card" style={{ borderLeft: '4px solid #ef4444', padding: '16px 20px' }}>
-          <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Low Stock Items</span>
-          <h3 style={{ fontSize: '22px', fontWeight: '900', color: '#ef4444', margin: '8px 0 4px 0' }}>{items.filter(i => (i.currentStock || 0) <= i.minStock).length} Alerts</h3>
-          <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>Action recommended</span>
-        </div>
-        <div className="card" style={{ borderLeft: '4px solid #10b981', padding: '16px 20px' }}>
-          <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Total Purchases</span>
-          <h3 style={{ fontSize: '22px', fontWeight: '900', color: '#10b981', margin: '8px 0 4px 0' }}>₹{totalPurchaseValue.toLocaleString()}</h3>
-          <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>Goods Inward value</span>
-        </div>
-        <div className="card" style={{ borderLeft: '4px solid #f59e0b', padding: '16px 20px' }}>
-          <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Total Consumption</span>
-          <h3 style={{ fontSize: '22px', fontWeight: '900', color: '#f59e0b', margin: '8px 0 4px 0' }}>₹{totalConsumptionValue.toLocaleString()}</h3>
-          <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>Department issues cost</span>
-        </div>
+      <div style={{ display: 'flex', gap: '12px' }}>
+        <button className="btn btn-secondary" onClick={handleExportExcel} style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          <Download size={16} style={{ color: '#15803d' }} /> Export Excel
+        </button>
+        <button className="btn btn-secondary" onClick={handleExportPDF} style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          <FileText size={16} style={{ color: '#6366f1' }} /> Export PDF
+        </button>
       </div>
+    </div>
 
-      {/* REPORT TYPE SELECTOR TABS */}
-      <div style={{ display: 'flex', gap: '8px', borderBottom: '2px solid var(--border)', paddingBottom: '8px', marginBottom: '24px' }}>
-        {[
-          { key: 'stock', label: 'Stock Inventory', icon: PieIcon },
-          { key: 'ledger', label: 'Stock Ledger', icon: FileText },
-          { key: 'consumption', label: 'Consumption Analysis', icon: PieIcon },
-          { key: 'purchase', label: 'Purchase Analysis', icon: Receipt },
-          { key: 'reorder', label: 'Low Stock Alerts', icon: AlertTriangle },
-          { key: 'audit', label: 'Audit Trail', icon: ClipboardList }
-        ].map(tab => {
-          const isSelected = activeTab === tab.key;
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.key}
-              onClick={() => {
-                setActiveTab(tab.key);
-                handleResetFilters();
-              }}
-              style={{
-                padding: '10px 16px',
-                fontSize: '13px',
-                fontWeight: 800,
-                border: 'none',
-                background: isSelected ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
-                color: isSelected ? '#6366f1' : 'var(--text-secondary)',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              <Icon size={14} /> {tab.label}
-            </button>
-          );
-        })}
-      </div>
+      {/* KPI METRICS */ }
+  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '24px' }}>
+    <div className="card" style={{ border: 'none', boxShadow: 'none', borderLeft: '4px solid #6366f1', padding: '16px 20px' }}>
+      <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Total Inventory Valuation</span>
+      <h3 style={{ fontSize: '22px', fontWeight: '900', color: 'var(--text-primary)', margin: '8px 0 4px 0' }}>₹{totalValuation.toLocaleString()}</h3>
+      <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>Active items in stores</span>
+    </div>
+    <div className="card" style={{ border: 'none', boxShadow: 'none', borderLeft: '4px solid #ef4444', padding: '16px 20px' }}>
+      <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Low Stock Items</span>
+      <h3 style={{ fontSize: '22px', fontWeight: '900', color: '#ef4444', margin: '8px 0 4px 0' }}>{items.filter(i => (i.currentStock || 0) <= i.minStock).length} Alerts</h3>
+      <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>Action recommended</span>
+    </div>
+    <div className="card" style={{ border: 'none', boxShadow: 'none', borderLeft: '4px solid #10b981', padding: '16px 20px' }}>
+      <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Total Purchases</span>
+      <h3 style={{ fontSize: '22px', fontWeight: '900', color: '#10b981', margin: '8px 0 4px 0' }}>₹{totalPurchaseValue.toLocaleString()}</h3>
+      <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>Goods Inward value</span>
+    </div>
+    <div className="card" style={{ border: 'none', boxShadow: 'none', borderLeft: '4px solid #f59e0b', padding: '16px 20px' }}>
+      <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Total Consumption</span>
+      <h3 style={{ fontSize: '22px', fontWeight: '900', color: '#f59e0b', margin: '8px 0 4px 0' }}>₹{totalConsumptionValue.toLocaleString()}</h3>
+      <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>Department issues cost</span>
+    </div>
+  </div>
 
-      {/* CHARTS AND VISUALIZATIONS SECTION */}
-      {['stock', 'consumption'].includes(activeTab) && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px', marginBottom: '24px' }}>
-          
-          {activeTab === 'stock' && (
-            <>
-              {/* Chart 1: Stock Level Comparer */}
-              <div className="card" style={{ padding: '24px' }}>
-                <h4 style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 16px 0', display: 'flex', justifyContent: 'space-between' }}>
-                  <span>📊 Stock Levels (Available vs Min limit)</span>
-                  <span style={{ color: '#6366f1', fontSize: '12px' }}>First 6 items</span>
-                </h4>
-                <div style={{ width: '100%', height: '240px' }}>
+  {/* REPORT TYPE SELECTOR TABS */ }
+  <div style={{ display: 'flex', gap: '8px', borderBottom: '2px solid var(--border)', paddingBottom: '8px', marginBottom: '24px' }}>
+    {[
+      { key: 'stock', label: 'Stock Inventory', icon: PieIcon },
+      { key: 'ledger', label: 'Stock Ledger', icon: FileText },
+      { key: 'consumption', label: 'Consumption Analysis', icon: PieIcon },
+      { key: 'purchase', label: 'Purchase Analysis', icon: Receipt },
+      { key: 'reorder', label: 'Low Stock Alerts', icon: AlertTriangle },
+      { key: 'audit', label: 'Audit Trail', icon: ClipboardList }
+    ].map(tab => {
+      const isSelected = activeTab === tab.key;
+      const Icon = tab.icon;
+      return (
+        <button
+          key={tab.key}
+          onClick={() => {
+            setActiveTab(tab.key);
+            handleResetFilters();
+          }}
+          style={{
+            padding: '10px 16px',
+            fontSize: '13px',
+            fontWeight: 800,
+            border: 'none',
+            background: isSelected ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
+            color: isSelected ? '#6366f1' : 'var(--text-secondary)',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+        >
+          <Icon size={14} /> {tab.label}
+        </button>
+      );
+    })}
+  </div>
+
+  {/* CHARTS AND VISUALIZATIONS SECTION */ }
+  {
+    ['stock', 'consumption'].includes(activeTab) && (
+      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px', marginBottom: '24px' }}>
+
+        {activeTab === 'stock' && (
+          <>
+            {/* Chart 1: Stock Level Comparer */}
+            <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '24px' }}>
+              <h4 style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 16px 0', display: 'flex', justifyContent: 'space-between' }}>
+                <span>📊 Stock Levels (Available vs Min limit)</span>
+                <span style={{ color: '#6366f1', fontSize: '12px' }}>First 6 items</span>
+              </h4>
+              <div style={{ width: '100%', height: '240px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={items.slice(0, 6)} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="name" stroke="#64748b" style={{ fontSize: '11px' }} />
+                    <YAxis stroke="#64748b" style={{ fontSize: '11px' }} />
+                    <Tooltip />
+                    <Legend style={{ fontSize: '12px' }} />
+                    <Bar dataKey="currentStock" name="Current Stock" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="minStock" name="Min Limit" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Chart 2: Category Distribution */}
+            <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '24px' }}>
+              <h4 style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 16px 0' }}>
+                🧶 Category Stock Valuation (Rs)
+              </h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', alignItems: 'center', height: '240px' }}>
+                <div style={{ height: '220px' }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={items.slice(0, 6)} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                      <XAxis dataKey="name" stroke="#64748b" style={{ fontSize: '11px' }} />
-                      <YAxis stroke="#64748b" style={{ fontSize: '11px' }} />
-                      <Tooltip />
-                      <Legend style={{ fontSize: '12px' }} />
-                      <Bar dataKey="currentStock" name="Current Stock" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="minStock" name="Min Limit" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                    </BarChart>
+                    <PieChart>
+                      <Pie
+                        data={categoryStockValuation}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={55}
+                        outerRadius={80}
+                        paddingAngle={4}
+                        dataKey="value"
+                      >
+                        {categoryStockValuation.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={v => `₹${v.toLocaleString()}`} />
+                    </PieChart>
                   </ResponsiveContainer>
                 </div>
-              </div>
 
-              {/* Chart 2: Category Distribution */}
-              <div className="card" style={{ padding: '24px' }}>
-                <h4 style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 16px 0' }}>
-                  🧶 Category Stock Valuation (Rs)
-                </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', alignItems: 'center', height: '240px' }}>
-                  <div style={{ height: '220px' }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={categoryStockValuation}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={55}
-                          outerRadius={80}
-                          paddingAngle={4}
-                          dataKey="value"
-                        >
-                          {categoryStockValuation.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={v => `₹${v.toLocaleString()}`} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto' }}>
-                    {categoryStockValuation.map((item, idx) => (
-                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px' }}>
-                        <div style={{ width: '10px', height: '10px', borderRadius: '3px', background: item.color }} />
-                        <span style={{ fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: '100px' }}>{item.name}:</span>
-                        <span style={{ color: 'var(--text-muted)' }}>₹{(item.value/1000).toFixed(1)}k</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-
-          {activeTab === 'consumption' && (
-            <>
-              {/* Chart 1: Department Consumption Bar */}
-              <div className="card" style={{ padding: '24px', gridColumn: 'span 2' }}>
-                <h4 style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 16px 0' }}>
-                  📈 Department-wise Total Consumption Cost Value (₹)
-                </h4>
-                <div style={{ width: '100%', height: '260px' }}>
-                  {deptSummary.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={deptSummary} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                        <XAxis dataKey="name" stroke="#64748b" style={{ fontSize: '12px' }} />
-                        <YAxis stroke="#64748b" style={{ fontSize: '12px' }} tickFormatter={v => `₹${(v/1000).toFixed(0)}k`} />
-                        <Tooltip formatter={(value) => `₹${value.toLocaleString()}`} />
-                        <Bar dataKey="value" name="Value (₹)" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={40} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-                      No department consumption records found.
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto' }}>
+                  {categoryStockValuation.map((item, idx) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px' }}>
+                      <div style={{ width: '10px', height: '10px', borderRadius: '3px', background: item.color }} />
+                      <span style={{ fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: '100px' }}>{item.name}:</span>
+                      <span style={{ color: 'var(--text-muted)' }}>₹{(item.value / 1000).toFixed(1)}k</span>
                     </div>
-                  )}
+                  ))}
                 </div>
               </div>
-            </>
-          )}
+            </div>
+          </>
+        )}
 
+        {activeTab === 'consumption' && (
+          <>
+            {/* Chart 1: Department Consumption Bar */}
+            <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '24px', gridColumn: 'span 2' }}>
+              <h4 style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 16px 0' }}>
+                📈 Department-wise Total Consumption Cost Value (₹)
+              </h4>
+              <div style={{ width: '100%', height: '260px' }}>
+                {deptSummary.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={deptSummary} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                      <XAxis dataKey="name" stroke="#64748b" style={{ fontSize: '12px' }} />
+                      <YAxis stroke="#64748b" style={{ fontSize: '12px' }} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
+                      <Tooltip formatter={(value) => `₹${value.toLocaleString()}`} />
+                      <Bar dataKey="value" name="Value (₹)" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={40} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+                    No department consumption records found.
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+      </div>
+    )
+  }
+
+  {/* FILTERS AND SEARCH PANEL */ }
+  <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '20px 24px', marginBottom: '24px' }}>
+    <h4 style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+      <Filter size={14} /> Report Filter parameters
+    </h4>
+    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+
+      <div className="form-group" style={{ margin: 0, flex: '1 1 240px' }}>
+        <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700 }}>Keyword Search</label>
+        <div style={{ position: 'relative' }}>
+          <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Search Item code, Name, Ref No..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            style={{ paddingLeft: '32px', margin: 0, fontSize: '13px' }}
+          />
+        </div>
+      </div>
+
+      <div className="form-group" style={{ margin: 0, width: '200px' }}>
+        <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700 }}>Category</label>
+        <select className="form-control" value={categoryFilter} onChange={e => { setCategoryFilter(e.target.value); setSelectedItem(''); }} style={{ margin: 0, fontSize: '13px' }}>
+          <option value="">All Categories</option>
+          {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+        </select>
+      </div>
+
+      {activeTab === 'ledger' && (
+        <div className="form-group" style={{ margin: 0, width: '200px' }}>
+          <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700 }}>Filter by Item</label>
+          <select className="form-control" value={selectedItem} onChange={e => setSelectedItem(e.target.value)} style={{ margin: 0, fontSize: '13px' }}>
+            <option value="">All Items</option>
+            {items
+              .filter(i => categoryFilter === '' || i.category === categoryFilter)
+              .map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+          </select>
         </div>
       )}
 
-      {/* FILTERS AND SEARCH PANEL */}
-      <div className="card" style={{ padding: '20px 24px', marginBottom: '24px' }}>
-        <h4 style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Filter size={14} /> Report Filter parameters
-        </h4>
-        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          
-          <div className="form-group" style={{ margin: 0, flex: '1 1 240px' }}>
-            <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700 }}>Keyword Search</label>
-            <div style={{ position: 'relative' }}>
-              <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input 
-                type="text" 
-                className="form-control" 
-                placeholder="Search Item code, Name, Ref No..." 
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                style={{ paddingLeft: '32px', margin: 0, fontSize: '13px' }}
-              />
-            </div>
+      {['ledger', 'consumption', 'purchase', 'audit'].includes(activeTab) && (
+        <>
+          <div className="form-group" style={{ margin: 0, width: '150px' }}>
+            <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700 }}>Date From</label>
+            <input type="date" className="form-control" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ margin: 0, fontSize: '13px' }} />
           </div>
-
-          <div className="form-group" style={{ margin: 0, width: '200px' }}>
-            <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700 }}>Category</label>
-            <select className="form-control" value={categoryFilter} onChange={e => { setCategoryFilter(e.target.value); setSelectedItem(''); }} style={{ margin: 0, fontSize: '13px' }}>
-              <option value="">All Categories</option>
-              {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-            </select>
+          <div className="form-group" style={{ margin: 0, width: '150px' }}>
+            <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700 }}>Date To</label>
+            <input type="date" className="form-control" value={dateTo} onChange={e => setDateTo(e.target.value)} style={{ margin: 0, fontSize: '13px' }} />
           </div>
+        </>
+      )}
 
-          {activeTab === 'ledger' && (
-            <div className="form-group" style={{ margin: 0, width: '200px' }}>
-              <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700 }}>Filter by Item</label>
-              <select className="form-control" value={selectedItem} onChange={e => setSelectedItem(e.target.value)} style={{ margin: 0, fontSize: '13px' }}>
-                <option value="">All Items</option>
-                {items
-                  .filter(i => categoryFilter === '' || i.category === categoryFilter)
-                  .map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
-              </select>
-            </div>
-          )}
+      <button
+        className="btn btn-secondary"
+        style={{ padding: '9px', fontSize: '13px', justifyContent: 'center', margin: 0, width: '100px' }}
+        onClick={handleResetFilters}
+      >
+        Reset
+      </button>
+    </div>
+  </div>
 
-          {['ledger', 'consumption', 'purchase', 'audit'].includes(activeTab) && (
-            <>
-              <div className="form-group" style={{ margin: 0, width: '150px' }}>
-                <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700 }}>Date From</label>
-                <input type="date" className="form-control" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ margin: 0, fontSize: '13px' }} />
-              </div>
-              <div className="form-group" style={{ margin: 0, width: '150px' }}>
-                <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700 }}>Date To</label>
-                <input type="date" className="form-control" value={dateTo} onChange={e => setDateTo(e.target.value)} style={{ margin: 0, fontSize: '13px' }} />
-              </div>
-            </>
-          )}
-
-          <button 
-            className="btn btn-secondary" 
-            style={{ padding: '9px', fontSize: '13px', justifyContent: 'center', margin: 0, width: '100px' }} 
-            onClick={handleResetFilters}
-          >
-            Reset
-          </button>
-        </div>
+  {/* DYNAMIC REPORT CONTENT TABLE */ }
+  <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 0, overflow: 'hidden' }}>
+    <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div>
+        <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)', margin: 0, textTransform: 'capitalize' }}>
+          {activeTab.replace('-', ' ')} Ledger List
+        </h3>
+        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+          Showing matching report entries
+        </span>
       </div>
+      <div style={{ display: 'flex', gap: '10px' }}>
+        {activeTab === 'reorder' && (
+          <button onClick={handleQuickRequisition} className="btn btn-success" style={{ padding: '6px 12px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <PlusCircle size={14} /> Quick Reorder Requisition
+          </button>
+        )}
+        <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '13px' }} onClick={handlePrint}>
+          <Printer size={12} /> Print Report
+        </button>
+      </div>
+    </div>
 
-      {/* DYNAMIC REPORT CONTENT TABLE */}
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)', margin: 0, textTransform: 'capitalize' }}>
-              {activeTab.replace('-', ' ')} Ledger List
-            </h3>
-            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-              Showing matching report entries
-            </span>
-          </div>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            {activeTab === 'reorder' && (
-              <button onClick={handleQuickRequisition} className="btn btn-success" style={{ padding: '6px 12px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <PlusCircle size={14} /> Quick Reorder Requisition
-              </button>
+    <div style={{ overflowX: 'auto' }}>
+      {activeTab === 'stock' && (
+        <table className="data-table" style={{ width: '100%', margin: 0 }}>
+          <thead>
+            <tr>
+              <th>Item Code</th>
+              <th>Item Name</th>
+              <th>Category</th>
+              <th>UOM</th>
+              <th style={{ textAlign: "right" }}>Stock</th>
+              <th style={{ textAlign: "right" }}>Rate</th>
+              <th style={{ textAlign: "right" }}>Valuation</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredStock.length === 0 ? (
+              <tr>
+                <td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>No stock items match this filter criteria.</td>
+              </tr>
+            ) : (
+              filteredStock.map(i => (
+                <tr key={i.id}>
+                  <td style={{ fontWeight: 700, fontFamily: 'monospace' }}>{i.code || i.id}</td>
+                  <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{i.name}</td>
+                  <td>{i.category}</td>
+                  <td>{i.uom}</td>
+                  <td style={{ textAlign: 'right', fontWeight: 700, color: (i.currentStock || 0) <= i.minStock ? '#d97706' : 'var(--text-primary)' }}>
+                    {i.currentStock || 0}
+                  </td>
+                  <td style={{ textAlign: 'right' }}>₹{i.rate}</td>
+                  <td style={{ textAlign: 'right', fontWeight: 800, color: '#6366f1' }}>₹{((i.currentStock || 0) * i.rate).toLocaleString()}</td>
+                </tr>
+              ))
             )}
-            <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '13px' }} onClick={handlePrint}>
-              <Printer size={12} /> Print Report
-            </button>
-          </div>
-        </div>
+          </tbody>
+        </table>
+      )}
 
-        <div style={{ overflowX: 'auto' }}>
-          {activeTab === 'stock' && (
-            <table className="data-table" style={{ width: '100%', margin: 0 }}>
-              <thead>
-                <tr>
-                  <th>Item Code</th>
-                  <th>Item Name</th>
-                  <th>Category</th>
-                  <th>UOM</th>
-                  <th style={{ textAlign: "right" }}>Stock</th>
-                  <th style={{ textAlign: "right" }}>Rate</th>
-                  <th style={{ textAlign: "right" }}>Valuation</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredStock.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>No stock items match this filter criteria.</td>
+      {activeTab === 'ledger' && (
+        <table className="data-table" style={{ width: '100%', margin: 0 }}>
+          <thead>
+            <tr>
+              <th>Transaction ID</th>
+              <th>Date</th>
+              <th>Item Name</th>
+              <th>Reference Voucher</th>
+              <th>Transaction Type</th>
+              <th style={{ textAlign: "right" }}>In (Receipt)</th>
+              <th style={{ textAlign: "right" }}>Out (Issue)</th>
+              <th style={{ textAlign: "right" }}>Stock Balance</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredLedger.length === 0 ? (
+              <tr>
+                <td colSpan="8" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>No transaction ledger records match this filter criteria.</td>
+              </tr>
+            ) : (
+              filteredLedger.map(l => {
+                const detail = items.find(x => x.id === l.itemId) || {};
+                return (
+                  <tr key={l.id}>
+                    <td style={{ fontFamily: 'monospace', fontSize: '12px' }}>{l.id}</td>
+                    <td>{l.date}</td>
+                    <td style={{ fontWeight: 600 }}>{detail.name || l.itemId}</td>
+                    <td style={{ fontWeight: 700, color: '#6366f1', fontFamily: 'monospace' }}>{l.refId}</td>
+                    <td>{l.refType}</td>
+                    <td style={{ textAlign: 'right', color: '#10b981', fontWeight: 700 }}>{l.inQty > 0 ? `+${l.inQty}` : '-'}</td>
+                    <td style={{ textAlign: 'right', color: '#ef4444', fontWeight: 700 }}>{l.outQty > 0 ? `-${l.outQty}` : '-'}</td>
+                    <td style={{ textAlign: 'right', fontWeight: 800 }}>{l.balance}</td>
                   </tr>
-                ) : (
-                  filteredStock.map(i => (
-                    <tr key={i.id}>
-                      <td style={{ fontWeight: 700, fontFamily: 'monospace' }}>{i.code || i.id}</td>
-                      <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{i.name}</td>
-                      <td>{i.category}</td>
-                      <td>{i.uom}</td>
-                      <td style={{ textAlign: 'right', fontWeight: 700, color: (i.currentStock || 0) <= i.minStock ? '#d97706' : 'var(--text-primary)' }}>
-                        {i.currentStock || 0}
-                      </td>
-                      <td style={{ textAlign: 'right' }}>₹{i.rate}</td>
-                      <td style={{ textAlign: 'right', fontWeight: 800, color: '#6366f1' }}>₹{((i.currentStock || 0) * i.rate).toLocaleString()}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          )}
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      )}
 
-          {activeTab === 'ledger' && (
-            <table className="data-table" style={{ width: '100%', margin: 0 }}>
-              <thead>
-                <tr>
-                  <th>Transaction ID</th>
-                  <th>Date</th>
-                  <th>Item Name</th>
-                  <th>Reference Voucher</th>
-                  <th>Transaction Type</th>
-                  <th style={{ textAlign: "right" }}>In (Receipt)</th>
-                  <th style={{ textAlign: "right" }}>Out (Issue)</th>
-                  <th style={{ textAlign: "right" }}>Stock Balance</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredLedger.length === 0 ? (
-                  <tr>
-                    <td colSpan="8" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>No transaction ledger records match this filter criteria.</td>
+      {activeTab === 'consumption' && (
+        <table className="data-table" style={{ width: '100%', margin: 0 }}>
+          <thead>
+            <tr>
+              <th>Issue ID</th>
+              <th>Date</th>
+              <th>Department</th>
+              <th>Employee</th>
+              <th>Purpose</th>
+              <th style={{ textAlign: "right" }}>Items Count</th>
+              <th style={{ textAlign: "right" }}>Total Cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredIssues.length === 0 ? (
+              <tr>
+                <td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>No department issues match this filter criteria.</td>
+              </tr>
+            ) : (
+              filteredIssues.map(iss => {
+                const filteredLines = iss.items.filter(line => {
+                  const detail = items.find(x => x.id === line.itemId) || {};
+                  return categoryFilter === '';
+                });
+                const filteredItems = iss.items.filter(line => {
+                  const detail = items.find(x => x.id === line.itemId) || {};
+                  return categoryFilter === '' || detail.category === categoryFilter;
+                });
+                const val = filteredItems.reduce((sum, line) => {
+                  const detail = items.find(x => x.id === line.itemId);
+                  return sum + (line.qty * (detail?.rate || 0));
+                }, 0);
+                return (
+                  <tr key={iss.id}>
+                    <td style={{ fontWeight: 700, fontFamily: 'monospace' }}>{iss.id}</td>
+                    <td>{iss.date}</td>
+                    <td style={{ fontWeight: 600 }}>🏢 {iss.department}</td>
+                    <td>{iss.employee}</td>
+                    <td>{iss.purpose}</td>
+                    <td style={{ textAlign: 'right' }}>{filteredItems.length}</td>
+                    <td style={{ textAlign: 'right', fontWeight: 800, color: '#d97706' }}>₹{val.toLocaleString()}</td>
                   </tr>
-                ) : (
-                  filteredLedger.map(l => {
-                    const detail = items.find(x => x.id === l.itemId) || {};
-                    return (
-                      <tr key={l.id}>
-                        <td style={{ fontFamily: 'monospace', fontSize: '12px' }}>{l.id}</td>
-                        <td>{l.date}</td>
-                        <td style={{ fontWeight: 600 }}>{detail.name || l.itemId}</td>
-                        <td style={{ fontWeight: 700, color: '#6366f1', fontFamily: 'monospace' }}>{l.refId}</td>
-                        <td>{l.refType}</td>
-                        <td style={{ textAlign: 'right', color: '#10b981', fontWeight: 700 }}>{l.inQty > 0 ? `+${l.inQty}` : '-'}</td>
-                        <td style={{ textAlign: 'right', color: '#ef4444', fontWeight: 700 }}>{l.outQty > 0 ? `-${l.outQty}` : '-'}</td>
-                        <td style={{ textAlign: 'right', fontWeight: 800 }}>{l.balance}</td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          )}
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      )}
 
-          {activeTab === 'consumption' && (
-            <table className="data-table" style={{ width: '100%', margin: 0 }}>
-              <thead>
-                <tr>
-                  <th>Issue ID</th>
-                  <th>Date</th>
-                  <th>Department</th>
-                  <th>Employee</th>
-                  <th>Purpose</th>
-                  <th style={{ textAlign: "right" }}>Items Count</th>
-                  <th style={{ textAlign: "right" }}>Total Cost</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredIssues.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>No department issues match this filter criteria.</td>
+      {activeTab === 'purchase' && (
+        <table className="data-table" style={{ width: '100%', margin: 0 }}>
+          <thead>
+            <tr>
+              <th>GRN No</th>
+              <th>Date</th>
+              <th>Vendor</th>
+              <th>PO ID</th>
+              <th>Invoice No</th>
+              <th style={{ textAlign: "right" }}>Total Items</th>
+              <th style={{ textAlign: "right" }}>Inward Cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredGrns.length === 0 ? (
+              <tr>
+                <td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>No inward purchases match this filter criteria.</td>
+              </tr>
+            ) : (
+              filteredGrns.map(grn => {
+                const filteredItems = grn.items.filter(line => {
+                  const detail = items.find(x => x.id === line.itemId) || {};
+                  return categoryFilter === '' || detail.category === categoryFilter;
+                });
+                const inwardValue = filteredItems.reduce((acc, i) => acc + (i.acceptedQty * i.rate), 0);
+                return (
+                  <tr key={grn.id}>
+                    <td style={{ fontWeight: 700, fontFamily: 'monospace' }}>{grn.id}</td>
+                    <td>{grn.date}</td>
+                    <td style={{ fontWeight: 600 }}>{grn.vendor}</td>
+                    <td style={{ fontWeight: 700, color: '#6366f1', fontFamily: 'monospace' }}>{grn.poId || '-'}</td>
+                    <td>{grn.invoiceNo || '-'}</td>
+                    <td style={{ textAlign: 'right' }}>{filteredItems.length}</td>
+                    <td style={{ textAlign: 'right', fontWeight: 800 }}>₹{inwardValue.toLocaleString()}</td>
                   </tr>
-                ) : (
-                  filteredIssues.map(iss => {
-                    const filteredLines = iss.items.filter(line => {
-                      const detail = items.find(x => x.id === line.itemId) || {};
-                      return categoryFilter === '';
-                    });
-                    const filteredItems = iss.items.filter(line => {
-                      const detail = items.find(x => x.id === line.itemId) || {};
-                      return categoryFilter === '' || detail.category === categoryFilter;
-                    });
-                    const val = filteredItems.reduce((sum, line) => {
-                      const detail = items.find(x => x.id === line.itemId);
-                      return sum + (line.qty * (detail?.rate || 0));
-                    }, 0);
-                    return (
-                      <tr key={iss.id}>
-                        <td style={{ fontWeight: 700, fontFamily: 'monospace' }}>{iss.id}</td>
-                        <td>{iss.date}</td>
-                        <td style={{ fontWeight: 600 }}>🏢 {iss.department}</td>
-                        <td>{iss.employee}</td>
-                        <td>{iss.purpose}</td>
-                        <td style={{ textAlign: 'right' }}>{filteredItems.length}</td>
-                        <td style={{ textAlign: 'right', fontWeight: 800, color: '#d97706' }}>₹{val.toLocaleString()}</td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          )}
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      )}
 
-          {activeTab === 'purchase' && (
-            <table className="data-table" style={{ width: '100%', margin: 0 }}>
-              <thead>
-                <tr>
-                  <th>GRN No</th>
-                  <th>Date</th>
-                  <th>Vendor</th>
-                  <th>PO ID</th>
-                  <th>Invoice No</th>
-                  <th style={{ textAlign: "right" }}>Total Items</th>
-                  <th style={{ textAlign: "right" }}>Inward Cost</th>
+      {activeTab === 'reorder' && (
+        <table className="data-table" style={{ width: '100%', margin: 0 }}>
+          <thead>
+            <tr>
+              <th>Item Code</th>
+              <th>Item Name</th>
+              <th>Category</th>
+              <th style={{ textAlign: "right" }}>Min Stock Limit</th>
+              <th style={{ textAlign: "right" }}>Available Stock</th>
+              <th style={{ textAlign: "right" }}>Suggested Reorder Qty</th>
+            </tr>
+          </thead>
+          <tbody>
+            {lowStockItems.length === 0 ? (
+              <tr>
+                <td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: '#10b981', fontWeight: 700 }}>
+                  ✓ All items have healthy stock levels above minimum thresholds!
+                </td>
+              </tr>
+            ) : (
+              lowStockItems.map(i => (
+                <tr key={i.id} style={{ backgroundColor: 'rgba(239, 68, 68, 0.02)' }}>
+                  <td style={{ fontWeight: 700, fontFamily: 'monospace' }}>{i.code || i.id}</td>
+                  <td style={{ fontWeight: 600, color: '#ef4444' }}>{i.name}</td>
+                  <td>{i.category}</td>
+                  <td style={{ textAlign: 'right' }}>{i.minStock}</td>
+                  <td style={{ textAlign: 'right' }}>
+                    <span style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '3px 8px', borderRadius: '4px', fontWeight: 800, fontSize: '12px' }}>
+                      {i.currentStock || 0}
+                    </span>
+                  </td>
+                  <td style={{ textAlign: 'right', fontWeight: 800, color: '#6366f1' }}>{i.reorderQty || 50}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {filteredGrns.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>No inward purchases match this filter criteria.</td>
-                  </tr>
-                ) : (
-                  filteredGrns.map(grn => {
-                    const filteredItems = grn.items.filter(line => {
-                      const detail = items.find(x => x.id === line.itemId) || {};
-                      return categoryFilter === '' || detail.category === categoryFilter;
-                    });
-                    const inwardValue = filteredItems.reduce((acc, i) => acc + (i.acceptedQty * i.rate), 0);
-                    return (
-                      <tr key={grn.id}>
-                        <td style={{ fontWeight: 700, fontFamily: 'monospace' }}>{grn.id}</td>
-                        <td>{grn.date}</td>
-                        <td style={{ fontWeight: 600 }}>{grn.vendor}</td>
-                        <td style={{ fontWeight: 700, color: '#6366f1', fontFamily: 'monospace' }}>{grn.poId || '-'}</td>
-                        <td>{grn.invoiceNo || '-'}</td>
-                        <td style={{ textAlign: 'right' }}>{filteredItems.length}</td>
-                        <td style={{ textAlign: 'right', fontWeight: 800 }}>₹{inwardValue.toLocaleString()}</td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          )}
+              ))
+            )}
+          </tbody>
+        </table>
+      )}
 
-          {activeTab === 'reorder' && (
-            <table className="data-table" style={{ width: '100%', margin: 0 }}>
-              <thead>
-                <tr>
-                  <th>Item Code</th>
-                  <th>Item Name</th>
-                  <th>Category</th>
-                  <th style={{ textAlign: "right" }}>Min Stock Limit</th>
-                  <th style={{ textAlign: "right" }}>Available Stock</th>
-                  <th style={{ textAlign: "right" }}>Suggested Reorder Qty</th>
-                </tr>
-              </thead>
-              <tbody>
-                {lowStockItems.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: '#10b981', fontWeight: 700 }}>
-                      ✓ All items have healthy stock levels above minimum thresholds!
+      {activeTab === 'audit' && (
+        <table className="data-table" style={{ width: '100%', margin: 0 }}>
+          <thead>
+            <tr>
+              <th>Audit ID</th>
+              <th>Date</th>
+              <th>Item Name</th>
+              <th>Correction Type</th>
+              <th>Reference Code</th>
+              <th style={{ textAlign: "right" }}>Deviation Qty</th>
+            </tr>
+          </thead>
+          <tbody>
+            {auditEntries.length === 0 ? (
+              <tr>
+                <td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>No audit or discrepancy logs match this filter criteria.</td>
+              </tr>
+            ) : (
+              auditEntries.map(entry => {
+                const itm = items.find(x => x.id === entry.itemId);
+                const isOut = entry.outQty > 0;
+                return (
+                  <tr key={entry.id}>
+                    <td style={{ fontFamily: 'monospace', fontSize: '12px' }}>{entry.id}</td>
+                    <td>{entry.date}</td>
+                    <td style={{ fontWeight: 600 }}>{itm?.name || 'Item'}</td>
+                    <td>{entry.refType}</td>
+                    <td style={{ fontWeight: 700, color: '#6366f1', fontFamily: 'monospace' }}>{entry.refId}</td>
+                    <td style={{ textAlign: 'right', fontWeight: 800, color: isOut ? '#ef4444' : '#10b981' }}>
+                      {isOut ? `-${entry.outQty}` : `+${entry.inQty}`}
                     </td>
                   </tr>
-                ) : (
-                  lowStockItems.map(i => (
-                    <tr key={i.id} style={{ backgroundColor: 'rgba(239, 68, 68, 0.02)' }}>
-                      <td style={{ fontWeight: 700, fontFamily: 'monospace' }}>{i.code || i.id}</td>
-                      <td style={{ fontWeight: 600, color: '#ef4444' }}>{i.name}</td>
-                      <td>{i.category}</td>
-                      <td style={{ textAlign: 'right' }}>{i.minStock}</td>
-                      <td style={{ textAlign: 'right' }}>
-                        <span style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '3px 8px', borderRadius: '4px', fontWeight: 800, fontSize: '12px' }}>
-                          {i.currentStock || 0}
-                        </span>
-                      </td>
-                      <td style={{ textAlign: 'right', fontWeight: 800, color: '#6366f1' }}>{i.reorderQty || 50}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          )}
-
-          {activeTab === 'audit' && (
-            <table className="data-table" style={{ width: '100%', margin: 0 }}>
-              <thead>
-                <tr>
-                  <th>Audit ID</th>
-                  <th>Date</th>
-                  <th>Item Name</th>
-                  <th>Correction Type</th>
-                  <th>Reference Code</th>
-                  <th style={{ textAlign: "right" }}>Deviation Qty</th>
-                </tr>
-              </thead>
-              <tbody>
-                {auditEntries.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>No audit or discrepancy logs match this filter criteria.</td>
-                  </tr>
-                ) : (
-                  auditEntries.map(entry => {
-                    const itm = items.find(x => x.id === entry.itemId);
-                    const isOut = entry.outQty > 0;
-                    return (
-                      <tr key={entry.id}>
-                        <td style={{ fontFamily: 'monospace', fontSize: '12px' }}>{entry.id}</td>
-                        <td>{entry.date}</td>
-                        <td style={{ fontWeight: 600 }}>{itm?.name || 'Item'}</td>
-                        <td>{entry.refType}</td>
-                        <td style={{ fontWeight: 700, color: '#6366f1', fontFamily: 'monospace' }}>{entry.refId}</td>
-                        <td style={{ textAlign: 'right', fontWeight: 800, color: isOut ? '#ef4444' : '#10b981' }}>
-                          {isOut ? `-${entry.outQty}` : `+${entry.inQty}`}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
-
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      )}
     </div>
+  </div>
+
+    </div >
   );
 }

@@ -1,15 +1,81 @@
 import api from '../../services/api';
 
 // Mock Database and Helper Functions for Stationery & Consumables Management
-const defaultCategories = [];
-const defaultUOMs = [];
-const defaultDepartments = [];
-const defaultVendors = [];
-const defaultItems = [];
-const defaultRequests = [];
-const defaultPOs = [];
-const defaultGRNs = [];
-const defaultIssues = [];
+const defaultCategories = [
+  { id: 1, name: 'Stationery' },
+  { id: 2, name: 'Office Supplies' },
+  { id: 3, name: 'Packaging' }
+];
+const defaultUOMs = [
+  { id: 1, name: 'Nos' },
+  { id: 2, name: 'Pack' },
+  { id: 3, name: 'Box' }
+];
+const defaultDepartments = [
+  { id: 1, department_name: 'Stores' },
+  { id: 2, department_name: 'Production' },
+  { id: 3, department_name: 'Administration' }
+];
+const defaultVendors = [
+  { id: 1, vendor_name: 'ABC Stationery Supplies' },
+  { id: 2, vendor_name: 'Office Essentials Pvt Ltd' }
+];
+const defaultItems = [
+  {
+    id: 1,
+    code: 'ITM100',
+    item_name: 'Ballpoint Pen',
+    category: 'Stationery',
+    uom: 'Nos',
+    currentStock: 320,
+    rate: 5,
+    minStock: 30,
+    maxStock: 500,
+    category_id: 1,
+    uom_id: 1
+  },
+  {
+    id: 2,
+    code: 'ITM101',
+    item_name: 'A4 Paper Ream',
+    category: 'Stationery',
+    uom: 'Pack',
+    currentStock: 85,
+    rate: 280,
+    minStock: 20,
+    maxStock: 200,
+    category_id: 1,
+    uom_id: 2
+  },
+  {
+    id: 3,
+    code: 'ITM102',
+    item_name: 'Notebook',
+    category: 'Office Supplies',
+    uom: 'Nos',
+    currentStock: 125,
+    rate: 55,
+    minStock: 40,
+    maxStock: 250,
+    category_id: 2,
+    uom_id: 1
+  }
+];
+const defaultRequests = [
+  { id: 'REQ001', date: '2026-07-20', department: 'Stores', requestedBy: 'Ravi Kumar', status: 'Pending' },
+  { id: 'REQ002', date: '2026-07-18', department: 'Production', requestedBy: 'Meena R.', status: 'Approved' }
+];
+const defaultPOs = [
+  { id: 'PO001', date: '2026-07-17', vendor: 'ABC Stationery Supplies', items: [{ total: 900 }], status: 'Ordered' },
+  { id: 'PO002', date: '2026-07-15', vendor: 'Office Essentials Pvt Ltd', items: [{ total: 240 }], status: 'Approved' }
+];
+const defaultGRNs = [
+  { id: 'GRN001', date: '2026-07-18', vendor: 'ABC Stationery Supplies', status: 'Received' }
+];
+const defaultIssues = [
+  { id: 'ISS001', date: '2026-07-19', department: 'Stores', employee: 'Suresh Kumar', status: 'Pending', purpose: 'Daily issue for stationery' },
+  { id: 'ISS002', date: '2026-07-16', department: 'Production', employee: 'Anita Sharma', status: 'Approved', purpose: 'Production department issue' }
+];
 const defaultLedger = [];
 const defaultQuotations = [];
 const defaultRequisitions = [];
@@ -59,7 +125,17 @@ const initializeDb = () => {
       localStorage.setItem(key, JSON.stringify(defaultData));
       return defaultData;
     }
-    return JSON.parse(val);
+    try {
+      const parsed = JSON.parse(val);
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        localStorage.setItem(key, JSON.stringify(defaultData));
+        return defaultData;
+      }
+      return parsed;
+    } catch (e) {
+      localStorage.setItem(key, JSON.stringify(defaultData));
+      return defaultData;
+    }
   };
 
   getOrSet('consumables_categories', defaultCategories);

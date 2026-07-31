@@ -1,14 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Calendar, Wrench, Search, Filter, Edit2, Trash2, Eye, X, Save, TrendingUp, ArrowLeft } from 'lucide-react';
+import { Plus, Calendar, Wrench, Search, Filter, Edit2, Trash2, Eye, X, Save, TrendingUp, ArrowLeft, Download, User, FileText, Globe, Mail, Phone, IndianRupee } from 'lucide-react';
 import api from '../../services/api';
 import MasterDropdown from '../../components/MasterDropdown';
 import { showError, showSuccess } from '../../utils/notifications';
 import { showConfirm } from '../../components/ConfirmDialog';
+import { downloadElementAsPdf } from '../../components/A4DocumentPreview';
+import jsPDF from 'jspdf';
+import logoImg from '../../assets/logo.png';
+import ExportButton from '../../components/ExportButton';
 
 const DetailRow = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
     <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>{label}</span>
     <span style={{ fontWeight: 600, color: 'var(--text-primary)', textAlign: 'right', maxWidth: '60%' }}>{value || '-'}</span>
+  </div>
+);
+
+const InfoRow2 = ({ label, value }) => (
+  <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', paddingBottom: 10, marginBottom: 10, fontSize: 13, alignItems: 'center' }}>
+    <div style={{ width: 150, color: '#64748b', fontWeight: 600 }}>{label}</div>
+    <div style={{ flex: 1, color: '#0f172a', fontWeight: 700 }}>{value || '-'}</div>
   </div>
 );
 
@@ -21,15 +32,17 @@ export default function ServiceSchedule() {
   const [selectedViewSchedule, setSelectedViewSchedule] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All Status');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
 
   const initialForm = {
     vehicle_id: '',
-    service_type: 'General Service',
+    service_type: '',
     scheduled_date: new Date().toISOString().split('T')[0],
     notes: '',
     service_provider: '',
     estimated_cost: '',
-    status: 'Scheduled'
+    status: ''
   };
 
   const [formData, setFormData] = useState(initialForm);
@@ -135,10 +148,19 @@ export default function ServiceSchedule() {
   const inProgressCount = schedules.filter(s => s.status === 'In Progress').length;
   const completedCount = schedules.filter(s => s.status === 'Completed').length;
 
+  const profilePreviewRef = React.useRef(null);
+  const generateProfilePDF = async (item) => {
+    if (profilePreviewRef.current) {
+      const safeName = (item?.service_type || 'Service Schedule').toString().replace(/[^a-zA-Z0-9_-]/g, '_');
+      await downloadElementAsPdf(profilePreviewRef.current, `Service Schedule_Profile_${safeName}.pdf`);
+    }
+  };
+
   // FORM VIEW
   if (view === 'form') {
-    return (
-      <div className="animate-fade">
+
+  return (
+    <div className="animate-fade">
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
           <button 
             type="button"
@@ -164,7 +186,7 @@ export default function ServiceSchedule() {
                     value={formData.vehicle_id}
                     onChange={(val) => setFormData({ ...formData, vehicle_id: val })}
                     options={vehicles.map(v => ({ value: v.id, label: v.vehicle_number }))}
-                    placeholder="Select Vehicle"
+                    placeholder="--- Select Vehicle ---"
                   />
                 </div>
                 <div className="form-group">
@@ -174,7 +196,7 @@ export default function ServiceSchedule() {
                     value={formData.service_type}
                     onChange={(val) => setFormData({ ...formData, service_type: val })}
                     options={serviceTypes.map(t => ({ value: t, label: t }))}
-                    placeholder="Select Service Type"
+                    placeholder="--- Select Service Type ---"
                   />
                 </div>
                 <div className="form-group">
@@ -184,7 +206,7 @@ export default function ServiceSchedule() {
                     value={formData.status}
                     onChange={(val) => setFormData({ ...formData, status: val })}
                     options={statuses.map(s => ({ value: s, label: s }))}
-                    placeholder="Select Status"
+                    placeholder="--- Select Status ---"
                   />
                 </div>
 
@@ -232,9 +254,24 @@ export default function ServiceSchedule() {
           </h2>
           <p style={{ color: 'var(--text-muted)' }}>Manage vehicle maintenance and service schedules</p>
         </div>
-        <button className="btn btn-primary" onClick={() => handleOpenForm()}>
-          <Plus size={18} /> Add Schedule
-        </button>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <ExportButton 
+            data={filteredSchedules}
+            filename="Service_Schedule_Report"
+            pdfTitle="Service Schedule Report"
+            columns={[
+              { header: 'Service Type', key: 'service_type' },
+              { header: 'Center Name', key: 'service_provider' },
+              { header: 'Schedule Date', key: 'scheduled_date' },
+              { header: 'Estimated Cost', key: 'estimated_cost', render: (row) => `₹${Number(row.estimated_cost || 0).toFixed(2)}` },
+              { header: 'Notes', key: 'notes' },
+              { header: 'Status', key: 'status' }
+            ]}
+          />
+          <button className="btn btn-primary" onClick={() => handleOpenForm()}>
+            <Plus size={18} /> Add Schedule
+          </button>
+        </div>
       </div>
 
       {/* Stat Cards */}
@@ -281,58 +318,68 @@ export default function ServiceSchedule() {
       </div>
 
       {/* Filter Bar */}
-      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', background: 'var(--bg-secondary)' }}>
+      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+        
+        {/* Left Side: Search */}
         <div style={{ position: 'relative', flex: 1, minWidth: 250, maxWidth: 350 }}>
           <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input type="text" className="form-control" placeholder="Search by service type or center..." style={{ paddingLeft: 38, width: '100%', margin: 0 }} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
-          <Filter size={16} />
-          <span style={{ fontSize: 13, fontWeight: 600 }}>Status:</span>
-        </div>
-        <div style={{ width: 180 }}>
-          <MasterDropdown
-            value={statusFilter}
-            onChange={(val) => setStatusFilter(val || 'All Status')}
-            options={[
-              { value: 'All Status', label: 'All Status' },
-              ...statuses.map(s => ({ value: s, label: s }))
-            ]}
-            placeholder="Filter Status"
-            allowClear={false}
-          />
+        {/* Right Side: Filters */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
+            <Filter size={16} />
+            <span style={{ fontSize: 13, fontWeight: 600 }}>Status:</span>
+          </div>
+          
+          <select className="form-control" style={{ width: 150, margin: 0 }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+            <option value="All Status">All Schedules</option>
+            {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>From:</span>
+            <input type="date" className="form-control" style={{ width: 140, margin: 0 }} value={fromDate} onChange={e => setFromDate(e.target.value)} />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>To:</span>
+            <input type="date" className="form-control" style={{ width: 140, margin: 0 }} value={toDate} onChange={e => setToDate(e.target.value)} />
+          </div>
         </div>
       </div>
 
       {/* Split Layout */}
+      {/* Full Width Table */}
       <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
-        {/* Table */}
         <div style={{ flex: 1, overflowX: 'auto' }}>
           <div className="card" style={{ padding: 0 }}>
             <table className="data-table">
               <thead>
                 <tr>
+                  <th>Service No</th>
+                  <th>Vehicle</th>
                   <th>Service Type</th>
-                  <th>Center Name</th>
-                  <th>Schedule Date</th>
-                  <th>Estimated Cost</th>
+                  <th>Due Date</th>
+                  <th>Next Service</th>
                   <th style={{ textAlign: 'center' }}>Status</th>
                   <th style={{ textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: 20 }}>Loading...</td></tr>
+                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>Loading...</td></tr>
                 ) : filteredSchedules.length === 0 ? (
-                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: 20 }}>No schedules found</td></tr>
+                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>No schedules found</td></tr>
                 ) : (
                   filteredSchedules.map(s => (
                     <tr key={s.id} onClick={() => setSelectedViewSchedule(s)} style={{ cursor: 'pointer', background: selectedViewSchedule?.id === s.id ? 'var(--bg-secondary)' : 'transparent' }}>
+                      <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{s.id}</td>
+                      <td>{vehicles.find(v => v.id === s.vehicle_id)?.vehicle_number || '-'}</td>
                       <td style={{ fontWeight: 600 }}>{s.service_type}</td>
-                      <td>{s.service_provider || '-'}</td>
                       <td>{s.scheduled_date}</td>
-                      <td>₹{Number(s.estimated_cost || 0).toFixed(2)}</td>
+                      <td>-</td>
                       <td style={{ textAlign: 'center' }}>
                         <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: s.status === 'Completed' ? '#d1fae5' : s.status === 'In Progress' ? '#fef3c7' : s.status === 'Scheduled' ? '#dbeafe' : '#f3f4f6', color: s.status === 'Completed' ? '#065f46' : s.status === 'In Progress' ? '#92400e' : s.status === 'Scheduled' ? '#1e40af' : '#374151' }}>
                           {s.status}
@@ -340,11 +387,14 @@ export default function ServiceSchedule() {
                       </td>
                       <td onClick={e => e.stopPropagation()} style={{ textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                          <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={() => handleOpenForm(s)}>
+                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(evt) => { evt.stopPropagation(); setSelectedViewSchedule(s); }} title="Preview Profile">
+                            <Eye size={16} color="var(--primary)" />
+                          </button>
+                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(evt) => { evt.stopPropagation(); handleOpenForm(s); }} title="Edit">
                             <Edit2 size={16} />
                           </button>
-                          <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={(e) => handleDelete(s.id, e)}>
-                            <Trash2 size={16} color="#ef4444" />
+                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(evt) => { evt.stopPropagation(); handleDelete(s.id, evt); }} title="Delete">
+                            <Trash2 size={16} color="var(--danger, #ef4444)" />
                           </button>
                         </div>
                       </td>
@@ -356,31 +406,76 @@ export default function ServiceSchedule() {
           </div>
         </div>
 
-        {/* Details Panel */}
+        
+        {/* Profile View Modal */}
         {selectedViewSchedule && (
-          <div style={{ flex: '0 0 380px' }}>
-            <div className="card animate-slide" style={{ position: 'sticky', top: 24, padding: '24px 20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
-                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--primary)' }}>
-                  <Wrench size={16} style={{ display: 'inline', marginRight: 8 }} />
-                  Schedule Details
-                </h3>
-                <button onClick={() => setSelectedViewSchedule(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
-                  <X size={18} />
-                </button>
+          <div className="fixed inset-0" style={{ zIndex: 100, display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(4px)' }}>
+            <div className="animate-scale-up" style={{ background: '#f8fafc', width: '95%', maxWidth: 900, height: '90vh', borderRadius: 12, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+              
+              <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', zIndex: 10, flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Eye size={18} style={{ color: '#4f46e5' }} /> 
+                  <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1e293b' }}>Service Schedule Profile Preview</h3>
+                </div>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <button onClick={() => generateProfilePDF(selectedViewSchedule)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#e2e8f0', border: 'none', color: '#1e293b', padding: '6px 12px', fontSize: 12, fontWeight: 600 }}>
+                    <Download size={14} /> Download PDF
+                  </button>
+                  <button onClick={() => setSelectedViewSchedule(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b' }}><X size={20} /></button>
+                </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, maxHeight: '65vh', overflowY: 'auto' }}>
-                <DetailRow label="Service Type" value={selectedViewSchedule.service_type} />
-                <DetailRow label="Center Name" value={selectedViewSchedule.service_provider} />
-                <DetailRow label="Schedule Date" value={selectedViewSchedule.scheduled_date} />
-                <DetailRow label="Notes" value={selectedViewSchedule.notes} />
-                <DetailRow label="Estimated Cost" value={`₹${Number(selectedViewSchedule.estimated_cost || 0).toFixed(2)}`} />
-                <DetailRow label="Status" value={<span style={{ fontWeight: 800, color: 'var(--primary)' }}>{selectedViewSchedule.status}</span>} />
+              <div style={{ flex: 1, overflowY: 'auto', padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div ref={profilePreviewRef} style={{ width: '100%', maxWidth: 794, background: '#ffffff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', borderRadius: 4, position: 'relative', marginBottom: 20, overflow: 'hidden', flexShrink: 0 }}>
+                  
+                  <div style={{ padding: '32px 40px 20px 40px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                        <div><img src={logoImg} alt="Dinesh Exports" style={{ width: 56, height: 56, objectFit: 'contain' }} /></div>
+                        <div>
+                           <h1 style={{ margin: 0, color: '#0f172a', fontSize: 28, fontWeight: 900, letterSpacing: '-0.02em' }}>DINESH EXPORTS</h1>
+                           <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em' }}>THE HOUSE OF FABRICS</p>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'left', width: 300 }}>
+                        <h2 style={{ margin: '0 0 16px 0', color: '#0f172a', fontSize: 18, fontWeight: 800, letterSpacing: '0.05em', textAlign: 'right' }}>SERVICE SCHEDULE PROFILE</h2>
+                        <div style={{ display: 'flex', fontSize: 11, marginBottom: 6, alignItems: 'center' }}>
+                          <div style={{ width: 100, fontWeight: 600, color: '#0f172a' }}>Status</div>
+                          <div style={{ width: 20, textAlign: 'center' }}>:</div>
+                          <div><span style={{ background: '#22c55e', color: 'white', padding: '2px 8px', borderRadius: 12, fontSize: 9, fontWeight: 700 }}>{(selectedViewSchedule.status || 'ACTIVE').toUpperCase()}</span></div>
+                        </div>
+                        <div style={{ display: 'flex', fontSize: 11, marginBottom: 6 }}>
+                          <div style={{ width: 100, fontWeight: 600, color: '#0f172a' }}>Generated On</div>
+                          <div style={{ width: 20, textAlign: 'center' }}>:</div>
+                          <div style={{ fontWeight: 500, color: '#0f172a' }}>{new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ borderBottom: '3px solid #0f172a' }}></div>
+
+                  <div style={{ padding: '10px 40px 40px 40px' }}>
+                    <div style={{ position: 'relative', border: '1px solid #e2e8f0', borderRadius: 6, padding: '24px 20px 12px 20px', marginTop: 24 }}>
+                      <div style={{ position: 'absolute', top: -14, left: -1, background: '#0f172a', color: 'white', padding: '6px 16px', borderRadius: '6px 6px 6px 0', display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>
+                        <User size={14} /> 1. DETAILS
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 0 }}>
+                        <div>
+                          <InfoRow2 label="Service Type" value={selectedViewSchedule.service_type} />
+                          <InfoRow2 label="Center Name" value={selectedViewSchedule.service_provider} />
+                          <InfoRow2 label="Schedule Date" value={selectedViewSchedule.scheduled_date} />
+                          <InfoRow2 label="Notes" value={selectedViewSchedule.notes} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         )}
+
       </div>
     </div>
   );

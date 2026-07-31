@@ -5,7 +5,7 @@ import {
   Settings, FolderKanban, ShoppingBag, Factory, AlertTriangle, 
   PlusCircle, FileText, CheckSquare, Truck, Globe, Printer, BookOpen, 
   MapPin, HelpCircle, Sparkles, Database, Shield, Layers,
-  Palette, Scale, ShieldCheck, Info, FileImage, Users, Eye, Edit2
+  Palette, Scale, ShieldCheck, Info, FileImage, Users, Eye, Edit2, XSquare
 } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
 import * as XLSX from 'xlsx';
@@ -3454,7 +3454,7 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
             /* ========================= LIST VIEW REGISTERS =========================== */
             /* ========================================================================= */
             <>
-              <div className="card" style={{ padding: '16px 20px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white' }}>
+              <div className="card" style={{ padding: '16px 20px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', border: 'none' }}>
                 <div>
                   <h3 style={{ fontSize: '16px', fontWeight: '800', margin: 0 }}>
                     {PAGES_METADATA[activePage].label} Records Audit
@@ -3518,7 +3518,52 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
 
               {/* FINAL INSPECTION TABLE */}
               {activePage === 'final_inspection' && (
-                <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'white' }}>
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
+                    <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+                      <div className="stat-icon" style={{ background: 'rgba(79, 70, 229, 0.1)', color: '#4f46e5' }}>
+                        <ShieldCheck size={24} />
+                      </div>
+                      <div className="stat-details">
+                        <h3>Total Audits</h3>
+                        <div className="value">{finalInspections.length}</div>
+                      </div>
+                    </div>
+                    <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+                      <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+                        <Layers size={24} />
+                      </div>
+                      <div className="stat-details">
+                        <h3>Meters Inspected</h3>
+                        <div className="value">
+                          {finalInspections.reduce((sum, item) => sum + (parseFloat(item.totalMetersInspected) || 0), 0).toFixed(2)}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+                      <div className="stat-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+                        <CheckSquare size={24} />
+                      </div>
+                      <div className="stat-details">
+                        <h3>Approved Meters</h3>
+                        <div className="value">
+                          {finalInspections.reduce((sum, item) => sum + (parseFloat(item.approvedMeters) || 0), 0).toFixed(2)}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="card stat-card" style={{ border: 'none', transition: 'all 0.2s' }}>
+                      <div className="stat-icon" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
+                        <XSquare size={24} />
+                      </div>
+                      <div className="stat-details">
+                        <h3>Rejected Meters</h3>
+                        <div className="value">
+                          {finalInspections.reduce((sum, item) => sum + (parseFloat(item.rejectedQuantity) || 0), 0).toFixed(2)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="card" style={{ padding: 0, overflow: 'hidden', border: 'none' }}>
                   <table className="data-table" style={{ width: '100%', margin: 0 }}>
                     <thead>
                       <tr>
@@ -3561,6 +3606,7 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
                     </tbody>
                   </table>
                 </div>
+                </>
               )}
 
               {/* CLOTH CHECKING TABLE */}
@@ -4014,7 +4060,7 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
 
               {/* NEW GOODS RELEASE ADVICE TABLE */}
               {activePage === 'goods_release' && (
-                <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'white' }}>
+                <div className="card" style={{ padding: 0, overflow: 'hidden', border: 'none' }}>
                   <table className="data-table" style={{ width: '100%', margin: 0 }}>
                     <thead>
                       <tr>
@@ -4580,7 +4626,7 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
                                     required={f.required}
                                     disabled={f.readOnly}
                                   >
-                                    <option value="">-- Select --</option>
+                                    <option value="">---select----</option>
                                     {(f.name === 'designNo' && dbDesigns && dbDesigns.length > 0 
                                       ? Array.from(new Set(dbDesigns.map(d => d.design_no).filter(Boolean))) 
                                       : (f.options || [])

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../services/api';
-import { Plus, Save, Trash2, X, FileText, Image, ImageIcon, Search, Filter, Upload, Download } from 'lucide-react';
-import MasterDropdown from '../../components/MasterDropdown';
+import { Download, FileText, Filter, Image, ImageIcon, Plus, Save, Search, Trash2, Upload, X } from 'lucide-react';
 
+import api from '../../services/api';
+
+import MasterDropdown from '../../components/MasterDropdown';
 
 export default function SwatchCardManagement() {
   const [view, setView] = useState('list'); // 'list' or 'form'
@@ -129,7 +130,6 @@ export default function SwatchCardManagement() {
     return matchesTab && matchesSearch;
   });
 
-
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
       {view === 'list' ? (
@@ -160,7 +160,7 @@ export default function SwatchCardManagement() {
             </button>
           </div>
 
-          <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 16 }}>
               <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
                 <button 

@@ -9,12 +9,12 @@ import hrService, {
 
 const PremiumStatCard = ({ icon: Icon, label, value, tone = 'indigo', onClick }) => {
   const themes = {
-    blue: { bg: 'linear-gradient(135deg, #eff6ff, #dbeafe)', text: '#2563eb', iconBg: '#bfdbfe' },
-    emerald: { bg: 'linear-gradient(135deg, #ecfdf5, #d1fae5)', text: '#059669', iconBg: '#a7f3d0' },
-    amber: { bg: 'linear-gradient(135deg, #fffbeb, #fef3c7)', text: '#d97706', iconBg: '#fde68a' },
-    purple: { bg: 'linear-gradient(135deg, #faf5ff, #f3e8ff)', text: '#9333ea', iconBg: '#e9d5ff' },
-    indigo: { bg: 'linear-gradient(135deg, #eef2ff, #e0e7ff)', text: '#4f46e5', iconBg: '#c7d2fe' },
-    rose: { bg: 'linear-gradient(135deg, #fff1f2, #ffe4e6)', text: '#e11d48', iconBg: '#fecdd3' }
+    blue: { color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' },
+    emerald: { color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' },
+    amber: { color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' },
+    purple: { color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' },
+    indigo: { color: '#4f46e5', bg: 'rgba(79, 70, 229, 0.1)' },
+    rose: { color: '#e11d48', bg: 'rgba(225, 29, 72, 0.1)' }
   };
 
   const theme = themes[tone] || themes.indigo;
@@ -22,15 +22,15 @@ const PremiumStatCard = ({ icon: Icon, label, value, tone = 'indigo', onClick })
   return (
     <div
       onClick={onClick}
-      className="premium-stat-card cursor-pointer"
-      style={{ background: theme.bg }}
+      className="card stat-card cursor-pointer"
+      style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}
     >
-      <div className="premium-stat-icon" style={{ color: theme.text }}>
+      <div className="stat-icon" style={{ background: theme.bg, color: theme.color }}>
         <Icon size={24} />
       </div>
-      <div>
-        <div className="premium-stat-value">{value}</div>
-        <div className="premium-stat-label">{label}</div>
+      <div className="stat-details">
+        <h3>{label}</h3>
+        <div className="value">{value}</div>
       </div>
     </div>
   );
@@ -38,13 +38,17 @@ const PremiumStatCard = ({ icon: Icon, label, value, tone = 'indigo', onClick })
 
 const NavTile = ({ icon: Icon, title, desc, onClick }) => {
   return (
-    <div className="premium-nav-tile" onClick={onClick}>
-      <div className="premium-nav-icon">
+    <div 
+      className="card stat-card cursor-pointer" 
+      onClick={onClick}
+      style={{ border: 'none', boxShadow: 'none', padding: '16px', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '16px' }}
+    >
+      <div className="stat-icon" style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', width: '40px', height: '40px', flexShrink: 0 }}>
         <Icon size={20} />
       </div>
-      <div>
-        <div className="premium-nav-title">{title}</div>
-        <div className="premium-nav-desc">{desc}</div>
+      <div className="stat-details" style={{ textAlign: 'left' }}>
+        <h3 style={{ fontSize: '14px', marginBottom: '2px', textTransform: 'none' }}>{title}</h3>
+        <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>{desc}</div>
       </div>
     </div>
   );
@@ -144,7 +148,7 @@ const HRDashboard = () => {
       {/* Charts / Data Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Headcount by Department */}
-        <div className="card lg:col-span-2 p-6">
+        <div className="card lg:col-span-2 p-6" style={{ border: 'none', boxShadow: 'none' }}>
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><Users size={20} /></div>
             <h2 className="text-lg font-bold text-slate-800">Headcount by Department</h2>
@@ -180,7 +184,7 @@ const HRDashboard = () => {
         </div>
 
         {/* Recent Hires */}
-        <div className="card p-6">
+        <div className="card p-6" style={{ border: 'none', boxShadow: 'none' }}>
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 bg-purple-50 text-purple-600 rounded-lg"><CalendarCheck size={20} /></div>
             <h2 className="text-lg font-bold text-slate-800">Recent Hires</h2>

@@ -617,7 +617,7 @@ export default function FinishedFabricInward() {
                         <div className="form-group">
                           <label style={{ fontSize: 11 }}>Inspection Type</label>
                           <select className="form-control" style={{ padding: '6px 10px', height: 'auto' }} name="inspection_type" value={formData.inspection_type} onChange={handleInputChange}>
-                            <option value="">-- Select --</option>
+                            <option value="">---select----</option>
                             <option value="Self Inspection">Self Inspection</option>
                             <option value="Third Party">Third Party</option>
                           </select>

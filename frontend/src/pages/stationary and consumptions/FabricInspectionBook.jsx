@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { AlertCircle, CheckSquare, FileText, Layers, Plus, Save, Search, Trash2, X } from 'lucide-react';
+
 import api from '../../services/api';
-import { Plus, Save, Trash2, X, FileText, CheckSquare, Layers, AlertCircle, Search } from 'lucide-react';
+
 export default function FabricInspectionBook() {
   const [inwardId, setInwardId] = useState('');
   const [rolls, setRolls] = useState([]);
@@ -137,25 +139,25 @@ export default function FabricInspectionBook() {
 
       {inwardId && rolls.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20 }}>
-          <div className="card" style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 4 }}>
             <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Total Rolls Inspected</span>
             <h2 style={{ fontSize: 28, fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>{rolls.length}</h2>
           </div>
-          <div className="card" style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 4 }}>
             <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Total Declared (m)</span>
             <h2 style={{ fontSize: 28, fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>{totalMetersDeclared.toFixed(2)}</h2>
           </div>
-          <div className="card" style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 4 }}>
             <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Total Actual (m)</span>
             <h2 style={{ fontSize: 28, fontWeight: 700, margin: 0, color: '#4f46e5' }}>{totalMetersActual.toFixed(2)}</h2>
           </div>
-          <div className="card" style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 4 }}>
             <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Difference / Shrinkage</span>
             <h2 style={{ fontSize: 28, fontWeight: 700, margin: 0, color: totalDifference >= 0 ? '#10b981' : '#ef4444' }}>
               {totalDifference >= 0 ? '+' : ''}{totalDifference.toFixed(2)}
             </h2>
           </div>
-          <div className="card" style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 4 }}>
             <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Avg Defect Points</span>
             <h2 style={{ fontSize: 28, fontWeight: 700, margin: 0, color: Number(avgPoints) > 10 ? '#ef4444' : 'var(--text-primary)' }}>{avgPoints}</h2>
           </div>
@@ -164,7 +166,7 @@ export default function FabricInspectionBook() {
 
       {inwardId ? (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: 24, alignItems: 'flex-start' }}>
-          <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
               <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Inspected Pieces / Rolls</h3>
             </div>
@@ -229,7 +231,7 @@ export default function FabricInspectionBook() {
             </div>
           </div>
 
-          <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
               <div style={{ padding: 10, background: '#6366f115', borderRadius: 10, color: '#6366f1' }}>
                 <Plus size={20} />
@@ -358,7 +360,7 @@ export default function FabricInspectionBook() {
           </div>
         </div>
       ) : (
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 20px', textAlign: 'center', color: 'var(--text-muted)', flex: 1 }}>
+        <div className="card" style={{ border: 'none', boxShadow: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 20px', textAlign: 'center', color: 'var(--text-muted)', flex: 1 }}>
           <Search size={48} style={{ marginBottom: 16, color: '#cbd5e1' }} />
           <h3 style={{ margin: '0 0 8px 0', color: 'var(--text-primary)' }}>No Fabric Inward Loaded</h3>
           <p style={{ margin: 0 }}>Please enter a Fabric Inward ID above and click "Load Inspection" to view or enter inspection rolls.</p>

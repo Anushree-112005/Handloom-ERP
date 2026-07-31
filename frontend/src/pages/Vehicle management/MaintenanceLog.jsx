@@ -1,14 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Wrench, Search, Filter, Edit2, Trash2, X, Save, Calendar, DollarSign, ArrowLeft } from 'lucide-react';
+import { Plus, Wrench, Search, Filter, Edit2, Trash2, X, Save, Calendar, DollarSign, ArrowLeft, Download, Eye, User, FileText, Globe, Mail, Phone, IndianRupee } from 'lucide-react';
 import api from '../../services/api';
 import MasterDropdown from '../../components/MasterDropdown';
 import { showError, showSuccess } from '../../utils/notifications';
 import { showConfirm } from '../../components/ConfirmDialog';
+import { downloadElementAsPdf } from '../../components/A4DocumentPreview';
+import jsPDF from 'jspdf';
+import logoImg from '../../assets/logo.png';
+import ExportButton from '../../components/ExportButton';
 
 const DetailRow = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
     <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>{label}</span>
     <span style={{ fontWeight: 600, color: 'var(--text-primary)', textAlign: 'right', maxWidth: '60%' }}>{value || '-'}</span>
+  </div>
+);
+
+const InfoRow2 = ({ label, value }) => (
+  <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', paddingBottom: 10, marginBottom: 10, fontSize: 13, alignItems: 'center' }}>
+    <div style={{ width: 150, color: '#64748b', fontWeight: 600 }}>{label}</div>
+    <div style={{ flex: 1, color: '#0f172a', fontWeight: 700 }}>{value || '-'}</div>
   </div>
 );
 
@@ -21,15 +32,17 @@ export default function MaintenanceLog() {
   const [selectedViewLog, setSelectedViewLog] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All Status');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
 
   const initialForm = {
     vehicle_id: '',
     service_date: new Date().toISOString().split('T')[0],
-    maintenance_type: 'General Service',
+    maintenance_type: '',
     work_description: '',
     labor_cost: '0',
     parts_cost: '0',
-    status: 'In Progress'
+    status: ''
   };
 
   const [formData, setFormData] = useState(initialForm);
@@ -133,10 +146,19 @@ export default function MaintenanceLog() {
   const inProgressCount = logs.filter(l => l.status === 'In Progress').length;
   const totalCost = logs.reduce((sum, l) => sum + (Number(l.labor_cost || 0) + Number(l.parts_cost || 0)), 0);
 
+  const profilePreviewRef = React.useRef(null);
+  const generateProfilePDF = async (item) => {
+    if (profilePreviewRef.current) {
+      const safeName = (item?.maintenance_type || 'Maintenance Log').toString().replace(/[^a-zA-Z0-9_-]/g, '_');
+      await downloadElementAsPdf(profilePreviewRef.current, `Maintenance Log_Profile_${safeName}.pdf`);
+    }
+  };
+
   // FORM VIEW
   if (view === 'form') {
-    return (
-      <div className="animate-fade">
+
+  return (
+    <div className="animate-fade">
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
           <button 
             type="button"
@@ -162,7 +184,7 @@ export default function MaintenanceLog() {
                     value={formData.vehicle_id}
                     onChange={(val) => setFormData({ ...formData, vehicle_id: val })}
                     options={vehicles.map(v => ({ value: v.id, label: v.vehicle_number }))}
-                    placeholder="Select Vehicle"
+                    placeholder="--- Select Vehicle ---"
                   />
                 </div>
                 <div className="form-group">
@@ -172,7 +194,7 @@ export default function MaintenanceLog() {
                     value={formData.maintenance_type}
                     onChange={(val) => setFormData({ ...formData, maintenance_type: val })}
                     options={maintenanceTypes.map(t => ({ value: t, label: t }))}
-                    placeholder="Select Maintenance Type"
+                    placeholder="--- Select Maintenance Type ---"
                   />
                 </div>
                 <div className="form-group">
@@ -182,7 +204,7 @@ export default function MaintenanceLog() {
                     value={formData.status}
                     onChange={(val) => setFormData({ ...formData, status: val })}
                     options={statuses.map(s => ({ value: s, label: s }))}
-                    placeholder="Select Status"
+                    placeholder="--- Select Status ---"
                   />
                 </div>
 
@@ -230,9 +252,25 @@ export default function MaintenanceLog() {
           </h2>
           <p style={{ color: 'var(--text-muted)' }}>Track all vehicle maintenance and repairs</p>
         </div>
-        <button className="btn btn-primary" onClick={() => handleOpenForm()}>
-          <Plus size={18} /> Add Log
-        </button>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <ExportButton 
+            data={filteredLogs}
+            filename="Maintenance_Log_Report"
+            pdfTitle="Maintenance Log Report"
+            columns={[
+              { header: 'Vehicle ID', key: 'vehicle_id' },
+              { header: 'Service Date', key: 'service_date' },
+              { header: 'Maintenance Type', key: 'maintenance_type' },
+              { header: 'Work Description', key: 'work_description' },
+              { header: 'Labor Cost', key: 'labor_cost', render: (row) => `₹${Number(row.labor_cost || 0).toFixed(2)}` },
+              { header: 'Parts Cost', key: 'parts_cost', render: (row) => `₹${Number(row.parts_cost || 0).toFixed(2)}` },
+              { header: 'Status', key: 'status' }
+            ]}
+          />
+          <button className="btn btn-primary" onClick={() => handleOpenForm()}>
+            <Plus size={18} /> Add Log
+          </button>
+        </div>
       </div>
 
       {/* Stat Cards */}
@@ -279,41 +317,50 @@ export default function MaintenanceLog() {
       </div>
 
       {/* Filter Bar */}
-      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', background: 'var(--bg-secondary)' }}>
+      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+        
+        {/* Left Side: Search */}
         <div style={{ position: 'relative', flex: 1, minWidth: 250, maxWidth: 350 }}>
           <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input type="text" className="form-control" placeholder="Search by type or description..." style={{ paddingLeft: 38, width: '100%', margin: 0 }} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
-          <Filter size={16} />
-          <span style={{ fontSize: 13, fontWeight: 600 }}>Status:</span>
-        </div>
-        <div style={{ width: 180 }}>
-          <MasterDropdown
-            value={statusFilter}
-            onChange={(val) => setStatusFilter(val || 'All Status')}
-            options={[
-              { value: 'All Status', label: 'All Status' },
-              ...statuses.map(s => ({ value: s, label: s }))
-            ]}
-            placeholder="Filter Status"
-            allowClear={false}
-          />
+        {/* Right Side: Filters */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
+            <Filter size={16} />
+            <span style={{ fontSize: 13, fontWeight: 600 }}>Status:</span>
+          </div>
+          
+          <select className="form-control" style={{ width: 150, margin: 0 }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+            <option value="All Status">All Logs</option>
+            {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>From:</span>
+            <input type="date" className="form-control" style={{ width: 140, margin: 0 }} value={fromDate} onChange={e => setFromDate(e.target.value)} />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>To:</span>
+            <input type="date" className="form-control" style={{ width: 140, margin: 0 }} value={toDate} onChange={e => setToDate(e.target.value)} />
+          </div>
         </div>
       </div>
 
       {/* Split Layout */}
+      {/* Full Width Table */}
       <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
-        {/* Table */}
         <div style={{ flex: 1, overflowX: 'auto' }}>
           <div className="card" style={{ padding: 0 }}>
             <table className="data-table">
               <thead>
                 <tr>
+                  <th>Log ID</th>
+                  <th>Vehicle</th>
+                  <th>Maintenance Type</th>
                   <th>Date</th>
-                  <th>Type</th>
-                  <th>Description</th>
                   <th style={{ textAlign: 'right' }}>Cost</th>
                   <th style={{ textAlign: 'center' }}>Status</th>
                   <th style={{ textAlign: 'center' }}>Actions</th>
@@ -321,15 +368,16 @@ export default function MaintenanceLog() {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: 20 }}>Loading...</td></tr>
+                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>Loading...</td></tr>
                 ) : filteredLogs.length === 0 ? (
-                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: 20 }}>No logs found</td></tr>
+                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>No logs found</td></tr>
                 ) : (
                   filteredLogs.map(l => (
                     <tr key={l.id} onClick={() => setSelectedViewLog(l)} style={{ cursor: 'pointer', background: selectedViewLog?.id === l.id ? 'var(--bg-secondary)' : 'transparent' }}>
-                      <td style={{ fontWeight: 600 }}>{l.service_date}</td>
+                      <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{l.id}</td>
+                      <td>{vehicles.find(v => v.id === l.vehicle_id)?.vehicle_number || '-'}</td>
                       <td>{l.maintenance_type}</td>
-                      <td>{l.work_description ? l.work_description.substring(0, 30) + '...' : '-'}</td>
+                      <td style={{ fontWeight: 600 }}>{l.service_date}</td>
                       <td style={{ textAlign: 'right' }}>₹{(Number(l.labor_cost || 0) + Number(l.parts_cost || 0)).toFixed(2)}</td>
                       <td style={{ textAlign: 'center' }}>
                         <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: l.status === 'Completed' ? '#d1fae5' : l.status === 'Verified' ? '#d1fae5' : '#fef3c7', color: l.status === 'Completed' ? '#065f46' : l.status === 'Verified' ? '#065f46' : '#92400e' }}>
@@ -338,11 +386,14 @@ export default function MaintenanceLog() {
                       </td>
                       <td onClick={e => e.stopPropagation()} style={{ textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                          <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={() => handleOpenForm(l)}>
+                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); setSelectedViewLog(l); }} title="Preview Profile">
+                            <Eye size={16} color="var(--primary)" />
+                          </button>
+                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); handleOpenForm(l); }} title="Edit">
                             <Edit2 size={16} />
                           </button>
-                          <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={(e) => handleDelete(l.id, e)}>
-                            <Trash2 size={16} color="#ef4444" />
+                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); handleDelete(l.id, e); }} title="Delete">
+                            <Trash2 size={16} color="var(--danger, #ef4444)" />
                           </button>
                         </div>
                       </td>
@@ -354,32 +405,75 @@ export default function MaintenanceLog() {
           </div>
         </div>
 
-        {/* Details Panel */}
+        
+        {/* Profile View Modal */}
         {selectedViewLog && (
-          <div style={{ flex: '0 0 380px' }}>
-            <div className="card animate-slide" style={{ position: 'sticky', top: 24, padding: '24px 20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
-                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--primary)' }}>
-                  <Wrench size={16} style={{ display: 'inline', marginRight: 8 }} />
-                  Log Details
-                </h3>
-                <button onClick={() => setSelectedViewLog(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
-                  <X size={18} />
-                </button>
+          <div className="fixed inset-0" style={{ zIndex: 100, display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(4px)' }}>
+            <div className="animate-scale-up" style={{ background: '#f8fafc', width: '95%', maxWidth: 900, height: '90vh', borderRadius: 12, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+              
+              <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', zIndex: 10, flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Eye size={18} style={{ color: '#4f46e5' }} /> 
+                  <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1e293b' }}>Maintenance Log Profile Preview</h3>
+                </div>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <button onClick={() => generateProfilePDF(selectedViewLog)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#e2e8f0', border: 'none', color: '#1e293b', padding: '6px 12px', fontSize: 12, fontWeight: 600 }}>
+                    <Download size={14} /> Download PDF
+                  </button>
+                  <button onClick={() => setSelectedViewLog(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b' }}><X size={20} /></button>
+                </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, maxHeight: '65vh', overflowY: 'auto' }}>
-                <DetailRow label="Service Date" value={selectedViewLog.service_date} />
-                <DetailRow label="Type" value={selectedViewLog.maintenance_type} />
-                <DetailRow label="Work Description" value={selectedViewLog.work_description} />
-                <DetailRow label="Labor Cost" value={`₹${Number(selectedViewLog.labor_cost || 0).toFixed(2)}`} />
-                <DetailRow label="Parts Cost" value={`₹${Number(selectedViewLog.parts_cost || 0).toFixed(2)}`} />
-                <DetailRow label="Total Cost" value={<span style={{ fontWeight: 800, color: 'var(--primary)' }}>₹{(Number(selectedViewLog.labor_cost || 0) + Number(selectedViewLog.parts_cost || 0)).toFixed(2)}</span>} />
-                <DetailRow label="Status" value={<span style={{ fontWeight: 800, color: 'var(--primary)' }}>{selectedViewLog.status}</span>} />
+              <div style={{ flex: 1, overflowY: 'auto', padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div ref={profilePreviewRef} style={{ width: '100%', maxWidth: 794, background: '#ffffff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', borderRadius: 4, position: 'relative', marginBottom: 20, overflow: 'hidden', flexShrink: 0 }}>
+                  
+                  <div style={{ padding: '32px 40px 20px 40px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                        <div><img src={logoImg} alt="Dinesh Exports" style={{ width: 56, height: 56, objectFit: 'contain' }} /></div>
+                        <div>
+                           <h1 style={{ margin: 0, color: '#0f172a', fontSize: 28, fontWeight: 900, letterSpacing: '-0.02em' }}>DINESH EXPORTS</h1>
+                           <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em' }}>THE HOUSE OF FABRICS</p>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'left', width: 300 }}>
+                        <h2 style={{ margin: '0 0 16px 0', color: '#0f172a', fontSize: 18, fontWeight: 800, letterSpacing: '0.05em', textAlign: 'right' }}>MAINTENANCE LOG PROFILE</h2>
+                        <div style={{ display: 'flex', fontSize: 11, marginBottom: 6, alignItems: 'center' }}>
+                          <div style={{ width: 100, fontWeight: 600, color: '#0f172a' }}>Status</div>
+                          <div style={{ width: 20, textAlign: 'center' }}>:</div>
+                          <div><span style={{ background: '#22c55e', color: 'white', padding: '2px 8px', borderRadius: 12, fontSize: 9, fontWeight: 700 }}>{(selectedViewLog.status || 'ACTIVE').toUpperCase()}</span></div>
+                        </div>
+                        <div style={{ display: 'flex', fontSize: 11, marginBottom: 6 }}>
+                          <div style={{ width: 100, fontWeight: 600, color: '#0f172a' }}>Generated On</div>
+                          <div style={{ width: 20, textAlign: 'center' }}>:</div>
+                          <div style={{ fontWeight: 500, color: '#0f172a' }}>{new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ borderBottom: '3px solid #0f172a' }}></div>
+
+                  <div style={{ padding: '10px 40px 40px 40px' }}>
+                    <div style={{ position: 'relative', border: '1px solid #e2e8f0', borderRadius: 6, padding: '24px 20px 12px 20px', marginTop: 24 }}>
+                      <div style={{ position: 'absolute', top: -14, left: -1, background: '#0f172a', color: 'white', padding: '6px 16px', borderRadius: '6px 6px 6px 0', display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>
+                        <User size={14} /> 1. DETAILS
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 0 }}>
+                        <div>
+                          <InfoRow2 label="Service Date" value={selectedViewLog.service_date} />
+                          <InfoRow2 label="Type" value={selectedViewLog.maintenance_type} />
+                          <InfoRow2 label="Work Description" value={selectedViewLog.work_description} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         )}
+
       </div>
     </div>
   );

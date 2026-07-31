@@ -1,11 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import api from '../../services/api';
 import { showError, showSuccess } from '../../utils/notifications';
 import { showConfirm } from '../../components/ConfirmDialog';
-import { Plus, MapPin, Navigation, Clock, DollarSign, Save, X, Edit2, Trash2, Eye, Search, Filter, Download, ArrowLeft } from 'lucide-react';
+import { Plus, MapPin, Compass, Clock, DollarSign, Save, X, Edit2, Trash2, Eye, Search, Filter, Download, ArrowLeft, User, FileText, Globe, Mail, Phone, IndianRupee } from 'lucide-react';
 import MasterDropdown from '../../components/MasterDropdown';
 import { getDispatches } from '../../services/dispatchService';
 import * as XLSX from 'xlsx';
+import { downloadElementAsPdf } from '../../components/A4DocumentPreview';
+import jsPDF from 'jspdf';
+import logoImg from '../../assets/logo.png';
+import ExportButton from '../../components/ExportButton';
+const InfoRow2 = ({ label, value }) => (
+  <div style={{ display: 'flex', padding: '8px 0', borderBottom: '1px dashed #e2e8f0', fontSize: 11 }}>
+    <div style={{ width: '40%', color: '#0f172a', fontWeight: 600 }}>{label}</div>
+    <div style={{ width: '5%', color: '#0f172a', textAlign: 'center' }}>:</div>
+    <div style={{ width: '55%', color: '#0f172a', fontWeight: 500 }}>{value || '-'}</div>
+  </div>
+);
 
 const RouteList = () => {
   const [routes, setRoutes] = useState([]);
@@ -15,10 +26,14 @@ const RouteList = () => {
   const [dispatches, setDispatches] = useState([]);
   const [stations, setStations] = useState([]);
   const [vehicles, setVehicles] = useState([]);
+  const profilePreviewRef = React.useRef(null);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All Status');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+  const fileInputRef = useRef(null);
 
   const initialForm = {
     routeName: '',
@@ -28,10 +43,10 @@ const RouteList = () => {
     estimatedTime: '',
     fuelCostEstimate: '',
     tollCharges: '',
-    roadCondition: 'Good',
-    routeType: 'State Highway',
+    roadCondition: '',
+    routeType: '',
     avgSpeed: '',
-    difficulty: 'Medium',
+    difficulty: '',
     // Fuel Entry Integration
     fuelDate: new Date().toISOString().split('T')[0],
     fuelStationId: '',
@@ -39,7 +54,7 @@ const RouteList = () => {
     fuelQuantity: '',
     fuelRate: '',
     fuelOdometer: '',
-    fuelPaymentMode: 'Cash',
+    fuelPaymentMode: '',
     fuelVehicleNumber: '',
     fuelStationName: '',
     isActive: true
@@ -246,24 +261,7 @@ const RouteList = () => {
   };
 
   const handleExportExcel = () => {
-    const data = filteredRoutes.map(route => ({
-      'Route Name': route.route_name,
-      'From': route.origin,
-      'To': route.destination,
-      'Distance (KM)': route.distance_km,
-      'Est. Time (Hours)': (route.estimated_duration_hours || 0).toFixed(2),
-      'Avg Speed (KM/H)': route.avg_speed || 0,
-      'Fuel Cost (₹)': route.fuel_cost_estimate || 0,
-      'Toll (₹)': route.toll_charges || 0,
-      'Condition': route.road_condition || 'Good',
-      'Type': route.route_type,
-      'Difficulty': route.difficulty || 'Medium',
-      'Status': route.status || 'Active'
-    }));
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Routes");
-    XLSX.writeFile(wb, "Routes_List.xlsx");
+    // Replaced by ExportButton component
   };
 
   const filteredRoutes = routes.filter(route => {
@@ -288,10 +286,19 @@ const RouteList = () => {
     else setStatusFilter(status);
   };
 
+  const generateProfilePDF = async (item) => {
+    if (profilePreviewRef.current) {
+      const safeName = (item?.route_name || 'Route').toString().replace(/[^a-zA-Z0-9_-]/g, '_');
+      await downloadElementAsPdf(profilePreviewRef.current, `Route_Profile_${safeName}.pdf`);
+    }
+  };
+
   // ── FORM VIEW ──
   if (view === 'form') {
-    return (
-      <div className="animate-fade">
+
+  return (
+    <div className="animate-fade">
+
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
           <button 
             type="button"
@@ -352,7 +359,7 @@ const RouteList = () => {
                     value={formData.roadCondition}
                     onChange={(val) => setFormData({ ...formData, roadCondition: val })}
                     options={roadConditions.map(c => ({ value: c, label: c }))}
-                    placeholder="Select Road Condition"
+                    placeholder="--- Select Road Condition ---"
                   />
                 </div>
 
@@ -363,7 +370,7 @@ const RouteList = () => {
                     value={formData.routeType}
                     onChange={(val) => setFormData({ ...formData, routeType: val })}
                     options={routeTypes.map(c => ({ value: c, label: c }))}
-                    placeholder="Select Route Type"
+                    placeholder="--- Select Route Type ---"
                   />
                 </div>
                 <div className="form-group">
@@ -373,7 +380,7 @@ const RouteList = () => {
                     value={formData.difficulty}
                     onChange={(val) => setFormData({ ...formData, difficulty: val })}
                     options={difficulties.map(c => ({ value: c, label: c }))}
-                    placeholder="Select Difficulty"
+                    placeholder="--- Select Difficulty ---"
                   />
                 </div>
                 <div className="form-group" style={{ display: 'flex', alignItems: 'center', paddingTop: 24 }}>
@@ -403,7 +410,7 @@ const RouteList = () => {
                       setFormData({ ...formData, fuelStationId: val, fuelStationName: st ? st.name : formData.fuelStationName });
                     }}
                     options={stations.map(s => ({ value: s.id, label: `${s.name} - ${s.location || ''}`.trim() }))}
-                    placeholder="Select a Station"
+                    placeholder="--- Select a Station ---"
                   />
                 </div>
 
@@ -413,7 +420,7 @@ const RouteList = () => {
                     value={formData.fuelVehicleNumber}
                     onChange={(val) => setFormData({ ...formData, fuelVehicleNumber: val })}
                     options={vehicles.map(v => ({ value: v.vehicle_number, label: v.vehicle_number }))}
-                    placeholder="Select Vehicle"
+                    placeholder="--- Select Vehicle ---"
                   />
                 </div>
                 <div className="form-group">
@@ -432,7 +439,7 @@ const RouteList = () => {
                     value={formData.fuelPaymentMode}
                     onChange={(val) => setFormData({ ...formData, fuelPaymentMode: val })}
                     options={paymentMethods.map(m => ({ value: m, label: m }))}
-                    placeholder="Select Payment Mode"
+                    placeholder="--- Select Payment Mode ---"
                   />
                 </div>
                 <div className="form-group">
@@ -462,20 +469,41 @@ const RouteList = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Navigation size={24} color="var(--primary)" /> Route Management
+            <Compass size={24} color="var(--primary)" /> Route Management
           </h2>
           <p style={{ color: 'var(--text-muted)' }}>Manage routes, cost estimates and route conditions</p>
         </div>
-        <button className="btn btn-primary" onClick={() => handleOpenForm()}>
-          <Plus size={18} /> Add New Route
-        </button>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <ExportButton 
+            data={filteredRoutes}
+            filename="Route_List_Report"
+            pdfTitle="Route List Report"
+            columns={[
+              { header: 'Route Name', key: 'route_name' },
+              { header: 'From', key: 'origin' },
+              { header: 'To', key: 'destination' },
+              { header: 'Distance (KM)', key: 'distance_km' },
+              { header: 'Est. Time (Hours)', key: 'estimated_duration_hours', render: (row) => (row.estimated_duration_hours || 0).toFixed(2) },
+              { header: 'Avg Speed (KM/H)', key: 'avg_speed' },
+              { header: 'Fuel Cost (₹)', key: 'fuel_cost_estimate' },
+              { header: 'Toll (₹)', key: 'toll_charges' },
+              { header: 'Condition', key: 'road_condition' },
+              { header: 'Type', key: 'route_type' },
+              { header: 'Difficulty', key: 'difficulty' },
+              { header: 'Status', key: 'status' }
+            ]}
+          />
+          <button className="btn btn-primary" onClick={() => handleOpenForm()}>
+            <Plus size={18} /> Add New Route
+          </button>
+        </div>
       </div>
 
       {/* Stat Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
         <div className="card stat-card" onClick={() => handleCardClick('Total')} style={{ cursor: 'pointer', transition: 'all 0.2s' }}>
           <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
-            <Navigation size={24} />
+            <Compass size={24} />
           </div>
           <div className="stat-details">
             <h3>Total Routes</h3>
@@ -505,7 +533,7 @@ const RouteList = () => {
 
         <div className="card stat-card" style={{ transition: 'all 0.2s' }}>
           <div className="stat-icon" style={{ background: 'rgba(139,92,246,0.1)', color: '#8b5cf6' }}>
-            <Navigation size={24} />
+            <Compass size={24} />
           </div>
           <div className="stat-details">
             <h3>Avg Distance</h3>
@@ -516,41 +544,42 @@ const RouteList = () => {
 
       {/* Filter Row */}
       <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+        
+        {/* Left Side: Search */}
         <div style={{ position: 'relative', flex: 1, minWidth: 250, maxWidth: 350 }}>
           <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input
             type="text"
             className="form-control"
-            placeholder="Search by route name or location..."
+            placeholder="Search by Route Name, Source, Destination..."
             style={{ paddingLeft: 38, width: '100%', margin: 0 }}
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
           />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        {/* Right Side: Filters */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
             <Filter size={16} />
             <span style={{ fontSize: 13, fontWeight: 600 }}>Filter:</span>
           </div>
 
-          <div style={{ width: 180 }}>
-            <MasterDropdown
-              value={statusFilter}
-              onChange={(val) => setStatusFilter(val || 'All Status')}
-              options={[
-                { value: 'All Status', label: 'All Status' },
-                { value: 'Active', label: 'Active' },
-                { value: 'Inactive', label: 'Inactive' }
-              ]}
-              placeholder="Filter Status"
-              allowClear={false}
-            />
+          <select className="form-control" style={{ width: 150, margin: 0 }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+            <option value="All Status">All Routes</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>From:</span>
+            <input type="date" className="form-control" style={{ width: 140, margin: 0 }} value={fromDate} onChange={e => setFromDate(e.target.value)} />
           </div>
 
-          <button className="btn btn-secondary" onClick={handleExportExcel} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Download size={16} /> Export Excel
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>To:</span>
+            <input type="date" className="form-control" style={{ width: 140, margin: 0 }} value={toDate} onChange={e => setToDate(e.target.value)} />
+          </div>
         </div>
       </div>
 
@@ -561,72 +590,45 @@ const RouteList = () => {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Route Name & Status</th>
-                  <th>Path Details</th>
-                  <th>Distance & Time</th>
-                  <th>Costs Estimate</th>
-                  <th>Conditions</th>
+                  <th>Route Code</th>
+                  <th>Route Name</th>
+                  <th>Source</th>
+                  <th>Destination</th>
+                  <th>Distance (KM)</th>
+                  <th style={{ textAlign: 'center' }}>Status</th>
                   <th style={{ textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: 20 }}>Loading routes...</td></tr>
+                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>Loading routes...</td></tr>
                 ) : filteredRoutes.length === 0 ? (
-                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: 20 }}>No routes found</td></tr>
+                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>No routes found</td></tr>
                 ) : (
                   filteredRoutes.map(route => {
                     const isActive = route.status !== 'Inactive';
                     return (
                       <tr key={route.id} onClick={() => setViewingRoute(route)} style={{ cursor: 'pointer', background: viewingRoute?.id === route.id ? 'var(--bg-secondary)' : 'transparent', transition: 'background 0.2s' }}>
-                        <td>
-                          <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{route.route_name}</div>
-                          <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: isActive ? '#d1fae5' : '#f3f4f6', color: isActive ? '#065f46' : '#374151', display: 'inline-block', marginTop: 4 }}>
+                        <td style={{ fontWeight: 600 }}>{route.route_code || route.id}</td>
+                        <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{route.route_name}</td>
+                        <td>{route.origin}</td>
+                        <td>{route.destination}</td>
+                        <td>{route.distance_km || 0}</td>
+                        <td style={{ textAlign: 'center' }}>
+                          <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: isActive ? '#d1fae5' : '#f3f4f6', color: isActive ? '#065f46' : '#374151', display: 'inline-block' }}>
                             {isActive ? 'ACTIVE' : 'INACTIVE'}
                           </span>
                         </td>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-primary)' }}>
-                            <MapPin size={14} color="var(--text-muted)" /> {route.origin}
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-primary)', marginTop: 4 }}>
-                            <MapPin size={14} color="var(--text-muted)" /> {route.destination}
-                          </div>
-                        </td>
-                        <td>
-                          <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{route.distance_km || 0} KM</div>
-                          <div style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
-                            <Clock size={12} /> {Math.round((route.estimated_duration_hours || 0) * 60)} min
-                          </div>
-                          <div style={{ fontSize: 11, color: '#059669', marginTop: 2 }}>{route.avg_speed || 0} KM/H avg</div>
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontWeight: 600, color: 'var(--text-primary)' }}>
-                            <DollarSign size={14} color="var(--text-muted)" /> ₹{route.fuel_cost_estimate || 0} fuel
-                          </div>
-                          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>₹{route.toll_charges || 0} toll</div>
-                          <div style={{ fontSize: 11, color: '#2563eb', marginTop: 2 }}>₹{((route.fuel_cost_estimate || 0) + (route.toll_charges || 0)).toFixed(2)} total</div>
-                        </td>
-                        <td>
-                          <div>
-                            <span style={{ padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 600, border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
-                              {route.road_condition || 'Good'}
-                            </span>
-                          </div>
-                          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{route.route_type || 'State Highway'}</div>
-                          <div style={{ marginTop: 4 }}>
-                            <span style={{ padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 600, border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
-                              {route.difficulty || 'Medium'}
-                            </span>
-                          </div>
-                        </td>
                         <td onClick={e => e.stopPropagation()} style={{ textAlign: 'center' }}>
                           <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                            <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={() => handleOpenForm(route)} title="Edit">
+                            <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setViewingRoute(route)} title="Preview Profile">
+                              <Eye size={16} color="var(--primary)" />
+                            </button>
+                            <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => handleOpenForm(route)} title="Edit">
                               <Edit2 size={16} />
                             </button>
-                            <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={(e) => handleDelete(route.id, e)} title="Delete">
-                              <Trash2 size={16} color="#ef4444" />
+                            <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => handleDelete(route.id, e)} title="Delete">
+                              <Trash2 size={16} color="var(--danger, #ef4444)" />
                             </button>
                           </div>
                         </td>
@@ -641,136 +643,110 @@ const RouteList = () => {
       </div>
       
       {/* View Modal */}
-      {viewingRoute && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 100,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'rgba(0, 0, 0, 0.4)',
-          backdropFilter: 'blur(4px)',
-          padding: 16
-        }}>
-          <div className="card" style={{ maxWidth: 600, width: '100%', padding: 0, overflow: 'hidden', borderRadius: 12, maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
-              <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-                Route Details — {viewingRoute.route_name}
-              </h3>
-              <button onClick={() => setViewingRoute(null)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }}>
-                <X size={18} />
-              </button>
-            </div>
-
-            <div style={{ padding: 24, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                <div>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>STATUS</span>
-                  <div style={{ marginTop: 4 }}>
-                    <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: viewingRoute.status !== 'Inactive' ? '#d1fae5' : '#f3f4f6', color: viewingRoute.status !== 'Inactive' ? '#065f46' : '#374151' }}>
-                      {viewingRoute.status !== 'Inactive' ? 'ACTIVE' : 'INACTIVE'}
-                    </span>
-                  </div>
+      
+        {/* Profile View Modal */}
+        {viewingRoute && (
+          <div className="fixed inset-0" style={{ zIndex: 100, display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(4px)' }}>
+            <div className="animate-scale-up" style={{ background: '#f8fafc', width: '95%', maxWidth: 900, height: '90vh', borderRadius: 12, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+              
+              <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', zIndex: 10, flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Eye size={18} style={{ color: '#4f46e5' }} /> 
+                  <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1e293b' }}>Route Profile Preview</h3>
+                </div>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <button onClick={() => generateProfilePDF(viewingRoute)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#e2e8f0', border: 'none', color: '#1e293b', padding: '6px 12px', fontSize: 12, fontWeight: 600 }}>
+                    <Download size={14} /> Download PDF
+                  </button>
+                  <button onClick={() => setViewingRoute(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b' }}><X size={20} /></button>
                 </div>
               </div>
 
-              <div style={{ borderTop: '1px dashed var(--border)', paddingTop: 16 }}>
-                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>PATH DETAILS</span>
-                <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ flex: 1, padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>FROM LOCATION</div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}><MapPin size={14} color="var(--primary)" /> {viewingRoute.origin}</div>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div ref={profilePreviewRef} style={{ width: '100%', maxWidth: 794, background: '#ffffff', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', borderRadius: 4, position: 'relative', marginBottom: 20, overflow: 'hidden', flexShrink: 0 }}>
+                  
+                  <div style={{ padding: '32px 40px 20px 40px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                        <div><img src={logoImg} alt="Dinesh Exports" style={{ width: 56, height: 56, objectFit: 'contain' }} /></div>
+                        <div>
+                           <h1 style={{ margin: 0, color: '#0f172a', fontSize: 28, fontWeight: 900, letterSpacing: '-0.02em' }}>DINESH EXPORTS</h1>
+                           <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em' }}>THE HOUSE OF FABRICS</p>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'left', width: 300 }}>
+                        <h2 style={{ margin: '0 0 16px 0', color: '#0f172a', fontSize: 18, fontWeight: 800, letterSpacing: '0.05em', textAlign: 'right' }}>ROUTE PROFILE</h2>
+                        <div style={{ display: 'flex', fontSize: 11, marginBottom: 6, alignItems: 'center' }}>
+                          <div style={{ width: 100, fontWeight: 600, color: '#0f172a' }}>Status</div>
+                          <div style={{ width: 20, textAlign: 'center' }}>:</div>
+                          <div><span style={{ background: '#22c55e', color: 'white', padding: '2px 8px', borderRadius: 12, fontSize: 9, fontWeight: 700 }}>{(viewingRoute.status || 'ACTIVE').toUpperCase()}</span></div>
+                        </div>
+                        <div style={{ display: 'flex', fontSize: 11, marginBottom: 6 }}>
+                          <div style={{ width: 100, fontWeight: 600, color: '#0f172a' }}>Generated On</div>
+                          <div style={{ width: 20, textAlign: 'center' }}>:</div>
+                          <div style={{ fontWeight: 500, color: '#0f172a' }}>{new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <Navigation size={16} color="var(--text-muted)" style={{ transform: 'rotate(90deg)' }} />
-                  <div style={{ flex: 1, padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>TO LOCATION</div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}><MapPin size={14} color="var(--primary)" /> {viewingRoute.destination}</div>
+
+                  <div style={{ borderBottom: '3px solid #0f172a' }}></div>
+
+                  <div style={{ padding: '10px 40px 40px 40px' }}>
+                    <div style={{ position: 'relative', border: '1px solid #e2e8f0', borderRadius: 6, padding: '24px 20px 12px 20px', marginTop: 24 }}>
+                      <div style={{ position: 'absolute', top: -14, left: -1, background: '#0f172a', color: 'white', padding: '6px 16px', borderRadius: '6px 6px 6px 0', display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>
+                        <User size={14} /> 1. PATH DETAILS
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40 }}>
+                        <div>
+                          <InfoRow2 label="Origin" value={viewingRoute.origin} />
+                        </div>
+                        <div>
+                          <InfoRow2 label="Destination" value={viewingRoute.destination} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ position: 'relative', border: '1px solid #e2e8f0', borderRadius: 6, padding: '24px 20px 12px 20px', marginTop: 24 }}>
+                      <div style={{ position: 'absolute', top: -14, left: -1, background: '#0f172a', color: 'white', padding: '6px 16px', borderRadius: '6px 6px 6px 0', display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>
+                        <User size={14} /> 2. DISTANCE & TIME
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40 }}>
+                        <div>
+                          <InfoRow2 label="Distance" value={`${viewingRoute.distance_km || 0} KM`} />
+                          <InfoRow2 label="Average Speed" value={`${viewingRoute.avg_speed || 0} KM/H`} />
+                        </div>
+                        <div>
+                          <InfoRow2 label="Estimated Time" value={`${Math.round((viewingRoute.estimated_duration_hours || 0) * 60)} min`} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ position: 'relative', border: '1px solid #e2e8f0', borderRadius: 6, padding: '24px 20px 12px 20px', marginTop: 24 }}>
+                      <div style={{ position: 'absolute', top: -14, left: -1, background: '#0f172a', color: 'white', padding: '6px 16px', borderRadius: '6px 6px 6px 0', display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>
+                        <IndianRupee size={14} /> 3. COST & CONDITIONS
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40 }}>
+                        <div>
+                          <InfoRow2 label="Fuel Cost Est." value={`₹${viewingRoute.fuel_cost_estimate || 0}`} />
+                          <InfoRow2 label="Toll Charges" value={`₹${viewingRoute.toll_charges || 0}`} />
+                        </div>
+                        <div>
+                          <InfoRow2 label="Road Condition" value={viewingRoute.road_condition || 'Good'} />
+                          <InfoRow2 label="Route Type" value={viewingRoute.route_type || 'State Highway'} />
+                          <InfoRow2 label="Difficulty" value={viewingRoute.difficulty || 'Medium'} />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-
-              <div style={{ borderTop: '1px dashed var(--border)', paddingTop: 16 }}>
-                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>DISTANCE & TIME</span>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 8 }}>
-                  <div>
-                    <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Distance</div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{viewingRoute.distance_km || 0} KM</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Estimated Time</div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{Math.round((viewingRoute.estimated_duration_hours || 0) * 60)} min</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Average Speed</div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{viewingRoute.avg_speed || 0} KM/H</div>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ borderTop: '1px dashed var(--border)', paddingTop: 16 }}>
-                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>COST ESTIMATES & CONDITIONS</span>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 8 }}>
-                  <div>
-                    <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Fuel Cost</div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>₹{viewingRoute.fuel_cost_estimate || 0}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Toll Charges</div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>₹{viewingRoute.toll_charges || 0}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Road Condition</div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{viewingRoute.road_condition || 'Good'}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Route Type</div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{viewingRoute.route_type || 'State Highway'}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Difficulty</div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{viewingRoute.difficulty || 'Medium'}</div>
-                  </div>
-                </div>
-              </div>
-
-              {(viewingRoute.fuel_date || viewingRoute.fuel_station_name || viewingRoute.fuel_quantity_liters) && (
-                <div style={{ borderTop: '1px dashed var(--border)', paddingTop: 16 }}>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>FUEL ENTRY DETAILS</span>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 8, background: 'var(--bg-secondary)', padding: 16, borderRadius: 8 }}>
-                    <div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Fuel Date</div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{viewingRoute.fuel_date || '-'}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Station Name</div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{viewingRoute.fuel_station_name || '-'}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Fuel Type</div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{viewingRoute.fuel_type || '-'}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Quantity (Liters)</div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{viewingRoute.fuel_quantity_liters || '-'}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Rate (Per Liter)</div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>₹{viewingRoute.fuel_rate_per_liter || '-'}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Payment Mode</div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{viewingRoute.fuel_payment_mode || '-'}</div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
-        </div>
-      )}
-    </div>
-  );
-};
+        )}
+
+      </div>
+    );
+  };
 
 export default RouteList;

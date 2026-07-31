@@ -341,32 +341,52 @@ export default function GatePass() {
           </div>
 
           {/* KPI METRICS ROW */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '24px' }}>
             
-            <div className="card" style={{ padding: '20px', borderLeft: '4px solid #7c3aed', background: 'white' }}>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Total Gate Passes</span>
-              <h3 style={{ fontSize: '24px', fontWeight: '900', color: 'var(--text-primary)', margin: '8px 0 0 0' }}>{totalPasses}</h3>
+            <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+              <div className="stat-icon" style={{ background: 'rgba(124, 58, 237, 0.1)', color: '#7c3aed' }}>
+                <FileText size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>Total Gate Passes</h3>
+                <div className="value">{totalPasses}</div>
+              </div>
             </div>
 
-            <div className="card" style={{ padding: '20px', borderLeft: '4px solid #10b981', background: 'white' }}>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Open Gate Passes</span>
-              <h3 style={{ fontSize: '24px', fontWeight: '900', color: '#10b981', margin: '8px 0 0 0' }}>{openPasses}</h3>
+            <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+              <div className="stat-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+                <Clock size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>Open Gate Passes</h3>
+                <div className="value">{openPasses}</div>
+              </div>
             </div>
 
-            <div className="card" style={{ padding: '20px', borderLeft: '4px solid #3b82f6', background: 'white' }}>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Returnable Passes</span>
-              <h3 style={{ fontSize: '24px', fontWeight: '900', color: '#3b82f6', margin: '8px 0 0 0' }}>{returnablePasses}</h3>
+            <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+              <div className="stat-icon" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
+                <ArrowLeft size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>Returnable Passes</h3>
+                <div className="value">{returnablePasses}</div>
+              </div>
             </div>
 
-            <div className="card" style={{ padding: '20px', borderLeft: '4px solid #ef4444', background: 'white' }}>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Expired Passes</span>
-              <h3 style={{ fontSize: '24px', fontWeight: '900', color: '#ef4444', margin: '8px 0 0 0' }}>{expiredPasses}</h3>
+            <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+              <div className="stat-icon" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
+                <AlertCircle size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>Expired Passes</h3>
+                <div className="value">{expiredPasses}</div>
+              </div>
             </div>
 
           </div>
 
           {/* FILTER TOOLBAR BAR */}
-          <div className="card" style={{ padding: '16px 20px', marginBottom: '24px', background: 'white' }}>
+          <div className="card" style={{ padding: '16px 20px', marginBottom: '24px', background: 'var(--bg-secondary)', border: 'none', boxShadow: 'none' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '16px', alignItems: 'center' }}>
               
               <div style={{ position: 'relative' }}>
@@ -405,7 +425,7 @@ export default function GatePass() {
           </div>
 
           {/* DUAL TABLE REPORT LIST */}
-          <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'white' }}>
+          <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'white', border: 'none', boxShadow: 'none' }}>
             <div style={{ overflowX: 'auto' }}>
               <table className="data-table" style={{ width: '100%', margin: 0 }}>
                 <thead>

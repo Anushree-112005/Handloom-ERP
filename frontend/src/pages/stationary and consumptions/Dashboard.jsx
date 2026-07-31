@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { AlertTriangle, ArrowLeft, BarChart2, CheckCircle, ClipboardList, Edit, MapPin, Package, Plus, Receipt, RefreshCw, Save, Search, ShoppingBag, Trash2, TrendingUp, X } from 'lucide-react';
+
 import { mockDb } from './mockDb';
 import { storesService } from '../../services/storesService';
 import api from '../../services/api';
-import { 
-  Package, Receipt, ShoppingBag, ClipboardList, CheckCircle, 
-  AlertTriangle, TrendingUp, BarChart2, MapPin, Search, Plus, 
-  Trash2, Edit, X, RefreshCw, Save, ArrowLeft 
-} from 'lucide-react';
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
@@ -52,7 +49,7 @@ export default function Dashboard() {
   const fetchLocations = async () => {
     setLocationsLoading(true);
     try {
-      const res = await api.get('/stationary/locations/all');
+      const res = await api.get('/stationary/locations');
       setLocations(res.data);
     } catch (err) {
       console.error("Failed to fetch material locations:", err);
@@ -210,7 +207,7 @@ export default function Dashboard() {
           </h2>
         </div>
 
-        <div className="card">
+        <div className="card" style={{ border: 'none', boxShadow: 'none', boxShadow: 'none' }}>
           <form onSubmit={handleLocSubmit}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16 }}>
               <div>
@@ -360,43 +357,43 @@ export default function Dashboard() {
 
       {/* KPI Stat Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
-        <div className="card stat-card" style={{ '--stat-color': 'var(--primary)' }}>
-          <div className="stat-icon" style={{ background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)' }}>
+        <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(79, 70, 229, 0.1)', color: '#4f46e5' }}>
             <Package size={24} />
           </div>
-          <div className="stat-info">
-            <h3>₹{stats.stockValue.toLocaleString()}</h3>
-            <p>Stock Value</p>
+          <div className="stat-details">
+            <h3>Stock Value</h3>
+            <div className="value">₹{stats.stockValue.toLocaleString()}</div>
           </div>
         </div>
 
-        <div className="card stat-card" style={{ '--stat-color': 'var(--secondary)' }}>
-          <div className="stat-icon" style={{ background: 'rgba(8, 145, 178, 0.1)', color: 'var(--secondary)' }}>
+        <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(8, 145, 178, 0.1)', color: '#0891b2' }}>
             <TrendingUp size={24} />
           </div>
-          <div className="stat-info">
-            <h3>₹{stats.todayIssues.toLocaleString()}</h3>
-            <p>Today's Issues</p>
+          <div className="stat-details">
+            <h3>Today's Issues</h3>
+            <div className="value">₹{stats.todayIssues.toLocaleString()}</div>
           </div>
         </div>
 
-        <div className="card stat-card" style={{ '--stat-color': 'var(--success)' }}>
-          <div className="stat-icon" style={{ background: 'rgba(5, 150, 105, 0.1)', color: 'var(--success)' }}>
+        <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(5, 150, 105, 0.1)', color: '#059669' }}>
             <Receipt size={24} />
           </div>
-          <div className="stat-info">
-            <h3>{stats.pendingApprovals} POs</h3>
-            <p>Pending POs</p>
+          <div className="stat-details">
+            <h3>Pending POs</h3>
+            <div className="value">{stats.pendingApprovals} POs</div>
           </div>
         </div>
 
-        <div className="card stat-card" style={{ '--stat-color': 'var(--accent)' }}>
-          <div className="stat-icon" style={{ background: 'rgba(217, 119, 6, 0.1)', color: 'var(--accent)' }}>
+        <div className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(217, 119, 6, 0.1)', color: '#d97706' }}>
             <AlertTriangle size={24} />
           </div>
-          <div className="stat-info">
-            <h3>{stats.lowStockItems} Items</h3>
-            <p>Low Stock Alert</p>
+          <div className="stat-details">
+            <h3>Low Stock Alert</h3>
+            <div className="value">{stats.lowStockItems} Items</div>
           </div>
         </div>
       </div>
@@ -406,7 +403,7 @@ export default function Dashboard() {
         {/* Left Column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           {/* Department Consumption */}
-          <div className="card">
+          <div className="card" style={{ border: 'none', boxShadow: 'none', boxShadow: 'none' }}>
             <div className="card-header">
               <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <BarChart2 style={{ color: 'var(--primary)' }} size={20} /> Department Wise Monthly Consumption
@@ -436,7 +433,7 @@ export default function Dashboard() {
           </div>
 
           {/* Stock Breakdown */}
-          <div className="card">
+          <div className="card" style={{ border: 'none', boxShadow: 'none', boxShadow: 'none' }}>
             <div className="card-header">
               <h3 className="card-title">Stock Breakdown Status</h3>
             </div>
@@ -458,7 +455,7 @@ export default function Dashboard() {
         </div>
 
         {/* Right Column: Recent Movement Ledger */}
-        <div className="card">
+        <div className="card" style={{ border: 'none', boxShadow: 'none', overflow: 'hidden', border: 'none', boxShadow: 'none' }}>
           <div className="card-header">
             <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <ClipboardList style={{ color: 'var(--primary)' }} size={20} /> Recent Stock Movements
@@ -489,7 +486,7 @@ export default function Dashboard() {
       </div>
 
       {/* Product & Material Location Section */}
-      <div className="card" style={{ marginTop: 24, padding: 24 }}>
+      <div className="card" style={{ boxShadow: 'none', marginTop: 24, padding: 24, border: 'none' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, borderBottom: '1px solid var(--border)', paddingBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)', padding: 8, borderRadius: 'var(--radius-md)' }}>

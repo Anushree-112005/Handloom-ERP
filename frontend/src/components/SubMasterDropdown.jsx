@@ -18,7 +18,7 @@ export default function SubMasterDropdown({
   onOptionsRefresh,
   required = false,
   disabled = false,
-  placeholder = '-- Select --',
+  placeholder = '---select----',
   onKeyDown,
   filterFn,
   allowCustom = true,

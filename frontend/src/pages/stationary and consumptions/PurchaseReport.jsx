@@ -12,12 +12,12 @@ export default function PurchaseReport() {
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen space-y-6">
-      <div className="card">
+      <div className="card" style={{ border: 'none', boxShadow: 'none', boxShadow: 'none' }}>
         <h1 style={{ fontSize: 24, fontWeight: 700 }}>Purchase & Stock Inward Report</h1>
         <p style={{ color: "var(--text-muted)", fontSize: 14 }}>Track vendor supply invoices, receipts, and purchase cost audits</p>
       </div>
 
-      <div className="card" style={{ padding: 0 }}>
+      <div className="card" style={{ border: 'none', boxShadow: 'none', padding: 0 }}>
         <table className="data-table">
               <thead>
             <tr>
