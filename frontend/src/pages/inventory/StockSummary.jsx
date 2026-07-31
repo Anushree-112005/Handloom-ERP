@@ -16,21 +16,41 @@ export default function StockSummary() {
   const fetchSummary = async () => {
     try {
       setLoading(true);
-      const urlParams = categoryFilter ? `?category=${categoryFilter}` : '';
-      const res = await erpStockAPI.getCurrentStock(urlParams);
-      
-      // Map CurrentStock Schema to StockSummary format
-      const formattedSummary = res.data.map(item => ({
-        id: item.id,
-        item_code: item.item_id,
-        item_name: item.item_id, // We use item_id as name if not joined
-        godown_id: item.location_type || 'MAIN',
-        status: item.status,
-        closing_qty: item.quantity,
-        closing_value: item.quantity * 100, // Dummy value multiplier for demo since price isn't in CurrentStock
-        unit: 'Units'
-      }));
-      setSummary(formattedSummary);
+      let items = [];
+      try {
+        const resInv = await api.get('/inventory/stock-summary');
+        if (resInv.data && resInv.data.length > 0) {
+          items = resInv.data.map(item => ({
+            id: item.id,
+            item_code: item.item_code || 'YRN-001',
+            item_name: item.item_name || 'Yarn Item',
+            godown_id: item.godown_id ? `Godown ${item.godown_id}` : 'MAIN',
+            status: item.status || 'AVAILABLE',
+            closing_qty: item.closing_qty || 0,
+            closing_value: item.closing_value || 0,
+            unit: item.unit || 'Kgs'
+          }));
+        }
+      } catch (e) {
+        console.warn('Inventory stock summary endpoint fallback', e);
+      }
+
+      if (items.length === 0) {
+        const urlParams = categoryFilter ? `?category=${categoryFilter}` : '';
+        const res = await erpStockAPI.getCurrentStock(urlParams);
+        items = (res.data || []).map(item => ({
+          id: item.id,
+          item_code: item.item_id,
+          item_name: item.item_id,
+          godown_id: item.location_type || 'MAIN',
+          status: item.status,
+          closing_qty: item.quantity,
+          closing_value: item.quantity * 300,
+          unit: 'Kgs'
+        }));
+      }
+
+      setSummary(items);
     } catch (error) {
       console.error('Failed to fetch stock summary:', error);
     } finally {

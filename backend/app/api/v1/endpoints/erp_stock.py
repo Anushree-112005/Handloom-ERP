@@ -25,14 +25,23 @@ async def get_current_stock(
     stmt = select(CurrentStock)
     
     if category:
-        # Assuming category maps to prefixes in item_id for this ERP
-        # Example: 'yarn' -> 'YRN-', 'fabric' -> 'FAB-', 'consumables' -> 'CON-'
-        prefix = ''
-        if category.lower() == 'yarn': prefix = 'YRN'
-        elif category.lower() == 'fabric': prefix = 'FAB'
-        elif category.lower() == 'consumables': prefix = 'CON'
-        if prefix:
-            stmt = stmt.where(CurrentStock.item_id.startswith(prefix))
+        cat_lower = category.lower()
+        if cat_lower == 'yarn':
+            from sqlalchemy import or_
+            stmt = stmt.where(
+                or_(
+                    CurrentStock.item_id.startswith('YRN'),
+                    CurrentStock.item_id.ilike('%ctn%'),
+                    CurrentStock.item_id.ilike('%yarn%'),
+                    CurrentStock.item_id.ilike('%cotton%'),
+                    CurrentStock.item_id.ilike('%s %'),
+                    CurrentStock.item_id.ilike('%s%')
+                )
+            )
+        elif cat_lower == 'fabric':
+            stmt = stmt.where(CurrentStock.item_id.startswith('FAB'))
+        elif cat_lower == 'consumables':
+            stmt = stmt.where(CurrentStock.item_id.startswith('CON'))
             
     if location_type:
         stmt = stmt.where(CurrentStock.location_type == location_type)

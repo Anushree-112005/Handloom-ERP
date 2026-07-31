@@ -94,7 +94,7 @@ async def list_godowns(db: AsyncSession = Depends(get_db)):
         await db.execute(text("ALTER TABLE erp_warehouses ADD COLUMN location VARCHAR(100)"))
         await db.commit()
     except Exception:
-        pass # Column might already exist
+        await db.rollback()
         
     stmt = select(Warehouse).options(
         selectinload(Warehouse.zones).selectinload(WarehouseZone.racks).selectinload(WarehouseRack.bins)

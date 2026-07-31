@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+
 import { useSearchParams } from 'react-router-dom';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, Palette, Users, FileText, Layers, CheckSquare, Download, ChevronDown, ArrowLeft, CheckCircle } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
 import { designEntryAPI, partyAPI, employeeAPI, buyerOrderAPI, subMasterAPI, textileDesignAPI, dropdownAPI, getBackendURL } from '../../services/api';
 import SubMasterDropdown from '../../components/SubMasterDropdown';
+import { confirmDialog } from '../../utils/dialogs';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -827,7 +829,11 @@ export default function DesignEntry() {
   const [searchTerm, setSearchTerm] = useState('');
   const [manuallyEditedFields, setManuallyEditedFields] = useState({});
 
+  const yarnTypeSelectRef = useRef(null);
+  const fabricTypeSelectRef = useRef(null);
+
   const [colorMasters, setColorMasters] = useState([]);
+
   const [yarnCountMasters, setYarnCountMasters] = useState([]);
   const [yarnRows, setYarnRows] = useState([]);
   const [fabricDesignRows, setFabricDesignRows] = useState([]);
@@ -938,7 +944,7 @@ export default function DesignEntry() {
       alert("Please select a yarn count.");
       return;
     }
-    setYarnRows([...yarnRows, { ...newYarnRow, id: Date.now() }]);
+    setYarnRows(prev => [...prev, { ...newYarnRow, id: Date.now() }]);
     setNewYarnRow({
       type: 'Warp',
       yarn_count: '',
@@ -947,6 +953,9 @@ export default function DesignEntry() {
       pick: '',
       crimp_pct: ''
     });
+    setTimeout(() => {
+      yarnTypeSelectRef.current?.focus();
+    }, 50);
   };
 
   const deleteYarnRow = (idx) => {
@@ -958,7 +967,7 @@ export default function DesignEntry() {
       alert("Please select a yarn count.");
       return;
     }
-    setFabricDesignRows([...fabricDesignRows, { ...newFabricDesignRow, id: Date.now() }]);
+    setFabricDesignRows(prev => [...prev, { ...newFabricDesignRow, id: Date.now() }]);
     setNewFabricDesignRow({
       type: '',
       yarn_count: '',
@@ -972,7 +981,11 @@ export default function DesignEntry() {
       line_val: '',
       ends_for_dents: ''
     });
+    setTimeout(() => {
+      fabricTypeSelectRef.current?.focus();
+    }, 50);
   };
+
 
   const deleteFabricDesignRow = (idx) => {
     setFabricDesignRows(fabricDesignRows.filter((_, i) => i !== idx));
@@ -1533,7 +1546,13 @@ export default function DesignEntry() {
 
   const handleApprove = async (id, e) => {
     if (e) e.stopPropagation();
-    if (window.confirm('Are you sure you want to approve this design? This will notify the Purchase Team.')) {
+    const confirmed = await confirmDialog({
+      title: 'Approve Design Entry',
+      message: 'Are you sure you want to approve this design? This will notify the Purchase Team.',
+      type: 'approve',
+      confirmText: 'Approve'
+    });
+    if (confirmed) {
       try {
         await designEntryAPI.approve(id);
         alert('Design approved successfully!');
@@ -1548,16 +1567,24 @@ export default function DesignEntry() {
 
   const handleDelete = async (id, ds_ref, e) => {
     if (e) e.stopPropagation();
-    if (window.confirm(`Are you sure you want to delete ${ds_ref}?`)) {
+    const confirmed = await confirmDialog({
+      title: 'Delete Design Entry',
+      message: `Are you sure you want to delete ${ds_ref}?`,
+      type: 'delete',
+      confirmText: 'Delete'
+    });
+    if (confirmed) {
       try {
         await designEntryAPI.delete(id);
         if (selectedViewEntry?.id === id) setSelectedViewEntry(null);
         loadData();
       } catch (err) {
         alert('Error deleting');
+        console.error(err);
       }
     }
   };
+
 
   const handleRowClick = async (entry) => {
     try {
@@ -2253,12 +2280,14 @@ export default function DesignEntry() {
                                     {isCustomYarnTypeMode ? (
                                       <div style={{ display: 'flex', gap: 4 }}>
                                         <input
+                                          ref={yarnTypeSelectRef}
                                           type="text"
                                           className="form-control"
                                           style={{ width: 120, padding: '4px 6px', margin: 0 }}
                                           placeholder="New Type"
                                           value={customYarnTypeVal}
                                           onChange={e => setCustomYarnTypeVal(e.target.value)}
+                                          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSaveCustomYarnSpecType(); } }}
                                         />
                                         <button
                                           type="button"
@@ -2282,6 +2311,7 @@ export default function DesignEntry() {
                                       </div>
                                     ) : (
                                       <select
+                                        ref={yarnTypeSelectRef}
                                         className="form-control"
                                         style={{ padding: '4px 6px', margin: 0, minWidth: 120 }}
                                         value={newYarnRow.type}
@@ -2331,6 +2361,7 @@ export default function DesignEntry() {
                                     placeholder="Act"
                                     value={newYarnRow.act_count}
                                     onChange={e => setNewYarnRow({ ...newYarnRow, act_count: e.target.value })}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addYarnRow(); } }}
                                   />
                                 </td>
                                 <td>
@@ -2341,6 +2372,7 @@ export default function DesignEntry() {
                                     placeholder="Ends"
                                     value={newYarnRow.ends}
                                     onChange={e => setNewYarnRow({ ...newYarnRow, ends: e.target.value })}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addYarnRow(); } }}
                                   />
                                 </td>
                                 <td>
@@ -2351,6 +2383,7 @@ export default function DesignEntry() {
                                     placeholder="Pick"
                                     value={newYarnRow.pick || ''}
                                     onChange={e => setNewYarnRow({ ...newYarnRow, pick: e.target.value })}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addYarnRow(); } }}
                                   />
                                 </td>
                                 <td>
@@ -2361,8 +2394,10 @@ export default function DesignEntry() {
                                     placeholder="Crimp"
                                     value={newYarnRow.crimp_pct}
                                     onChange={e => setNewYarnRow({ ...newYarnRow, crimp_pct: e.target.value })}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addYarnRow(); } }}
                                   />
                                 </td>
+
                                 <td>
                                   <button
                                     type="button"
@@ -2445,8 +2480,14 @@ export default function DesignEntry() {
                         type="button" 
                         className="btn" 
                         style={{ padding: '4px 12px', background: '#ef4444', color: '#fff', fontWeight: 600 }}
-                        onClick={() => {
-                          if (window.confirm("Are you sure you want to clear the Fabric Design table?")) {
+                        onClick={async () => {
+                          const confirmed = await confirmDialog({
+                            title: 'Clear Fabric Design Table',
+                            message: 'Are you sure you want to clear the Fabric Design table?',
+                            type: 'delete',
+                            confirmText: 'Clear'
+                          });
+                          if (confirmed) {
                             setFabricDesignRows([]);
                           }
                         }}
@@ -2805,11 +2846,13 @@ export default function DesignEntry() {
                           <td>New</td>
                           <td>
                             <select
+                              ref={fabricTypeSelectRef}
                               className="form-control"
                               style={{ padding: '4px 6px', margin: 0, minWidth: 70 }}
                               value={newFabricDesignRow.type}
                               onChange={e => setNewFabricDesignRow({ ...newFabricDesignRow, type: e.target.value })}
                             >
+
                               <option value="">Select...</option>
                               {uniqueTypes.map(t => (
                                 <option key={t} value={t}>{t}</option>

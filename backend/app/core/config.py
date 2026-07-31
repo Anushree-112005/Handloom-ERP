@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     NVIDIA_API_KEY: Optional[str] = None
     NVIDIA_VISION_MODEL: str = "nvidia/nemotron-nano-12b-v2-vl"
 
+    # Mistral Pixtral Vision API
+    MISTRAL_API_KEY: Optional[str] = None
+    mistral_api_key: Optional[str] = None
+
     def get_groq_api_keys(self) -> List[str]:
         """Return a deduplicated list of all configured Groq API keys."""
         keys = []
@@ -43,7 +47,9 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
-        case_sensitive = True
+        case_sensitive = False
+        extra = "ignore"
+
 
 
 settings = Settings()

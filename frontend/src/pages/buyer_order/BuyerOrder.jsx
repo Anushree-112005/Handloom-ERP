@@ -1236,7 +1236,15 @@ export default function BuyerOrder() {
                             <button
                               className="btn btn-secondary"
                               style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                              onClick={(evt) => { evt.stopPropagation(); setViewModalOrder(o); }}
+                              onClick={async (evt) => {
+                                evt.stopPropagation();
+                                try {
+                                  const { data } = await buyerOrderAPI.get(o.id);
+                                  setViewModalOrder(data);
+                                } catch (err) {
+                                  setViewModalOrder(o);
+                                }
+                              }}
                               title="Preview Order"
                             >
                               <Eye size={16} color="var(--primary)" />
@@ -1263,7 +1271,14 @@ export default function BuyerOrder() {
                       <button
                         className="btn btn-secondary"
                         style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        onClick={() => setViewModalOrder(selectedViewOrder)}
+                        onClick={async () => {
+                          try {
+                            const { data } = await buyerOrderAPI.get(selectedViewOrder.id);
+                            setViewModalOrder(data);
+                          } catch (err) {
+                            setViewModalOrder(selectedViewOrder);
+                          }
+                        }}
                         title="Preview Order"
                       >
                         <Eye size={16} color="var(--primary)" />

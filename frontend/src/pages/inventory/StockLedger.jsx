@@ -9,28 +9,53 @@ export default function StockLedger() {
   const [ledgerData, setLedgerData] = useState([]);
 
   useEffect(() => {
-    // Fetch real ledger data from backend API
-    erpStockAPI.getMovements()
-      .then(res => {
-        const data = res.data || [];
-        const mapped = data.map(mov => ({
-          id: mov.id,
-          date: new Date(mov.timestamp).toLocaleDateString(),
-          sku: mov.item_id,
-          type: ['RECEIPT', 'QC_UPDATE'].includes(mov.transaction_type) ? 'Inward' : 'Outward',
-          ref: mov.tracking_id || '-',
-          qtyIn: mov.quantity > 0 ? mov.quantity : 0,
-          qtyOut: mov.quantity < 0 ? Math.abs(mov.quantity) : 0,
-          balance: 0, // In a real app we compute running balance on backend, default 0 for UI demo
-          godown: mov.location_type || 'Main Warehouse',
-          operator: mov.user_id || 'System'
-        }));
+    const fetchLedgerData = async () => {
+      try {
+        let mapped = [];
+        try {
+          const res = await api.get('/inventory/stock-ledger');
+          if (res.data && res.data.length > 0) {
+            mapped = res.data.map(mov => ({
+              id: mov.id,
+              date: mov.txn_date ? new Date(mov.txn_date).toLocaleDateString() : new Date().toLocaleDateString(),
+              sku: mov.item_name || 'Yarn Item',
+              type: mov.movement_type === 'INWARD' ? 'Inward' : 'Outward',
+              ref: mov.ref_voucher_no || mov.lot_no || '-',
+              qtyIn: mov.movement_type === 'INWARD' ? (mov.qty || 0) : 0,
+              qtyOut: mov.movement_type !== 'INWARD' ? Math.abs(mov.qty || 0) : 0,
+              balance: mov.qty || 0,
+              godown: mov.godown_id ? `Godown ${mov.godown_id}` : 'Main Warehouse',
+              operator: 'System'
+            }));
+          }
+        } catch (e) {
+          console.warn('Inventory stock ledger endpoint fallback', e);
+        }
+
+        if (mapped.length === 0) {
+          const res = await erpStockAPI.getMovements();
+          const data = res.data || [];
+          mapped = data.map(mov => ({
+            id: mov.id,
+            date: mov.timestamp ? new Date(mov.timestamp).toLocaleDateString() : new Date().toLocaleDateString(),
+            sku: mov.item_id,
+            type: ['RECEIPT', 'QC_UPDATE', 'INWARD'].includes(mov.transaction_type) ? 'Inward' : 'Outward',
+            ref: mov.tracking_id || '-',
+            qtyIn: mov.quantity > 0 ? mov.quantity : 0,
+            qtyOut: mov.quantity < 0 ? Math.abs(mov.quantity) : 0,
+            balance: mov.quantity || 0,
+            godown: mov.location_type || 'Main Warehouse',
+            operator: mov.user_id || 'System'
+          }));
+        }
         setLedgerData(mapped);
-      })
-      .catch((err) => {
-        console.error(err);
+      } catch (err) {
+        console.error('Failed to fetch ledger:', err);
         setLedgerData([]);
-      });
+      }
+    };
+
+    fetchLedgerData();
   }, []);
 
   const filteredLedger = useMemo(() => {

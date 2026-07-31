@@ -1,7 +1,6 @@
 """
 Dinesh Textile ERP — FastAPI application entry point.
 """
-from pickle import TRUE
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -136,9 +135,9 @@ async def lifespan(app: FastAPI):
                 session.add(admin)
                 await session.commit()
             else:
-                existing_admin.username = "admin"
-                existing_admin.password_hash = get_password_hash("admin123")
-                existing_admin.status = "Active"
+                setattr(existing_admin, "username", "admin")
+                setattr(existing_admin, "password_hash", get_password_hash("admin123"))
+                setattr(existing_admin, "status", "Active")
                 await session.commit()
 
             # Seed RBAC roles and permissions automatically
@@ -373,7 +372,7 @@ app.add_middleware(AuditMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL, "http://localhost:5173", "http://localhost:3000"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

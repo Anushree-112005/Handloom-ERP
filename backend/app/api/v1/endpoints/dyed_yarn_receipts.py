@@ -155,52 +155,73 @@ async def create_dyed_yarn_receipt(receipt_in: DyedYarnReceivedCreate, db: Async
     
     await db.commit()
 
-    # RULE 1 & 2: INVENTORY MODULE INTEGRATION (Receipt from Job Work + Loss Calc)
+    # INVENTORY MODULE INTEGRATION
     from app.services.inventory_service import post_stock_ledger
     from finance_app.models.stock_item import StockItem
-    from app.models.inventory import StockLedger
     
     for item_in in receipt_in.items:
-        stmt_item = select(StockItem).where(StockItem.name == item_in.yarn_count)
+        yarn_name = item_in.yarn_count or item_in.received_count or "Yarn Item"
+        stmt_item = select(StockItem).where(StockItem.name == yarn_name)
         res_item = await db.execute(stmt_item)
         stock_item = res_item.scalars().first()
-        
-        if stock_item:
-            # Rule 2: Loss % Calc
-            sent_qty = item_in.delivery_qty or 0.0
-            recv_qty = item_in.received_qty or 0.0
-            loss_pct = 0.0
-            if sent_qty > 0:
-                loss_pct = ((sent_qty - recv_qty) / sent_qty) * 100
-                
-            remarks = f"Dyed Yarn Received. Loss: {loss_pct:.2f}%"
+        if not stock_item:
+            q_cnt = select(StockItem).order_by(desc(StockItem.id))
+            r_cnt = await db.execute(q_cnt)
+            last_item = r_cnt.scalars().first()
+            n_id = (last_item.id + 1) if last_item else 1
+            stock_item = StockItem(
+                name=yarn_name,
+                code=f"YRN-{n_id:04d}",
+                item_category="YARN",
+                unit="Kgs",
+                purchase_rate=item_in.rate or 0.0,
+                selling_rate=item_in.rate or 0.0,
+                opening_qty=0,
+                opening_rate=0,
+                reorder_level=0,
+                is_active=True
+            )
+            db.add(stock_item)
+            await db.flush()
+
+        sent_qty = float(item_in.taken_kgs or 0.0)
+        recv_qty = float(item_in.rcvd_kgs or item_in.kgs or 0.0)
+        loss_pct = 0.0
+        if sent_qty > 0:
+            loss_pct = ((sent_qty - recv_qty) / sent_qty) * 100
             
-            # Decrease AT_JOB_WORK
+        remarks = f"Dyed Yarn Received. Loss: {loss_pct:.2f}%"
+        lot_no = item_in.our_lot_no or item_in.dyed_lot_no or "LOT-MAIN"
+        
+        if sent_qty > 0:
             await post_stock_ledger(
                 db=db,
                 stock_item_id=stock_item.id,
                 status="AT_JOB_WORK",
                 movement_type="TRANSFER_OUT",
                 qty=-sent_qty,
-                lot_no=item_in.lot_no,
+                lot_no=lot_no,
                 ref_voucher_type="DYEING_RECEIPT",
-                ref_voucher_no=db_receipt.receipt_no,
-                remarks=remarks
+                ref_voucher_no=str(db_receipt.receipt_no),
+                remarks=remarks,
+                allow_negative=True
             )
-            # Increase AVAILABLE (only received qty)
+        if recv_qty > 0:
             await post_stock_ledger(
                 db=db,
                 stock_item_id=stock_item.id,
                 status="AVAILABLE",
-                movement_type="INWARD", # Treating receipt as inward for the new location
+                movement_type="INWARD",
                 qty=recv_qty,
-                lot_no=item_in.lot_no,
-                godown_id=db_receipt.godown_id,
+                lot_no=lot_no,
+                godown_id=db_receipt.godown_id or 1,
                 ref_voucher_type="DYEING_RECEIPT",
                 ref_voucher_no=db_receipt.receipt_no,
                 remarks=remarks
             )
-    return {"id": db_receipt.id, "message": "Dyed Yarn Receipt created successfully"}
+
+    await db.commit()
+    return {"id": db_receipt.id, "receipt_no": db_receipt.receipt_no, "inv_no": db_receipt.inv_no, "message": "Dyed Yarn Receipt created successfully"}
 
 @router.get("")
 async def list_dyed_yarn_receipts(db: AsyncSession = Depends(get_db)):

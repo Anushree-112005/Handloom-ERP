@@ -11,6 +11,7 @@ from app.core.database import get_db
 from app.core.config import settings
 from app.models.design_entry import DesignEntry
 from app.models.notification import Notification
+from app.design_ai.pixtral_service import process_image_bytes_with_pixtral
 
 router = APIRouter(prefix="/design-entries", tags=["Design Entry"])
 
@@ -236,13 +237,13 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
     if not files:
         return {"rows": []}
 
-    # ── Multi-API-key rotation ──────────────────────────────────────────────
-    # Load all keys from config; exhausted keys are tracked per-request
+    # ── Vision Model Setup (Pixtral / NVIDIA / Groq) ─────────────────────────
     all_api_keys = settings.get_groq_api_keys()
     nvidia_api_key = getattr(settings, "NVIDIA_API_KEY", None)
+    mistral_api_key = os.getenv("mistral_api_key") or os.getenv("MISTRAL_API_KEY")
 
-    if not all_api_keys and not nvidia_api_key:
-        raise HTTPException(status_code=500, detail="No AI Vision API keys configured. Add NVIDIA_API_KEY or GROQ_API_KEYS to .env")
+    if not all_api_keys and not nvidia_api_key and not mistral_api_key:
+        raise HTTPException(status_code=500, detail="No AI Vision API keys configured. Add mistral_api_key, NVIDIA_API_KEY, or GROQ_API_KEYS to .env")
 
     # Track which keys are exhausted (rate-limited) this request
     exhausted_keys: set = set()
@@ -256,47 +257,79 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
             or "rate limit" in err_str.lower()
         )
 
-    def call_vision_with_key_rotation(messages: list, max_tokens: int = 4800):
-        """Try NVIDIA Vision API (Nemotron OCR v2). Retry once on timeout before failing."""
+    def call_vision_with_key_rotation(messages: list, max_tokens: int = 4800, raw_bytes: Optional[bytes] = None):
+        """Primary: Pixtral Vision Service via app/design_ai/pixtral_service.py. Fallback: NVIDIA Nemotron / Groq."""
         from types import SimpleNamespace
         import requests
+        import base64
 
-        nv_model = getattr(settings, "NVIDIA_VISION_MODEL", "nvidia/nemotron-nano-12b-v2-vl")
-        nv_url = "https://integrate.api.nvidia.com/v1/chat/completions"
-        nv_headers = {
-            "Authorization": f"Bearer {nvidia_api_key}",
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "model": nv_model,
-            "messages": messages,
-            "temperature": 0.0,
-            "max_tokens": max_tokens
-        }
-
-        # Attempt 1: 120s timeout
-        for attempt, timeout_sec in enumerate([120, 180], start=1):
+        # 1. Try Pixtral OCR service if key is available
+        if mistral_api_key:
             try:
-                print(f"[NVIDIA VISION] Attempt {attempt} with timeout={timeout_sec}s ...")
-                response = requests.post(nv_url, json=payload, headers=nv_headers, timeout=timeout_sec)
-                if response.status_code == 200:
-                    res_json = response.json()
-                    content = res_json["choices"][0]["message"]["content"]
-                    print(f"[NVIDIA VISION Nemotron OCR v2] Success on attempt {attempt}")
-                    return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=content))])
-                else:
-                    err_str = f"NVIDIA API Error {response.status_code}: {response.text[:300]}"
-                    print(f"[NVIDIA VISION WARNING] {err_str}")
-                    raise HTTPException(status_code=502, detail=f"AI extraction failed: {err_str}")
-            except HTTPException:
-                raise
-            except Exception as nvidia_err:
-                print(f"[NVIDIA VISION ERROR] Attempt {attempt} failed: {nvidia_err}")
-                if attempt == 2:
-                    raise HTTPException(
-                        status_code=504,
-                        detail=f"AI extraction timed out after {timeout_sec}s. Please retry."
+                img_data_bytes = raw_bytes
+                prompt_text = ""
+                for msg in messages:
+                    c_val = msg.get("content")
+                    if isinstance(c_val, list):
+                        for item in c_val:
+                            if isinstance(item, dict):
+                                if item.get("type") == "text":
+                                    prompt_text += item.get("text", "") + "\n"
+                                elif item.get("type") == "image_url" and not img_data_bytes:
+                                    url_val = item.get("image_url", {})
+                                    url_str = url_val.get("url", "") if isinstance(url_val, dict) else str(url_val)
+                                    if isinstance(url_str, str) and "base64," in url_str:
+                                        b64_str = url_str.split("base64,")[1]
+                                        img_data_bytes = base64.b64decode(b64_str)
+                    elif isinstance(c_val, str):
+                        prompt_text += c_val + "\n"
+
+                if img_data_bytes:
+                    print("[PIXTRAL VISION OCR] Calling app.design_ai.pixtral_service...")
+                    content_res, duration = process_image_bytes_with_pixtral(
+                        image_bytes=img_data_bytes,
+                        prompt=prompt_text.strip()
                     )
+                    print(f"[PIXTRAL VISION OCR Success] Extracted in {duration:.2f}s")
+                    return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=content_res))])
+            except Exception as pixtral_err:
+                print(f"[PIXTRAL VISION WARNING] Pixtral OCR failed ({pixtral_err}). Falling back to NVIDIA Vision...")
+
+        # 2. Fallback to NVIDIA Nemotron Vision API
+        if nvidia_api_key:
+            nv_model = getattr(settings, "NVIDIA_VISION_MODEL", "nvidia/nemotron-nano-12b-v2-vl")
+            nv_url = "https://integrate.api.nvidia.com/v1/chat/completions"
+            nv_headers = {
+                "Authorization": f"Bearer {nvidia_api_key}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "model": nv_model,
+                "messages": messages,
+                "temperature": 0.0,
+                "max_tokens": max_tokens
+            }
+
+            for attempt, timeout_sec in enumerate([120, 180], start=1):
+                try:
+                    print(f"[NVIDIA VISION] Attempt {attempt} with timeout={timeout_sec}s ...")
+                    response = requests.post(nv_url, json=payload, headers=nv_headers, timeout=timeout_sec)
+                    if response.status_code == 200:
+                        res_json = response.json()
+                        content = res_json["choices"][0]["message"]["content"]
+                        print(f"[NVIDIA VISION Nemotron OCR v2] Success on attempt {attempt}")
+                        return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=content))])
+                    else:
+                        err_str = f"NVIDIA API Error {response.status_code}: {response.text[:300]}"
+                        print(f"[NVIDIA VISION WARNING] {err_str}")
+                except Exception as nvidia_err:
+                    print(f"[NVIDIA VISION ERROR] Attempt {attempt} failed: {nvidia_err}")
+
+        raise HTTPException(
+            status_code=504,
+            detail="AI image extraction timed out or failed on vision endpoints. Please retry."
+        )
+
     # ── End rotation setup ──────────────────────────────────────────────────
 
     def clean_llm_text(raw_content: str) -> str:
@@ -669,25 +702,23 @@ OUTPUT FORMAT — Return ONLY valid JSON inside a ```json block:
             weft_list = res_data.get("weft", [])
 
             # 2. ADAPTIVE COLUMN-CROP EXTRACTION FOR MULTI-ROW / 20-ROW SHEETS
-            # Only trigger column crop pass if the sheet contains > 10 pattern rows (e.g. 20-row sheets)
+            # Only trigger column crop pass if the sheet contains > 10 pattern rows
             if len(warp_list) > 10 or len(weft_list) > 10 or (len(warp_list) > 0 and sum(int(r.get("threads", 0)) for r in warp_list) > 200):
                 print(f"[ADAPTIVE] Long multi-row design sheet detected (Warp rows={len(warp_list)}). Running Column Crop Pass...")
                 
                 prompt_warp_crop = """You are an expert OCR vision system for handwritten textile design sheets.
 Analyze this cropped image showing the WARP SECTION (Left Column) of a textile design sheet.
 
-There are 20 handwritten pattern rows listed from top to bottom.
-Extract EVERY SINGLE ROW in order from row 1 to row 20.
-
-Color names: NAVY (or NANY), WHITE, RED.
-Read the thread numbers next to each color line with 100% EXTREME PRECISION.
-Look at the sum calculation at the bottom: 370 x 11R. The sum of your 20 extracted WARP thread values MUST EQUAL 370.
+Extract EVERY SINGLE handwritten pattern row listed from top to bottom in order.
+Read the color name and thread count for each line with 100% EXTREME PRECISION.
+Normalize color names: NAVY (or NANY -> NAVY), WHITE, RED, MAROON, VIOLET, BROWN, BLACK.
+Ignore bottom summation totals (e.g. 370 x 11R, 4070).
 
 Output ONLY valid JSON:
 ```json
 {
   "warp": [
-    {"line": 1, "color": "NAVY", "threads": 68, "times": "11"}
+    {"line": 1, "color": "NAVY", "threads": 68}
   ]
 }
 ```"""
@@ -703,25 +734,23 @@ Output ONLY valid JSON:
                     raw_w = comp_warp.choices[0].message.content or ""
                     p_w = parse_text_from_llm(raw_w)
                     w_rows = p_w.get("warp", [])
-                    if len(w_rows) >= 15:
+                    if len(w_rows) >= 5:
                         print(f"[COLUMN CROP] Successfully extracted {len(w_rows)} WARP rows via Left Crop!")
                         warp_list = w_rows
 
                 prompt_weft_crop = """You are an expert OCR vision system for handwritten textile design sheets.
 Analyze this cropped image showing the WEFT SECTION (Right Column) of a textile design sheet.
 
-There are 20 handwritten pattern rows listed from top to bottom.
-Extract EVERY SINGLE ROW in order from row 1 to row 20.
-
-Color names: NAVY (or NANY), WHITE, RED.
-Read the thread numbers next to each color line with 100% EXTREME PRECISION.
-Look at the sum calculation at the bottom: 424. The sum of your 20 extracted WEFT thread values MUST EQUAL 424.
+Extract EVERY SINGLE handwritten pattern row listed from top to bottom in order.
+Read the color name and thread count for each line with 100% EXTREME PRECISION.
+Normalize color names: NAVY (or NANY -> NAVY), WHITE, RED, MAROON, VIOLET, BROWN, BLACK.
+Ignore bottom summation totals (e.g. 424).
 
 Output ONLY valid JSON:
 ```json
 {
   "weft": [
-    {"line": 1, "color": "NAVY", "threads": 84, "times": "1"}
+    {"line": 1, "color": "NAVY", "threads": 84}
   ]
 }
 ```"""
@@ -737,14 +766,14 @@ Output ONLY valid JSON:
                     raw_e = comp_weft.choices[0].message.content or ""
                     p_e = parse_text_from_llm(raw_e)
                     e_rows = p_e.get("weft", [])
-                    if len(e_rows) >= 15:
+                    if len(e_rows) >= 5:
                         print(f"[COLUMN CROP] Successfully extracted {len(e_rows)} WEFT rows via Right Crop!")
                         weft_list = e_rows
             else:
                 print(f"[ADAPTIVE] Short design sheet detected (Warp rows={len(warp_list)}, Weft rows={len(weft_list)}). Preserving full image extraction!")
 
             def prune_exact_duplicate_halves(rows: list) -> list:
-                if len(rows) >= 6:
+                if len(rows) >= 2:
                     keys = [(r.get("color", "").strip().lower(), int(r.get("threads", 0))) for r in rows]
                     for unit_size in range(1, len(rows) // 2 + 1):
                         if len(rows) % unit_size == 0:
@@ -800,13 +829,14 @@ Output ONLY valid JSON:
         color_val = str(item.get("color") or "White").strip().title()
         yarn_count = normalize_yarn_count(item.get("yarn_count", ""))
         drawing_order = str(item.get("drawing_order") or item.get("line") or "").strip()
+        times_val = str(final_no_of_repeats) if (final_no_of_repeats and final_no_of_repeats > 1) else str(item.get("times") or "1")
             
         formatted_rows.append({
             "type": "Warp",
             "yarn_count": yarn_count,
             "color": color_val,
             "threads": int(item.get("threads") or 1),
-            "times": str(item.get("times") or final_no_of_repeats or "1"),
+            "times": times_val,
             "line": drawing_order,
             "pick": "",
             "drawing_order": drawing_order,
@@ -826,7 +856,7 @@ Output ONLY valid JSON:
             "yarn_count": yarn_count,
             "color": color_val,
             "threads": int(item.get("threads") or 1),
-            "times": str(item.get("times") or final_no_of_repeats or "1"),
+            "times": "1",
             "line": drawing_order,
             "pick": "",
             "drawing_order": drawing_order,

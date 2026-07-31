@@ -6,6 +6,7 @@ import { yarnInwardAPI, partyAPI, yarnPurchaseOrderAPI, subMasterAPI, dropdownAP
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { rackAPI } from '../../services/api';
+import { confirmDialog } from '../../utils/dialogs';
 
 const DetailRow = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
@@ -261,9 +262,13 @@ export default function YarnInward() {
 
   const handleConfirm = async (e) => {
     e.preventDefault();
-    if (!window.confirm("Are you sure you want to confirm this GRN? This will update stock and send pending bill to Finance.")) {
-      return;
-    }
+    const confirmed = await confirmDialog({
+      title: 'Confirm GRN',
+      message: 'Are you sure you want to confirm this GRN? This will update stock and send pending bill to Finance.',
+      confirmText: 'Confirm',
+      type: 'info'
+    });
+    if (!confirmed) return;
     try {
       await yarnInwardAPI.confirm(editingId);
       alert('GRN Confirmed Successfully!');
@@ -314,7 +319,13 @@ export default function YarnInward() {
 
   const handleDelete = async (id, ref, e) => {
     if (e) e.stopPropagation();
-    if (window.confirm(`Are you sure you want to delete ${ref}?`)) {
+    const confirmed = await confirmDialog({
+      title: 'Delete Yarn Inward',
+      message: `Are you sure you want to delete ${ref}?`,
+      confirmText: 'Delete',
+      type: 'danger'
+    });
+    if (confirmed) {
       try {
         await yarnInwardAPI.delete(id);
         if (selectedViewEntry?.id === id) setSelectedViewEntry(null);

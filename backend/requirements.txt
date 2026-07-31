@@ -23,3 +23,4 @@ weasyprint
 groq
 openpyxl
 xhtml2pdf
+mistralai

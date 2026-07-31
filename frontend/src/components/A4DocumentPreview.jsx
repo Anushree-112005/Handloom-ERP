@@ -4,6 +4,7 @@ import logoImg from '../assets/logo.png';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import html2canvas from 'html2canvas';
+import { getBackendURL } from '../services/api';
 
 export const downloadElementAsPdf = async (element, filename = 'Document_Profile.pdf') => {
   if (!element) return;
@@ -280,7 +281,7 @@ const A4DocumentPreview = ({
                             src={getBackendURL(imgData.url)} 
                             alt={imgData.label} 
                             style={{ width: '100%', height: '130px', objectFit: 'contain', borderRadius: 4, cursor: 'pointer' }} 
-                            onClick={() => window.open(imgData.url.startsWith('http') ? imgData.url : `http://localhost:8000${imgData.url}`, '_blank')}
+                            onClick={() => window.open(getBackendURL(imgData.url), '_blank')}
                           />
                           <div style={{ fontSize: 10, fontWeight: 600, color: '#475569', marginTop: 6 }}>{imgData.label}</div>
                         </div>

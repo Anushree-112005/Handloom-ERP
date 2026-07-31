@@ -8,8 +8,35 @@ import os
 import io
 
 from app.design_ai.image_analyzer import extract_colors_and_pipeline, classify_weave
+from app.design_ai.pixtral_service import process_image_bytes_with_pixtral
 
 router = APIRouter(prefix="/design-ai", tags=["Design AI"])
+
+@router.post("/pixtral-ocr")
+async def pixtral_ocr_extraction(
+    file: UploadFile = File(...),
+    model: str = Form("pixtral-12b-2409")
+):
+    try:
+        content = await file.read()
+        mime_type = file.content_type or "image/jpeg"
+        
+        markdown_output, duration = process_image_bytes_with_pixtral(
+            image_bytes=content,
+            mime_type=mime_type,
+            model=model
+        )
+        
+        return {
+            "success": True,
+            "filename": file.filename,
+            "execution_time_seconds": round(duration, 2),
+            "model": model,
+            "markdown": markdown_output
+        }
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Pixtral OCR extraction failed: {str(e)}")
 
 @router.post("/analyze")
 async def analyze_image(

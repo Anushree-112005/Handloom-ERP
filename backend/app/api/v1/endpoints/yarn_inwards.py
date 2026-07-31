@@ -131,49 +131,57 @@ async def create_inward(data: YarnInwardCreate, db: AsyncSession = Depends(get_d
 
     db.add(order)
     await db.commit()
-    await db.refresh(order)
-
-    # RULE 1: INVENTORY MODULE INTEGRATION
-    from app.services.inventory_service import post_stock_ledger
-    from finance_app.models.stock_item import StockItem
     
-    for item in order.items:
-        # Find or create a matching StockItem for this yarn
-        stmt_item = select(StockItem).where(StockItem.name == item.yarn_count)
-        res_item = await db.execute(stmt_item)
-        stock_item = res_item.scalars().first()
-        
-        if not stock_item:
-            stock_item = StockItem(
-                name=item.yarn_count or "Unknown Yarn",
-                item_category="YARN",
-                yarn_form="CONE" if order.cone_type else "NA",
-                company_id=1,
-                unit="Kgs"
-            )
-            db.add(stock_item)
-            await db.commit()
-            await db.refresh(stock_item)
-            
-        await post_stock_ledger(
-            db=db,
-            stock_item_id=stock_item.id,
-            status="AVAILABLE",
-            movement_type="INWARD",
-            qty=item.kgs or 0.0,
-            rate=item.rate,
-            lot_no=item.lot_no,
-            godown_id=order.godown_id,
-            ref_voucher_type="YARN_INWARD",
-            ref_voucher_no=order.ref_no,
-            remarks=f"Yarn Inward from {order.received_from}"
-        )
-
-
-    result = await db.execute(
+    # Reload order with items loaded eagerly
+    res_order = await db.execute(
         select(YarnInward).options(selectinload(YarnInward.items)).where(YarnInward.id == order.id)
     )
-    return result.scalar_one()
+    order = res_order.scalar_one()
+
+    # RULE 1: INVENTORY MODULE INTEGRATION
+    try:
+        from app.services.inventory_service import post_stock_ledger
+        from finance_app.models.stock_item import StockItem
+
+        for item in order.items:
+            if not item.yarn_count: continue
+            item_name_str = item.yarn_count
+            stmt_item = select(StockItem).where(StockItem.name == item_name_str)
+            res_item = await db.execute(stmt_item)
+            stock_item = res_item.scalars().first()
+
+            if not stock_item:
+                stock_item = StockItem(
+                    name=item_name_str,
+                    item_code=f"YRN-{max_num + 1:04d}",
+                    item_category="YARN",
+                    yarn_form="CONE" if order.cone_type else "NA",
+                    company_id=1,
+                    unit="Kgs",
+                    purchase_rate=float(item.rate or 0.0)
+                )
+                db.add(stock_item)
+                await db.flush()
+
+            await post_stock_ledger(
+                db=db,
+                stock_item_id=stock_item.id,
+                status="AVAILABLE",
+                movement_type="INWARD",
+                qty=float(item.kgs or 0.0),
+                rate=float(item.rate or 0.0),
+                lot_no=item.lot_no,
+                godown_id=order.godown_id or 1,
+                ref_voucher_type="YARN_INWARD",
+                ref_voucher_no=order.ref_no,
+                remarks=f"Yarn Inward from {order.received_from}"
+            )
+        await db.commit()
+    except Exception as e:
+        import logging
+        logging.getLogger("yarn_inward_inventory").error(f"Stock ledger error: {e}")
+
+    return order
 
 
 @router.get("/{inward_id}", response_model=YarnInwardOut)
@@ -222,11 +230,38 @@ async def update_inward(inward_id: int, data: YarnInwardCreate, db: AsyncSession
 
 @router.delete("/{inward_id}", status_code=204)
 async def delete_inward(inward_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(YarnInward).where(YarnInward.id == inward_id))
+    result = await db.execute(
+        select(YarnInward).options(selectinload(YarnInward.items)).where(YarnInward.id == inward_id)
+    )
     order = result.scalar_one_or_none()
     if not order:
         raise HTTPException(status_code=404, detail="Yarn Inward not found")
-        
+
+    if order.ref_no:
+        try:
+            from app.models.inventory import StockLedger, StockBalance
+            from app.models.stock import CurrentStock, StockMovement
+
+            # Get ledger entries for this GRN
+            res_led = await db.execute(select(StockLedger).where(StockLedger.ref_voucher_no == order.ref_no))
+            ledgers = res_led.scalars().all()
+            for leg in ledgers:
+                res_bal = await db.execute(select(StockBalance).where(StockBalance.stock_item_id == leg.stock_item_id))
+                bal = res_bal.scalars().first()
+                if bal:
+                    bal.closing_qty = max(0.0, float(bal.closing_qty) - float(leg.qty))
+                await db.delete(leg)
+
+            for item in order.items:
+                if item.yarn_count:
+                    res_curr = await db.execute(select(CurrentStock).where(CurrentStock.item_id == item.yarn_count))
+                    curr = res_curr.scalars().first()
+                    if curr:
+                        curr.quantity = max(0.0, float(curr.quantity) - float(item.kgs or 0.0))
+        except Exception as err:
+            import logging
+            logging.getLogger("delete_inward_stock").error(f"Error reverting stock on delete: {err}")
+
     await db.delete(order)
     await db.commit()
     return None

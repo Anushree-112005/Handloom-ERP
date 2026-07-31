@@ -81,12 +81,6 @@ export const overrideBrowserDialogs = () => {
   };
 
   window.confirm = (message) => {
-    console.warn("Synchronous window.confirm called. For best UX, please use async await confirmDialog().");
-    if (dialogRef) {
-      // For synchronous callers who don't await, we open the modal and return false initially
-      confirmDialog({ message: String(message), type: 'warning', title: 'Confirmation Required' });
-      return false;
-    }
     return originalConfirm(message);
   };
 
@@ -99,3 +93,4 @@ export const overrideBrowserDialogs = () => {
     return originalPrompt(message, defaultValue);
   };
 };
+
