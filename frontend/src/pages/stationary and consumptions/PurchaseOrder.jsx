@@ -461,6 +461,30 @@ export default function PurchaseOrder() {
   const selectedVendorObj = vendors.find(v => v.vendor_id === parseInt(formData.vendor_id));
   const selectedWarehouseObj = warehouses.find(w => w.id === parseInt(formData.delivery_warehouse_id));
 
+  const totalPOValue = pos.reduce((sum, po) => sum + (parseFloat(po.grand_total) || 0), 0);
+  const pendingPOsCount = pos.filter(po => po.status?.toLowerCase() === 'pending').length;
+  const approvedPOsCount = pos.filter(po => po.status?.toLowerCase() === 'approved').length;
+  const uniqueVendors = new Set(pos.map(po => po.vendor_id)).size;
+
+  const stats = [
+    {
+      label: 'Total Purchase Orders', value: pos.length,
+      icon: <FileSpreadsheet size={24} />, color: '#3b82f6'
+    },
+    {
+      label: 'Pending Orders', value: pendingPOsCount,
+      icon: <Clock size={24} />, color: '#f59e0b'
+    },
+    {
+      label: 'Approved Orders', value: approvedPOsCount,
+      icon: <CheckCircle size={24} />, color: '#10b981'
+    },
+    {
+      label: 'Vendors in Use', value: uniqueVendors,
+      icon: <Briefcase size={24} />, color: '#8b5cf6'
+    }
+  ];
+
   // Tabs for PO modal
   const tabs = [
     { id: 'order_info', label: 'Order Info', icon: Building2 },
@@ -522,6 +546,20 @@ export default function PurchaseOrder() {
             <Plus size={16} /> Create PO
           </button>
         </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 20, marginBottom: 24 }}>
+        {stats.map(stat => (
+          <div key={stat.label} className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+            <div className="stat-icon" style={{ background: `${stat.color}20`, color: stat.color }}>
+              {stat.icon}
+            </div>
+            <div className="stat-details">
+              <h3>{stat.label}</h3>
+              <div className="value">{stat.value}</div>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="card" style={{ padding: 0, border: 'none', boxShadow: 'none' }}>

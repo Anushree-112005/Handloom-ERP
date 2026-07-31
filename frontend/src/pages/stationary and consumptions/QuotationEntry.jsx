@@ -469,6 +469,31 @@ export default function QuotationEntry() {
 
   const selectedVendor = vendors.find(v => v.vendor_id === parseInt(formData.vendor_id));
 
+  const totalQuotationValue = quotations.reduce((sum, q) => sum + (q.grand_total || 0), 0);
+
+  const stats = [
+    {
+      label: 'Total Quotations',
+      value: quotations.length,
+      icon: <FileText size={24} />, color: '#3b82f6'
+    },
+    {
+      label: 'Registered Vendors',
+      value: vendors.length,
+      icon: <Users size={24} />, color: '#10b981'
+    },
+    {
+      label: 'Total Quotation Value',
+      value: `₹${totalQuotationValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+      icon: <IndianRupee size={24} />, color: '#8b5cf6'
+    },
+    {
+      label: 'Quoted Items',
+      value: quotations.reduce((sum, q) => sum + (q.items?.length || 0), 0),
+      icon: <Package size={24} />, color: '#f59e0b'
+    }
+  ];
+
   // Tab definitions
   const tabs = [
     { id: 'order_info', label: 'Order Info', icon: Building2 },
@@ -593,6 +618,20 @@ export default function QuotationEntry() {
             </div>
           )}
         </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 20, marginBottom: 24 }}>
+        {stats.map(stat => (
+          <div key={stat.label} className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+            <div className="stat-icon" style={{ background: `${stat.color}20`, color: stat.color }}>
+              {stat.icon}
+            </div>
+            <div className="stat-details">
+              <h3>{stat.label}</h3>
+              <div className="value">{stat.value}</div>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="card" style={{ padding: 0, border: 'none', boxShadow: 'none' }}>

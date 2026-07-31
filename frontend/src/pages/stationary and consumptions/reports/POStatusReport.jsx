@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { AlertTriangle, Briefcase, Download, Edit2, Eye, FileText, Filter, IndianRupee, MapPin, Phone, RefreshCw, Search, Trash2, User, X, Globe, Mail, ClipboardList } from 'lucide-react';
+import { AlertTriangle, Briefcase, CheckCircle, Download, Edit2, Eye, FileText, Filter, IndianRupee, MapPin, Phone, RefreshCw, Search, Trash2, User, X, Globe, Mail, ClipboardList } from 'lucide-react';
 
 import { storesService } from '../../../services/storesService';
 
@@ -124,6 +124,29 @@ export default function POStatusReport() {
     }
   };
 
+  const stats = [
+    {
+      label: 'Total Requests',
+      value: data.length,
+      icon: <FileText size={24} />, color: '#3b82f6'
+    },
+    {
+      label: 'Approved',
+      value: data.filter(item => (item.current_status || '').toLowerCase() === 'approved').length,
+      icon: <CheckCircle size={24} />, color: '#10b981'
+    },
+    {
+      label: 'Completed',
+      value: data.filter(item => (item.current_status || '').toLowerCase() === 'completed').length,
+      icon: <Briefcase size={24} />, color: '#8b5cf6'
+    },
+    {
+      label: 'Pending',
+      value: data.filter(item => (item.current_status || '').toLowerCase() === 'pending').length,
+      icon: <RefreshCw size={24} />, color: '#f59e0b'
+    }
+  ];
+
   return (
     <div className="animate-fade page-wrapper" style={{ paddingBottom: '60px' }}>
       {/* Header */}
@@ -154,6 +177,20 @@ export default function POStatusReport() {
             <RefreshCw size={18} />
           </button>
         </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 20, marginBottom: 24 }}>
+        {stats.map(stat => (
+          <div key={stat.label} className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+            <div className="stat-icon" style={{ background: `${stat.color}20`, color: stat.color }}>
+              {stat.icon}
+            </div>
+            <div className="stat-details">
+              <h3>{stat.label}</h3>
+              <div className="value">{stat.value}</div>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="card" style={{ padding: 0, border: 'none', boxShadow: 'none' }}>

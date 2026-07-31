@@ -244,6 +244,20 @@ export default function ReturnableDCManagement() {
       {/* ══════════ LIST VIEW ══════════ */}
       {view === 'list' ? (
         <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 20, marginBottom: 24 }}>
+            {stats.map(stat => (
+              <div key={stat.label} className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+                <div className="stat-icon" style={{ background: `${stat.color}20`, color: stat.color }}>
+                  {stat.icon}
+                </div>
+                <div className="stat-details">
+                  <h3>{stat.label}</h3>
+                  <div className="value">{stat.value}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
           <div className="card" style={{ padding: 0, border: 'none', boxShadow: 'none' }}>
             {/* Search Card */}
             <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
@@ -303,7 +317,7 @@ export default function ReturnableDCManagement() {
                             const detailedDC = await storesService.getReturnableDC(dc.id);
                             setSelectedViewItem(detailedDC);
                           }}
-                          style={{ cursor: 'pointer', transition: 'background 0.2s', background: selectedViewItem?.id === dc.id ? 'var(--bg-secondary)' : isOver ? 'rgba(254, 226, 226, 0.5)' : 'transparent' }}
+                          style={{ cursor: 'pointer', transition: 'background 0.2s', background: selectedViewItem?.id === dc.id ? 'var(--bg-secondary)' : 'transparent' }}
                         >
                           <td style={{ fontFamily: "monospace", color: '#4f46e5', fontWeight: 700 }}>{dc.dc_no}</td>
                           <td>{dc.issued_to_department_name || '-'}</td>

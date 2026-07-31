@@ -441,8 +441,3 @@ export const storesService = {
 };
 
 export default storesService;
-
-};
-
-export default storesService;
-

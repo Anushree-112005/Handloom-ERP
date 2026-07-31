@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { AlertTriangle, Briefcase, Download, Edit2, Eye, FileText, Filter, IndianRupee, MapPin, Phone, Printer, RefreshCw, Search, Trash2, User, X, Globe, Mail, ClipboardList } from 'lucide-react';
+import { AlertTriangle, Download, Eye, FileText, Filter, MapPin, Phone, Printer, RefreshCw, Search, X, Globe, Mail } from 'lucide-react';
 
-import { storesService } from '../../../services/storesService';
+import storesService from '../../../services/storesService';
 
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -120,6 +120,29 @@ export default function POPrintReport() {
     }
   };
 
+  const stats = [
+    {
+      label: 'Total Records',
+      value: data.length,
+      icon: <FileText size={24} />, color: '#3b82f6'
+    },
+    {
+      label: 'Purchase Orders',
+      value: data.filter(item => item.document_type === 'PO').length,
+      icon: <Printer size={24} />, color: '#10b981'
+    },
+    {
+      label: 'Delivery Challans',
+      value: data.filter(item => item.document_type === 'DC').length,
+      icon: <MapPin size={24} />, color: '#8b5cf6'
+    },
+    {
+      label: 'Pending',
+      value: data.filter(item => (item.status || '').toLowerCase() === 'pending').length,
+      icon: <RefreshCw size={24} />, color: '#f59e0b'
+    }
+  ];
+
   return (
     <div className="animate-fade page-wrapper" style={{ paddingBottom: '60px' }}>
       {/* Header */}
@@ -150,6 +173,20 @@ export default function POPrintReport() {
             <RefreshCw size={18} />
           </button>
         </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 20, marginBottom: 24 }}>
+        {stats.map(stat => (
+          <div key={stat.label} className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+            <div className="stat-icon" style={{ background: `${stat.color}20`, color: stat.color }}>
+              {stat.icon}
+            </div>
+            <div className="stat-details">
+              <h3>{stat.label}</h3>
+              <div className="value">{stat.value}</div>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="card" style={{ padding: 0, border: 'none', boxShadow: 'none' }}>
@@ -197,57 +234,56 @@ export default function POPrintReport() {
           <>
             <div className="table-responsive">
               <div className="card" style={{ padding: 0, overflowX: "auto" }}>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>PO/DC Number</th>
-                    <th>Type</th>
-                    <th>Vendor</th>
-                    <th>Date</th>
-                    <th style={{ textAlign: 'right' }}>Total Items</th>
-                    <th style={{ textAlign: 'right' }}>Total Qty</th>
-                    <th style={{ textAlign: 'right' }}>Total Amount</th>
-                    <th>Status</th>
-                    <th style={{ textAlign: 'center' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedData.map((row, idx) => (
-                    <tr 
-                      key={idx}
-                      style={{ cursor: 'pointer', transition: 'background 0.2s', background: selectedViewItem?.id === row.document_number ? 'var(--bg-secondary)' : 'transparent' }}
-                      onClick={() => setSelectedViewItem(row)}
-                    >
-                      <td style={{ fontFamily: "monospace", color: '#4f46e5', fontWeight: 700 }}>{row.document_number}</td>
-                      <td>
-                        <span style={{
-                          padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold',
-                          background: row.document_type === 'PO' ? '#e0e7ff' : '#fce7f3',
-                          color: row.document_type === 'PO' ? '#4338ca' : '#be185d'
-                        }}>
-                          {row.document_type}
-                        </span>
-                      </td>
-                      <td style={{ fontWeight: 600 }}>{row.vendor_name}</td>
-                      <td>{row.date}</td>
-                      <td style={{ textAlign: 'right' }}>{row.total_items}</td>
-                      <td style={{ textAlign: 'right' }}>{row.total_quantity}</td>
-                      <td style={{ textAlign: 'right', fontWeight: 600 }}>{row.total_amount ? `Rs.${row.total_amount}` : '-'}</td>
-                      <td>
-                        <span className={`status-badge ${(row.status || 'pending').toLowerCase().replace(' ', '-')}`}>
-                          {row.status}
-                        </span>
-                      </td>
-                      <td onClick={e => e.stopPropagation()} style={{ textAlign: 'center' }}>
-                        <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setSelectedViewItem(row)} title="Preview"><Eye size={16} color="var(--primary)" /></button>
-                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Print Document"><Printer size={16} color="var(--text-primary)" /></button>
-                        </div>
-                      </td>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>PO/DC Number</th>
+                      <th>Type</th>
+                      <th>Vendor</th>
+                      <th>Date</th>
+                      <th style={{ textAlign: 'right' }}>Total Items</th>
+                      <th style={{ textAlign: 'right' }}>Total Qty</th>
+                      <th style={{ textAlign: 'right' }}>Total Amount</th>
+                      <th>Status</th>
+                      <th style={{ textAlign: 'center' }}>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {paginatedData.map((row, idx) => (
+                      <tr
+                        key={idx}
+                        style={{ cursor: 'pointer', transition: 'background 0.2s', background: selectedViewItem?.document_number === row.document_number ? 'var(--bg-secondary)' : 'transparent' }}
+                        onClick={() => setSelectedViewItem(row)}
+                      >
+                        <td style={{ fontFamily: "monospace", color: '#4f46e5', fontWeight: 700 }}>{row.document_number}</td>
+                        <td>
+                          <span style={{
+                            padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold',
+                            background: row.document_type === 'PO' ? '#e0e7ff' : '#fce7f3',
+                            color: row.document_type === 'PO' ? '#4338ca' : '#be185d'
+                          }}>
+                            {row.document_type}
+                          </span>
+                        </td>
+                        <td style={{ fontWeight: 600 }}>{row.vendor_name}</td>
+                        <td>{row.date}</td>
+                        <td style={{ textAlign: 'right' }}>{row.total_items}</td>
+                        <td style={{ textAlign: 'right' }}>{row.total_quantity}</td>
+                        <td style={{ textAlign: 'right', fontWeight: 600 }}>{row.total_amount ? `Rs.${row.total_amount}` : '-'}</td>
+                        <td>
+                          <span className={`status-badge ${(row.status || 'pending').toLowerCase().replace(' ', '-')}`}>
+                            {row.status}
+                          </span>
+                        </td>
+                        <td onClick={e => e.stopPropagation()} style={{ textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                            <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); setSelectedViewItem(row); }} title="Preview"><Eye size={16} color="var(--primary)" /></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
 
@@ -352,16 +388,16 @@ export default function POPrintReport() {
                     <MapPin size={16} strokeWidth={2.5} style={{ flexShrink: 0, marginTop: 2, color: '#1e3a8a' }} />
                     <div>
                       <div style={{ fontWeight: 800, marginBottom: 2 }}>Dinesh Exports</div>
-                      <div style={{ color: '#475569', fontWeight: 500, lineHeight: '16px' }}>No. 123, Textile Street,<br/>Erode, Tamil Nadu - 638001, India</div>
+                      <div style={{ color: '#475569', fontWeight: 500, lineHeight: '16px' }}>No. 123, Textile Street,<br />Erode, Tamil Nadu - 638001, India</div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Phone size={14} color="#1e3a8a" strokeWidth={2.5}/> 0424-1234567</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Mail size={14} color="#1e3a8a" strokeWidth={2.5}/> info@dineshexports.com</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Globe size={14} color="#1e3a8a" strokeWidth={2.5}/> www.dineshexports.com</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Phone size={14} color="#1e3a8a" strokeWidth={2.5} /> 0424-1234567</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Mail size={14} color="#1e3a8a" strokeWidth={2.5} /> info@dineshexports.com</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Globe size={14} color="#1e3a8a" strokeWidth={2.5} /> www.dineshexports.com</div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end', fontWeight: 700 }}>
-                      <FileText size={16} color="#1e3a8a" strokeWidth={2.5}/> GSTIN : 33ABCDE1234F1Z5
+                    <FileText size={16} color="#1e3a8a" strokeWidth={2.5} /> GSTIN : 33ABCDE1234F1Z5
                   </div>
                 </div>
               </div>

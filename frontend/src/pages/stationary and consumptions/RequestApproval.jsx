@@ -70,12 +70,12 @@ export default function RequestApproval() {
         <>
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <div>
-            <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Check size={24} color="var(--primary)" /> Department Request Approval
-            </h2>
-            <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Review and authorize department material request slips</p>
-          </div>
+            <div>
+              <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Check size={24} color="var(--primary)" /> Department Request Approval
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Review and authorize department material request slips</p>
+            </div>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
               <ExportButton
                 data={filteredRequests}
@@ -90,6 +90,20 @@ export default function RequestApproval() {
                 ]}
               />
             </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 20, marginBottom: 24 }}>
+            {stats.map(stat => (
+              <div key={stat.label} className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+                <div className="stat-icon" style={{ background: `${stat.color}20`, color: stat.color }}>
+                  {stat.icon}
+                </div>
+                <div className="stat-details">
+                  <h3>{stat.label}</h3>
+                  <div className="value">{stat.value}</div>
+                </div>
+              </div>
+            ))}
           </div>
 
           <div className="card" style={{ padding: 0, border: 'none', boxShadow: 'none' }}>
@@ -119,8 +133,8 @@ export default function RequestApproval() {
             </div>
           </div>
 
-            <div className="table-responsive" style={{ flex: 1 }}>
-              <div className="card" style={{ padding: 0, overflowX: "auto" }}>
+          <div className="table-responsive" style={{ flex: 1 }}>
+            <div className="card" style={{ padding: 0, overflowX: "auto" }}>
               <table className="data-table" style={{ width: '100%' }}>
                 <thead>
                   <tr>
@@ -134,7 +148,7 @@ export default function RequestApproval() {
                 </thead>
                 <tbody>
                   {filteredRequests.map(req => (
-                    <tr 
+                    <tr
                       key={req.id}
                       onClick={() => setSelectedViewItem(req)}
                       style={{ cursor: 'pointer', transition: 'background 0.2s', background: selectedViewItem?.id === req.id ? 'var(--bg-secondary)' : 'transparent' }}
@@ -155,9 +169,6 @@ export default function RequestApproval() {
                           </button>
                         )}
                         <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setSelectedViewItem(req)} title="Preview"><Eye size={16} color="var(--primary)" /></button>
-                        <button onClick={() => { setSelectedReq(req); setView('form'); }} className="btn btn-outline" style={{ padding: '6px 12px', fontSize: 12, borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                          <Eye size={14} /> Review
-                        </button>
                       </td>
                     </tr>
                   ))}
@@ -166,8 +177,8 @@ export default function RequestApproval() {
                   )}
                 </tbody>
               </table>
-              </div>
             </div>
+          </div>
         </>
       ) : (
         <div className="card animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24, flex: 1 }}>
@@ -322,16 +333,16 @@ export default function RequestApproval() {
                     <MapPin size={16} strokeWidth={2.5} style={{ flexShrink: 0, marginTop: 2, color: '#1e3a8a' }} />
                     <div>
                       <div style={{ fontWeight: 800, marginBottom: 2 }}>Dinesh Exports</div>
-                      <div style={{ color: '#475569', fontWeight: 500, lineHeight: '16px' }}>No. 123, Textile Street,<br/>Erode, Tamil Nadu - 638001, India</div>
+                      <div style={{ color: '#475569', fontWeight: 500, lineHeight: '16px' }}>No. 123, Textile Street,<br />Erode, Tamil Nadu - 638001, India</div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Phone size={14} color="#1e3a8a" strokeWidth={2.5}/> 0424-1234567</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Mail size={14} color="#1e3a8a" strokeWidth={2.5}/> info@dineshexports.com</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Globe size={14} color="#1e3a8a" strokeWidth={2.5}/> www.dineshexports.com</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Phone size={14} color="#1e3a8a" strokeWidth={2.5} /> 0424-1234567</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Mail size={14} color="#1e3a8a" strokeWidth={2.5} /> info@dineshexports.com</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Globe size={14} color="#1e3a8a" strokeWidth={2.5} /> www.dineshexports.com</div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end', fontWeight: 700 }}>
-                      <FileText size={16} color="#1e3a8a" strokeWidth={2.5}/> GSTIN : 33ABCDE1234F1Z5
+                    <FileText size={16} color="#1e3a8a" strokeWidth={2.5} /> GSTIN : 33ABCDE1234F1Z5
                   </div>
                 </div>
               </div>
@@ -342,4 +353,3 @@ export default function RequestApproval() {
     </div>
   );
 }
-

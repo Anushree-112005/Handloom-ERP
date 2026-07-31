@@ -236,6 +236,20 @@ export default function AdjustmentEntry() {
 
       {view === 'list' ? (
         <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 20, marginBottom: 24 }}>
+            {stats.map(stat => (
+              <div key={stat.label} className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+                <div className="stat-icon" style={{ background: `${stat.color}20`, color: stat.color }}>
+                  {stat.icon}
+                </div>
+                <div className="stat-details">
+                  <h3>{stat.label}</h3>
+                  <div className="value">{stat.value}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
           <div className="card" style={{ padding: 0, border: 'none', boxShadow: 'none' }}>
             {/* Search Card */}
             <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>

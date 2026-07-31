@@ -35,7 +35,7 @@ export default function IssueApproval() {
   }, []);
 
   const handleApprove = (issId) => {
-    mockDb.update('consumables_issues', issId, { status: 'Approved' });
+    mockDb.update('consumables_issues', issId, { ...selectedIssue, status: 'Approved' });
     setIssues(mockDb.get('consumables_issues'));
     setSelectedIssue(null);
     alert('Issue voucher approved successfully!');
@@ -83,6 +83,20 @@ export default function IssueApproval() {
                 ]}
               />
             </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 20, marginBottom: 24 }}>
+            {stats.map(stat => (
+              <div key={stat.label} className="card stat-card" style={{ border: 'none', boxShadow: 'none', transition: 'all 0.2s' }}>
+                <div className="stat-icon" style={{ background: `${stat.color}20`, color: stat.color }}>
+                  {stat.icon}
+                </div>
+                <div className="stat-details">
+                  <h3>{stat.label}</h3>
+                  <div className="value">{stat.value}</div>
+                </div>
+              </div>
+            ))}
           </div>
 
           <div className="card" style={{ padding: 0, border: 'none', boxShadow: 'none' }}>
@@ -148,9 +162,8 @@ export default function IssueApproval() {
                           </button>
                         )}
                         <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setSelectedViewItem(iss)} title="Preview"><Eye size={16} color="var(--primary)" /></button>
-                        <button onClick={() => { setSelectedIssue(iss); setView('form'); }} className="btn btn-outline" style={{ padding: '6px 12px', fontSize: 12, borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                          <Eye size={14} /> Review
-                        </button>
+                        <button onClick={() => { setSelectedIssue(iss); setView('form'); }} className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Edit"><Edit2 size={16} color="var(--text-primary)" /></button>
+                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Delete"><Trash2 size={16} color="#ef4444" /></button>
                       </td>
                     </tr>
                   ))}
@@ -168,8 +181,8 @@ export default function IssueApproval() {
             <>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: 16 }}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Review Store Issue: {selectedIssue.id}</h3>
-                  <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Review quantities and purpose before releasing stock.</p>
+                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Edit Store Issue: {selectedIssue.id}</h3>
+                  <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Review and edit quantities and purpose before releasing stock.</p>
                 </div>
                 <span style={{
                   background: selectedIssue.status === 'Approved' ? '#dcfce7' : '#fef3c7',
@@ -195,7 +208,7 @@ export default function IssueApproval() {
                 </div>
                 <div>
                   <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: 13, marginBottom: 4 }}>Purpose</span>
-                  <span style={{ fontWeight: 500, fontSize: 14, color: 'var(--text-primary)' }}>{selectedIssue.purpose || '-'}</span>
+                  <input type="text" value={selectedIssue.purpose || ''} onChange={(e) => setSelectedIssue({...selectedIssue, purpose: e.target.value})} style={{ width: '100%', padding: '4px 8px', borderRadius: 4, border: '1px solid var(--border)' }} />
                 </div>
               </div>
 
@@ -217,7 +230,9 @@ export default function IssueApproval() {
                           <tr key={k} style={{ borderBottom: k !== selectedIssue.items.length - 1 ? '1px solid var(--border)' : 'none' }}>
                             <td style={{ padding: '12px 16px', fontFamily: 'monospace', color: '#64748b' }}>{i.itemId}</td>
                             <td style={{ padding: '12px 16px', fontWeight: 600 }}>{detail?.name || 'Item'}</td>
-                            <td style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 700, color: '#6366f1', background: '#e0e7ff30' }}>{i.qty}</td>
+                            <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                              <input type="number" value={i.qty} onChange={(e) => { const newItems = [...selectedIssue.items]; newItems[k].qty = parseInt(e.target.value) || 0; setSelectedIssue({...selectedIssue, items: newItems}) }} style={{ width: '80px', textAlign: 'center', padding: '4px', borderRadius: 4, border: '1px solid var(--border)' }} />
+                            </td>
                           </tr>
                         );
                       })}
