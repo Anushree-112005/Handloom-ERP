@@ -488,19 +488,23 @@ export default function YarnPurchaseOrder() {
 
   const loadData = async () => {
     try {
+      setLoading(true);
       const [ordRes, partRes, dropRes, buyerOrdRes, designRes, compRes] = await Promise.all([
-        yarnPurchaseOrderAPI.list(), 
-        partyAPI.list(), 
-        dropdownAPI.getAll(),
-        buyerOrderAPI.list(),
-        designEntryAPI.list(),
+        yarnPurchaseOrderAPI.list().catch(err => { console.error("Error yarnPO:", err); return { data: [] }; }), 
+        partyAPI.list().catch(err => { console.error("Error party:", err); return { data: [] }; }), 
+        dropdownAPI.getAll().catch(err => { console.error("Error dropdown:", err); return { data: {} }; }),
+        buyerOrderAPI.list().catch(err => { console.error("Error buyerOrders:", err); return { data: [] }; }),
+        designEntryAPI.list().catch(err => { console.error("Error designEntries:", err); return { data: [] }; }),
         companySettingAPI.get().catch(() => null)
       ]);
-      setOrders(ordRes.data);
-      setParties(partRes.data);
-      setOptions(dropRes.data);
-      setBuyerOrders(buyerOrdRes.data || []);
-      setDesignEntries(designRes.data || []);
+      setOrders(Array.isArray(ordRes.data) ? ordRes.data : []);
+      setParties(Array.isArray(partRes.data) ? partRes.data : []);
+      setOptions(dropRes.data || {});
+      setBuyerOrders(Array.isArray(buyerOrdRes.data) ? buyerOrdRes.data : []);
+      
+      const designList = Array.isArray(designRes.data) ? designRes.data : (designRes.data?.data || []);
+      setDesignEntries(designList);
+
       if (compRes && compRes.data) {
         setCompanyProfile({
           company_name: compRes.data.company_name || 'Dinesh Exports Private Limited',
@@ -509,7 +513,7 @@ export default function YarnPurchaseOrder() {
         });
       }
     } catch (err) {
-      console.error(err);
+      console.error('Error loading PO data:', err);
     } finally {
       setLoading(false);
     }
@@ -1196,6 +1200,7 @@ export default function YarnPurchaseOrder() {
                 setCustomMainSupplierVal('');
                 setCustomCountSupplierIdx(null);
                 setCustomCountSupplierVal('');
+                loadData();
               }}>
                 <Plus size={18} /> New Order
               </button>
@@ -1683,28 +1688,15 @@ export default function YarnPurchaseOrder() {
                     <div className="form-group"><label>Internal PO No</label><input className="form-control" name="internal_po_no" value={form.internal_po_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Used For</label><input className="form-control" name="used_for" value={form.used_for} onChange={handleChange} /></div>
                     <div className="form-group"><label>Against Reference</label>
-                      {isCustomAgainstRef ? (
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <input type="text" className="form-control" autoFocus placeholder="Enter Against Ref..." value={customAgainstRefVal} onChange={e => setCustomAgainstRefVal(e.target.value)} />
-                          <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomAgainstRef}><CheckCircle size={16} /></button>
-                          <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomAgainstRef(false); setCustomAgainstRefVal(''); }}><X size={16} /></button>
-                        </div>
-                      ) : (
-                        <select className="form-control" name="against_ref" value={form.against_ref || ''} onChange={e => {
-                          if (e.target.value === 'custom') setIsCustomAgainstRef(true);
-                          else handleChange(e);
-                        }}>
-                          <option value="">Select...</option>
-                          <option value="No Reference">No Reference (Dummy PO)</option>
-                          {buyerOrders.map(bo => (
-                            <option key={bo.id} value={bo.ibpo_number}>
-                              {bo.ibpo_number} ({bo.party_name || bo.buyer_name || 'No Party'})
-                            </option>
-                          ))}
-                          {options.masters?.against_reference_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Against Ref...</option>
-                        </select>
-                      )}
+                      <select className="form-control" name="against_ref" value={form.against_ref || ''} onChange={handleChange}>
+                        <option value="">Select...</option>
+                        <option value="Direct PO">Direct PO</option>
+                        {buyerOrders.map(bo => (
+                          <option key={bo.id} value={bo.ibpo_number}>
+                            IBPO: {bo.ibpo_number} ({bo.party_name || bo.buyer_name || 'No Party'})
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div className="form-group">
                       <label>Design Entry No</label>
