@@ -85,7 +85,8 @@ export default function PartyMaster() {
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
-  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null, name: '' });
+  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null, name: '', isBulk: false });
+  const [selectedIds, setSelectedIds] = useState([]);
 
   // Custom inline state removed — now handled by SubMasterDropdown component
 
@@ -178,7 +179,27 @@ export default function PartyMaster() {
 
   const handleDelete = (id, name, e) => {
     if (e) e.stopPropagation();
-    setDeleteConfirm({ show: true, id, name });
+    setDeleteConfirm({ show: true, id, name, isBulk: false });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredParties.length && filteredParties.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredParties.map(p => p.id));
+    }
+  };
+
+  const toggleSelectRow = (id, e) => {
+    if (e) e.stopPropagation();
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedIds.length === 0) return;
+    setDeleteConfirm({ show: true, isBulk: true, count: selectedIds.length });
   };
 
   const handleSubmit = async (e) => {
@@ -1403,6 +1424,31 @@ export default function PartyMaster() {
         </div>
       </div>
 
+      {/* Bulk Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="card animate-fade" style={{ padding: '12px 20px', marginBottom: 16, background: '#fef2f2', border: '1px solid #fee2e2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ color: '#991b1b', fontWeight: 700, fontSize: 14 }}>
+              {selectedIds.length} party record{selectedIds.length > 1 ? 's' : ''} selected
+            </span>
+            <button
+              className="btn btn-secondary"
+              style={{ padding: '4px 10px', fontSize: 12 }}
+              onClick={() => setSelectedIds([])}
+            >
+              Clear Selection
+            </button>
+          </div>
+          <button
+            className="btn"
+            style={{ background: '#ef4444', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', fontWeight: 700, borderRadius: 6, cursor: 'pointer' }}
+            onClick={handleBulkDelete}
+          >
+            <Trash2 size={16} /> Delete Selected ({selectedIds.length})
+          </button>
+        </div>
+      )}
+
       <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
 
         {/* LEFT SIDE: TABLE */}
@@ -1411,15 +1457,23 @@ export default function PartyMaster() {
             <table className="data-table">
               <thead>
                 <tr>
+                  <th style={{ width: 40, textAlign: 'center' }}>
+                    <input
+                      type="checkbox"
+                      checked={filteredParties.length > 0 && selectedIds.length === filteredParties.length}
+                      onChange={toggleSelectAll}
+                      style={{ cursor: 'pointer', width: 16, height: 16 }}
+                    />
+                  </th>
                   <th>Party no</th><th>Business Name</th><th>Type & Group</th>
                   <th>Contact & Phone</th><th>City</th><th>Merchandiser</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>Loading...</td></tr>
+                  <tr><td colSpan="8" style={{ textAlign: 'center', padding: 20 }}>Loading...</td></tr>
                 ) : filteredParties.length === 0 ? (
-                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>No parties found matching criteria.</td></tr>
+                  <tr><td colSpan="8" style={{ textAlign: 'center', padding: 20 }}>No parties found matching criteria.</td></tr>
                 ) : (
                   filteredParties.map(p => (
                     <tr
@@ -1427,10 +1481,18 @@ export default function PartyMaster() {
                       onClick={() => setSelectedViewParty(p)}
                       style={{
                         cursor: 'pointer',
-                        background: selectedViewParty?.id === p.id ? 'var(--bg-secondary)' : 'transparent',
+                        background: selectedIds.includes(p.id) ? 'rgba(239, 68, 68, 0.05)' : selectedViewParty?.id === p.id ? 'var(--bg-secondary)' : 'transparent',
                         transition: 'background 0.2s'
                       }}
                     >
+                      <td style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(p.id)}
+                          onChange={(e) => toggleSelectRow(p.id, e)}
+                          style={{ cursor: 'pointer', width: 16, height: 16 }}
+                        />
+                      </td>
                       <td style={{ fontWeight: 600 }}>{p.customer_code}</td>
                       <td style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{p.company_name}</td>
                       <td>
@@ -1608,7 +1670,11 @@ export default function PartyMaster() {
             </h3>
 
             <p style={{ margin: '0 0 24px', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              Are you sure you want to delete <strong style={{ color: 'var(--text-primary)' }}>"{deleteConfirm.name}"</strong>? This action cannot be undone.
+              {deleteConfirm.isBulk ? (
+                <>Are you sure you want to delete <strong style={{ color: 'var(--text-primary)' }}>{deleteConfirm.count} selected parties</strong>? This action cannot be undone.</>
+              ) : (
+                <>Are you sure you want to delete <strong style={{ color: 'var(--text-primary)' }}>"{deleteConfirm.name}"</strong>? This action cannot be undone.</>
+              )}
             </p>
 
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
@@ -1616,7 +1682,7 @@ export default function PartyMaster() {
                 type="button"
                 className="btn btn-secondary"
                 style={{ flex: 1, padding: '10px 16px', fontWeight: 600, fontSize: 13 }}
-                onClick={() => setDeleteConfirm({ show: false, id: null, name: '' })}
+                onClick={() => setDeleteConfirm({ show: false, id: null, name: '', isBulk: false })}
               >
                 Cancel
               </button>
@@ -1625,14 +1691,24 @@ export default function PartyMaster() {
                 className="btn btn-primary"
                 style={{ flex: 1, padding: '10px 16px', fontWeight: 600, fontSize: 13, background: '#ef4444', borderColor: '#ef4444', color: 'white' }}
                 onClick={async () => {
-                  const { id } = deleteConfirm;
-                  setDeleteConfirm({ show: false, id: null, name: '' });
+                  const { id, isBulk } = deleteConfirm;
+                  setDeleteConfirm({ show: false, id: null, name: '', isBulk: false });
                   try {
-                    await partyAPI.delete(id);
-                    if (selectedViewParty?.id === id) setSelectedViewParty(null);
+                    if (isBulk) {
+                      await Promise.all(selectedIds.map(selectedId => partyAPI.delete(selectedId)));
+                      if (selectedViewParty && selectedIds.includes(selectedViewParty.id)) {
+                        setSelectedViewParty(null);
+                      }
+                      setSelectedIds([]);
+                    } else if (id) {
+                      await partyAPI.delete(id);
+                      if (selectedViewParty?.id === id) setSelectedViewParty(null);
+                      setSelectedIds(prev => prev.filter(i => i !== id));
+                    }
                     fetchParties();
                   } catch (err) {
-                    alert("Error deleting party. It may be in use.");
+                    alert("Error deleting party/parties. Some items may be in use.");
+                    fetchParties();
                   }
                 }}
               >

@@ -18,6 +18,7 @@ export default function TwistingDoublingPO() {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [selectedViewOrder, setSelectedViewOrder] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
   
   const initialForm = {
     po_no: '',
@@ -280,13 +281,44 @@ export default function TwistingDoublingPO() {
     setShowForm(true);
   };
 
+  const toggleSelectAll = (filteredData = []) => {
+    if (selectedIds.length === filteredData.length && filteredData.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredData.map(o => o.id));
+    }
+  };
+
+  const toggleSelectRow = (id, e) => {
+    if (e) e.stopPropagation();
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this order?")) {
       try {
         await twistingDoublingPOAPI.delete(id);
+        setSelectedIds(prev => prev.filter(item => item !== id));
         loadData();
       } catch (err) {
         alert("Error deleting order");
+      }
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (window.confirm(`Are you sure you want to delete ${selectedIds.length} selected twisting/doubling PO(s)?`)) {
+      try {
+        await Promise.all(selectedIds.map(id => twistingDoublingPOAPI.delete(id)));
+        setSelectedIds([]);
+        loadData();
+      } catch (err) {
+        alert('Error deleting selected twisting/doubling POs');
+        console.error(err);
+        loadData();
       }
     }
   };
@@ -408,10 +440,43 @@ export default function TwistingDoublingPO() {
             </div>
           </div>
 
+          {/* Bulk Action Bar */}
+          {selectedIds.length > 0 && (
+            <div className="card animate-fade" style={{ padding: '12px 20px', marginBottom: 16, background: '#fef2f2', border: '1px solid #fee2e2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ color: '#991b1b', fontWeight: 700, fontSize: 14 }}>
+                  {selectedIds.length} twisting/doubling PO{selectedIds.length > 1 ? 's' : ''} selected
+                </span>
+                <button
+                  className="btn btn-secondary"
+                  style={{ padding: '4px 10px', fontSize: 12 }}
+                  onClick={() => setSelectedIds([])}
+                >
+                  Clear Selection
+                </button>
+              </div>
+              <button
+                className="btn"
+                style={{ background: '#ef4444', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', fontWeight: 700, borderRadius: 6, cursor: 'pointer' }}
+                onClick={handleBulkDelete}
+              >
+                <Trash2 size={16} /> Delete Selected ({selectedIds.length})
+              </button>
+            </div>
+          )}
+
           <div className="card" style={{ overflowX: 'auto' }}>
             <table className="data-table">
               <thead>
                 <tr>
+                  <th style={{ width: 40, textAlign: 'center' }}>
+                    <input
+                      type="checkbox"
+                      checked={filteredOrders.length > 0 && selectedIds.length === filteredOrders.length}
+                      onChange={() => toggleSelectAll(filteredOrders)}
+                      style={{ cursor: 'pointer', width: 16, height: 16 }}
+                    />
+                  </th>
                   <th>PO NO</th>
                   <th>DATE</th>
                   <th>SUPPLIER / JOB WORKER</th>
@@ -422,10 +487,18 @@ export default function TwistingDoublingPO() {
               </thead>
               <tbody>
                 {filteredOrders.length === 0 ? (
-                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: 30, color: 'var(--text-muted)' }}>No orders found</td></tr>
+                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: 30, color: 'var(--text-muted)' }}>No orders found</td></tr>
                 ) : (
                   filteredOrders.map(order => (
-                    <tr key={order.id}>
+                    <tr key={order.id} style={{ background: selectedIds.includes(order.id) ? 'rgba(239, 68, 68, 0.05)' : 'transparent' }}>
+                      <td style={{ textAlign: 'center' }} onClick={evt => evt.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(order.id)}
+                          onChange={(evt) => toggleSelectRow(order.id, evt)}
+                          style={{ cursor: 'pointer', width: 16, height: 16 }}
+                        />
+                      </td>
                       <td style={{ fontWeight: 600, color: 'var(--primary-light)' }}>{order.po_no}</td>
                       <td>{order.po_date}</td>
                       <td style={{ fontWeight: 500 }}>{order.supplier_worker}</td>
