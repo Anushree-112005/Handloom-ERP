@@ -24,6 +24,7 @@ export default function WarpDelivery() {
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   // Terms state
   const [newTerm, setNewTerm] = useState('');
@@ -175,15 +176,47 @@ export default function WarpDelivery() {
     }
   };
 
+  const toggleSelectAll = (filteredData = []) => {
+    if (selectedIds.length === filteredData.length && filteredData.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredData.map(o => o.id));
+    }
+  };
+
+  const toggleSelectRow = (id, e) => {
+    if (e) e.stopPropagation();
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
   const handleDelete = async (id, inv, e) => {
     if (e) e.stopPropagation();
     if (window.confirm(`Are you sure you want to delete ${inv}?`)) {
       try {
         await warpDeliveryAPI.delete(id);
+        setSelectedIds(prev => prev.filter(item => item !== id));
         if (selectedViewEntry?.id === id) setSelectedViewEntry(null);
         loadData();
       } catch (err) {
         alert('Error deleting');
+      }
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (window.confirm(`Are you sure you want to delete ${selectedIds.length} selected delivery(s)?`)) {
+      try {
+        await Promise.all(selectedIds.map(id => warpDeliveryAPI.delete(id)));
+        setSelectedIds([]);
+        if (selectedViewEntry && selectedIds.includes(selectedViewEntry.id)) setSelectedViewEntry(null);
+        loadData();
+      } catch (err) {
+        alert('Error deleting selected deliveries');
+        console.error(err);
+        loadData();
       }
     }
   };
@@ -461,22 +494,63 @@ export default function WarpDelivery() {
             </div>
           </div>
 
+          {/* Bulk Action Bar */}
+          {selectedIds.length > 0 && (
+            <div className="card animate-fade" style={{ padding: '12px 20px', marginBottom: 16, background: '#fef2f2', border: '1px solid #fee2e2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ color: '#991b1b', fontWeight: 700, fontSize: 14 }}>
+                  {selectedIds.length} warp delivery{selectedIds.length > 1 ? 'ies' : ''} selected
+                </span>
+                <button
+                  className="btn btn-secondary"
+                  style={{ padding: '4px 10px', fontSize: 12 }}
+                  onClick={() => setSelectedIds([])}
+                >
+                  Clear Selection
+                </button>
+              </div>
+              <button
+                className="btn"
+                style={{ background: '#ef4444', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', fontWeight: 700, borderRadius: 6, cursor: 'pointer' }}
+                onClick={handleBulkDelete}
+              >
+                <Trash2 size={16} /> Delete Selected ({selectedIds.length})
+              </button>
+            </div>
+          )}
+
           <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
             <div style={{ flex: 1, overflowX: 'auto' }}>
               <div className="card" style={{ padding: 0 }}>
                 <table className="data-table">
                   <thead>
                     <tr>
+                      <th style={{ width: 40, textAlign: 'center' }}>
+                        <input
+                          type="checkbox"
+                          checked={filteredDeliveries.length > 0 && selectedIds.length === filteredDeliveries.length}
+                          onChange={() => toggleSelectAll(filteredDeliveries)}
+                          style={{ cursor: 'pointer', width: 16, height: 16 }}
+                        />
+                      </th>
                       <th>DC No</th><th>Date</th><th>Vendor Name</th><th>Type</th><th>Total Mtrs</th><th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {loading ? (
-                      <tr><td colSpan={6} style={{ textAlign: 'center', padding: 40 }}>Loading...</td></tr>
+                      <tr><td colSpan={7} style={{ textAlign: 'center', padding: 40 }}>Loading...</td></tr>
                     ) : filteredDeliveries.length === 0 ? (
-                      <tr><td colSpan={6} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No deliveries found.</td></tr>
+                      <tr><td colSpan={7} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No deliveries found.</td></tr>
                     ) : filteredDeliveries.map(r => (
-                      <tr key={r.id} onClick={() => handleRowClick(r)} style={{ cursor: 'pointer', background: selectedViewEntry?.id === r.id ? 'var(--bg-secondary)' : 'transparent' }}>
+                      <tr key={r.id} onClick={() => handleRowClick(r)} style={{ cursor: 'pointer', background: selectedIds.includes(r.id) ? 'rgba(239, 68, 68, 0.05)' : selectedViewEntry?.id === r.id ? 'var(--bg-secondary)' : 'transparent' }}>
+                        <td style={{ textAlign: 'center' }} onClick={evt => evt.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(r.id)}
+                            onChange={(evt) => toggleSelectRow(r.id, evt)}
+                            style={{ cursor: 'pointer', width: 16, height: 16 }}
+                          />
+                        </td>
                         <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{r.dc_no}</td>
                         <td>{r.dc_date}</td>
                         <td style={{ fontWeight: 500 }}>{r.party_name || '-'}</td>
