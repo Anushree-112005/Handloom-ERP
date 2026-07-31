@@ -432,7 +432,7 @@ export default function YarnPurchaseOrder() {
 
   const initialForm = {
     po_date: new Date().toISOString().split('T')[0],
-    org_name: '', internal_po_no: '', used_for: '', against_ref: '', design_no: '', agent_name: '',
+    org_name: '', internal_po_no: '', used_for: '', against_ref: 'Direct', ibpo_no: '', design_no: '', agent_name: '',
     supplier_name: '', delivery_at: '',
     
     freight_type: '', freight_chg: 0, insurance_chg: 0, total_order_kgs: 0,
@@ -486,25 +486,30 @@ export default function YarnPurchaseOrder() {
     };
   };
 
+  const getAvailableDesignEntries = () => {
+    const selectedIbpo = form.ibpo_no || (form.against_ref !== 'PO' && form.against_ref !== 'Direct' ? form.against_ref : '');
+    if (selectedIbpo) {
+      const filtered = designEntries.filter(de => de.ibpo_no === selectedIbpo);
+      if (filtered.length > 0) return filtered;
+    }
+    return designEntries;
+  };
+
   const loadData = async () => {
     try {
-      setLoading(true);
       const [ordRes, partRes, dropRes, buyerOrdRes, designRes, compRes] = await Promise.all([
-        yarnPurchaseOrderAPI.list().catch(err => { console.error("Error yarnPO:", err); return { data: [] }; }), 
-        partyAPI.list().catch(err => { console.error("Error party:", err); return { data: [] }; }), 
-        dropdownAPI.getAll().catch(err => { console.error("Error dropdown:", err); return { data: {} }; }),
-        buyerOrderAPI.list().catch(err => { console.error("Error buyerOrders:", err); return { data: [] }; }),
-        designEntryAPI.list().catch(err => { console.error("Error designEntries:", err); return { data: [] }; }),
+        yarnPurchaseOrderAPI.list(), 
+        partyAPI.list(), 
+        dropdownAPI.getAll(),
+        buyerOrderAPI.list(),
+        designEntryAPI.list(),
         companySettingAPI.get().catch(() => null)
       ]);
-      setOrders(Array.isArray(ordRes.data) ? ordRes.data : []);
-      setParties(Array.isArray(partRes.data) ? partRes.data : []);
-      setOptions(dropRes.data || {});
-      setBuyerOrders(Array.isArray(buyerOrdRes.data) ? buyerOrdRes.data : []);
-      
-      const designList = Array.isArray(designRes.data) ? designRes.data : (designRes.data?.data || []);
-      setDesignEntries(designList);
-
+      setOrders(ordRes.data);
+      setParties(partRes.data);
+      setOptions(dropRes.data);
+      setBuyerOrders(buyerOrdRes.data || []);
+      setDesignEntries(designRes.data || []);
       if (compRes && compRes.data) {
         setCompanyProfile({
           company_name: compRes.data.company_name || 'Dinesh Exports Private Limited',
@@ -513,7 +518,7 @@ export default function YarnPurchaseOrder() {
         });
       }
     } catch (err) {
-      console.error('Error loading PO data:', err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -791,6 +796,7 @@ export default function YarnPurchaseOrder() {
           let agentName = form.agent_name || '';
           let supplierName = form.supplier_name || '';
           let deliveryAt = form.delivery_at || '';
+          let ibpoNo = form.ibpo_no || selectedDesign.ibpo_no || '';
           if (selectedDesign.ibpo_no) {
             const selectedOrder = buyerOrders.find(bo => bo.ibpo_number === selectedDesign.ibpo_no);
             if (selectedOrder) {
@@ -813,8 +819,9 @@ export default function YarnPurchaseOrder() {
           }
           setForm(recalculate({
             ...form,
+            against_ref: 'PO',
+            ibpo_no: ibpoNo,
             design_no: selectedDesign.ds_ref_no || selectedDesign.design_no || value,
-            against_ref: selectedDesign.ibpo_no || form.against_ref || '',
             agent_name: agentName,
             supplier_name: supplierName,
             delivery_at: deliveryAt,
@@ -828,103 +835,92 @@ export default function YarnPurchaseOrder() {
         }
       } else {
         setForm(prev => ({ ...prev, design_no: '' }));
+        return;
       }
     }
 
     if (name === 'against_ref') {
-      if (value === 'custom') {
-        setIsCustomAgainstRef(true);
-        setCustomAgainstRefVal('');
+      if (value === 'Direct') {
+        setForm(prev => ({
+          ...prev,
+          against_ref: 'Direct',
+          ibpo_no: '',
+          design_no: ''
+        }));
         return;
       }
+      if (value === 'PO') {
+        setForm(prev => ({
+          ...prev,
+          against_ref: 'PO'
+        }));
+        return;
+      }
+      setForm(prev => ({ ...prev, against_ref: value }));
+      return;
+    }
+
+    if (name === 'ibpo_no') {
+      const selectedIbpo = value;
+      if (!selectedIbpo) {
+        setForm(prev => ({ ...prev, ibpo_no: '' }));
+        return;
+      }
+      const selectedOrder = buyerOrders.find(bo => bo.ibpo_number === selectedIbpo);
+      const matchingDesigns = designEntries.filter(de => de.ibpo_no === selectedIbpo);
       
-      if (value && value !== 'No Reference') {
-        const selectedOrder = buyerOrders.find(bo => bo.ibpo_number === value);
-        const matchingDesigns = designEntries.filter(de => de.ibpo_no === value);
-        
-        if (matchingDesigns.length > 0) {
-          let newIndentDetails = [];
-          matchingDesigns.forEach(de => {
-            const reqs = calculateDesignYarnRequirements(de);
-            newIndentDetails.push(...reqs);
-          });
-          
-          if (newIndentDetails.length === 0) {
-            newIndentDetails = [{
-              yarn_count: '', colour: '', order_qty: 0, uom: 'KGS', delivery_date: '', rate: 0, amount: 0, packing_type: '', labeling: '', design_no: ''
-            }];
-          }
+      let newIndentDetails = [];
+      if (matchingDesigns.length > 0) {
+        matchingDesigns.forEach(de => {
+          const reqs = calculateDesignYarnRequirements(de);
+          newIndentDetails.push(...reqs);
+        });
+      }
+      
+      if (newIndentDetails.length === 0 && selectedOrder) {
+        newIndentDetails = (selectedOrder.items || []).map(item => ({
+          yarn_count: item.yarn_count || '',
+          colour: item.color || '',
+          order_qty: parseFloat(item.order_mtrs) || 0,
+          delivery_date: item.po_date ? item.po_date.substring(0, 10) : '',
+          rate: parseFloat(item.rate) || 0,
+          amount: parseFloat(item.amount) || 0,
+          packing_type: item.packing_type || '',
+          labeling: '',
+          design_no: item.design_no || ''
+        }));
+      }
 
-          const supplierName = selectedOrder?.party_name || form.supplier_name || '';
-          const selectedParty = parties.find(p => p.company_name === supplierName);
-          let taxUpdates = {};
-          if (selectedParty) {
-            const stateLower = (selectedParty.state || '').toLowerCase().trim();
-            const gstCode = (selectedParty.gst_no || '').trim().substring(0, 2);
-            const isTN = stateLower.includes('tamil') || gstCode === '33';
-            if (!isTN && (stateLower !== '' || gstCode !== '')) {
-              taxUpdates = { tax_type: 'IGST', sgst_pct: 0, cgst_pct: 0, igst_pct: 5.0 };
-            } else {
-              taxUpdates = { tax_type: 'GST', sgst_pct: 2.5, cgst_pct: 2.5, igst_pct: 0 };
-            }
-          }
+      if (newIndentDetails.length === 0) {
+        newIndentDetails = form.indent_details;
+      }
 
-          setForm(recalculate({
-            ...form,
-            against_ref: value,
-            design_no: matchingDesigns.length === 1 ? (matchingDesigns[0].ds_ref_no || matchingDesigns[0].design_no) : '',
-            agent_name: selectedOrder?.agent_name || form.agent_name || '',
-            supplier_name: supplierName,
-            delivery_at: selectedOrder?.delivery_at || form.delivery_at || '',
-            indent_details: newIndentDetails,
-            ...taxUpdates
-          }));
-          return;
-        } else if (selectedOrder) {
-          const newIndentDetails = (selectedOrder.items || []).map(item => {
-            return {
-              yarn_count: item.yarn_count || '',
-              colour: item.color || '',
-              order_qty: parseFloat(item.order_mtrs) || 0,
-              delivery_date: item.po_date ? item.po_date.substring(0, 10) : '',
-              rate: parseFloat(item.rate) || 0,
-              amount: parseFloat(item.amount) || 0,
-              packing_type: item.packing_type || '',
-              labeling: '',
-              design_no: item.design_no || ''
-            };
-          });
-
-          const supplierName = selectedOrder.party_name || form.supplier_name || '';
-          const selectedParty = parties.find(p => p.company_name === supplierName);
-          let taxUpdates = {};
-          if (selectedParty) {
-            const stateLower = (selectedParty.state || '').toLowerCase().trim();
-            const gstCode = (selectedParty.gst_no || '').trim().substring(0, 2);
-            const isTN = stateLower.includes('tamil') || gstCode === '33';
-            if (!isTN && (stateLower !== '' || gstCode !== '')) {
-              taxUpdates = { tax_type: 'IGST', sgst_pct: 0, cgst_pct: 0, igst_pct: 5.0 };
-            } else {
-              taxUpdates = { tax_type: 'GST', sgst_pct: 2.5, cgst_pct: 2.5, igst_pct: 0 };
-            }
-          }
-
-          setForm(recalculate({
-            ...form,
-            against_ref: value,
-            design_no: matchingDesigns.length === 1 ? (matchingDesigns[0].ds_ref_no || matchingDesigns[0].design_no) : '',
-            agent_name: selectedOrder.agent_name || form.agent_name || '',
-            supplier_name: supplierName,
-            delivery_at: selectedOrder.delivery_at || form.delivery_at || '',
-            indent_details: newIndentDetails.length > 0 ? newIndentDetails : form.indent_details,
-            ...taxUpdates
-          }));
-          return;
+      const supplierName = selectedOrder?.party_name || form.supplier_name || '';
+      const selectedParty = parties.find(p => p.company_name === supplierName);
+      let taxUpdates = {};
+      if (selectedParty) {
+        const stateLower = (selectedParty.state || '').toLowerCase().trim();
+        const gstCode = (selectedParty.gst_no || '').trim().substring(0, 2);
+        const isTN = stateLower.includes('tamil') || gstCode === '33';
+        if (!isTN && (stateLower !== '' || gstCode !== '')) {
+          taxUpdates = { tax_type: 'IGST', sgst_pct: 0, cgst_pct: 0, igst_pct: 5.0 };
         } else {
-          setForm(prev => ({ ...prev, against_ref: value }));
-          return;
+          taxUpdates = { tax_type: 'GST', sgst_pct: 2.5, cgst_pct: 2.5, igst_pct: 0 };
         }
       }
+
+      setForm(recalculate({
+        ...form,
+        against_ref: 'PO',
+        ibpo_no: selectedIbpo,
+        design_no: matchingDesigns.length === 1 ? (matchingDesigns[0].ds_ref_no || matchingDesigns[0].design_no) : form.design_no,
+        agent_name: selectedOrder?.agent_name || form.agent_name || '',
+        supplier_name: supplierName,
+        delivery_at: selectedOrder?.delivery_at || form.delivery_at || '',
+        indent_details: newIndentDetails,
+        ...taxUpdates
+      }));
+      return;
     }
 
     if (name === 'supplier_name') {
@@ -1200,7 +1196,6 @@ export default function YarnPurchaseOrder() {
                 setCustomMainSupplierVal('');
                 setCustomCountSupplierIdx(null);
                 setCustomCountSupplierVal('');
-                loadData();
               }}>
                 <Plus size={18} /> New Order
               </button>
@@ -1687,41 +1682,68 @@ export default function YarnPurchaseOrder() {
                     <div className="form-group"><label>Order Date *</label><input type="date" className="form-control" name="po_date" value={form.po_date} onChange={handleChange} required /></div>
                     <div className="form-group"><label>Internal PO No</label><input className="form-control" name="internal_po_no" value={form.internal_po_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Used For</label><input className="form-control" name="used_for" value={form.used_for} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Against Reference</label>
-                      <select className="form-control" name="against_ref" value={form.against_ref || ''} onChange={handleChange}>
-                        <option value="">Select...</option>
-                        <option value="Direct PO">Direct PO</option>
-                        {buyerOrders.map(bo => (
-                          <option key={bo.id} value={bo.ibpo_number}>
-                            IBPO: {bo.ibpo_number} ({bo.party_name || bo.buyer_name || 'No Party'})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
                     <div className="form-group">
-                      <label>Design Entry No</label>
+                      <label>Against Reference</label>
                       <select 
                         className="form-control" 
-                        name="design_no" 
-                        value={form.design_no || ''} 
+                        name="against_ref" 
+                        value={form.against_ref === 'PO' || (form.against_ref && form.against_ref !== 'Direct' && form.against_ref !== 'No Reference') ? 'PO' : 'Direct'} 
                         onChange={handleChange}
                       >
-                        <option value="">Select...</option>
-                        {form.design_no && !designEntries.some(de => (de.ds_ref_no === form.design_no || de.design_no === form.design_no)) && (
-                          <option value={form.design_no}>{form.design_no}</option>
-                        )}
-                        {designEntries.map(de => {
-                          const val = de.ds_ref_no || de.design_no || `DE-${de.id}`;
-                          const display = de.ds_ref_no && de.design_no && de.ds_ref_no !== de.design_no
-                            ? `${de.ds_ref_no} (${de.design_no})`
-                            : (de.ds_ref_no || de.design_no || `DE-${de.id}`);
-                          return (
-                            <option key={de.id} value={val}>
-                              {display} {de.ibpo_no ? `(IBPO: ${de.ibpo_no})` : ''}
-                            </option>
-                          );
-                        })}
+                        <option value="Direct">Direct</option>
+                        <option value="PO">PO</option>
                       </select>
+                    </div>
+
+                    {(form.against_ref === 'PO' || (form.against_ref && form.against_ref !== 'Direct' && form.against_ref !== 'No Reference')) && (
+                      <div className="form-group">
+                        <label>IBPO No</label>
+                        <select 
+                          className="form-control" 
+                          name="ibpo_no" 
+                          value={form.ibpo_no || (form.against_ref !== 'PO' && form.against_ref !== 'Direct' ? form.against_ref : '')} 
+                          onChange={handleChange}
+                        >
+                          <option value="">Select IBPO...</option>
+                          {buyerOrders.map(bo => (
+                            <option key={bo.id} value={bo.ibpo_number}>
+                              {bo.ibpo_number} ({bo.party_name || bo.buyer_name || 'No Party'})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    <div className="form-group">
+                      <label>Design Entry No</label>
+                      {form.against_ref === 'Direct' ? (
+                        <select className="form-control" disabled value="">
+                          <option value="">N/A (Direct PO)</option>
+                        </select>
+                      ) : (
+                        <select 
+                          className="form-control" 
+                          name="design_no" 
+                          value={form.design_no || ''} 
+                          onChange={handleChange}
+                        >
+                          <option value="">Select Design Entry...</option>
+                          {form.design_no && !designEntries.some(de => (de.ds_ref_no === form.design_no || de.design_no === form.design_no)) && (
+                            <option value={form.design_no}>{form.design_no}</option>
+                          )}
+                          {getAvailableDesignEntries().map(de => {
+                            const val = de.ds_ref_no || de.design_no || `DE-${de.id}`;
+                            const display = de.ds_ref_no && de.design_no && de.ds_ref_no !== de.design_no
+                              ? `${de.ds_ref_no} (${de.design_no})`
+                              : (de.ds_ref_no || de.design_no || `DE-${de.id}`);
+                            return (
+                              <option key={de.id} value={val}>
+                                {display} {de.ibpo_no ? `(IBPO: ${de.ibpo_no})` : ''}
+                              </option>
+                            );
+                          })}
+                        </select>
+                      )}
                     </div>
                     <div className="form-group"><label>Agent Name</label><input className="form-control" name="agent_name" value={form.agent_name} onChange={handleChange} /></div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Supplier Name</label>
