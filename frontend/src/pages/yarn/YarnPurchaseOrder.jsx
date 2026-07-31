@@ -96,7 +96,7 @@ const calculateDesignYarnRequirements = (design) => {
       finalAgg[key].order_qty += req_kg;
     } else {
       finalAgg[key] = {
-        design_no: design.design_no || '',
+        design_no: design.ds_ref_no || design.design_no || '',
         yarn_count: count,
         colour: color,
         order_qty: req_kg,
@@ -778,7 +778,7 @@ export default function YarnPurchaseOrder() {
     
     if (name === 'design_no') {
       if (value) {
-        const selectedDesign = designEntries.find(de => de.design_no === value);
+        const selectedDesign = designEntries.find(de => de.ds_ref_no === value || de.design_no === value);
         if (selectedDesign) {
           const reqs = calculateDesignYarnRequirements(selectedDesign);
           let newIndentDetails = reqs.length > 0 ? reqs : [{
@@ -809,7 +809,7 @@ export default function YarnPurchaseOrder() {
           }
           setForm(recalculate({
             ...form,
-            design_no: value,
+            design_no: selectedDesign.ds_ref_no || selectedDesign.design_no || value,
             against_ref: selectedDesign.ibpo_no || form.against_ref || '',
             agent_name: agentName,
             supplier_name: supplierName,
@@ -868,7 +868,7 @@ export default function YarnPurchaseOrder() {
           setForm(recalculate({
             ...form,
             against_ref: value,
-            design_no: matchingDesigns.length === 1 ? matchingDesigns[0].design_no : '',
+            design_no: matchingDesigns.length === 1 ? (matchingDesigns[0].ds_ref_no || matchingDesigns[0].design_no) : '',
             agent_name: selectedOrder?.agent_name || form.agent_name || '',
             supplier_name: supplierName,
             delivery_at: selectedOrder?.delivery_at || form.delivery_at || '',
@@ -908,7 +908,7 @@ export default function YarnPurchaseOrder() {
           setForm(recalculate({
             ...form,
             against_ref: value,
-            design_no: matchingDesigns.length === 1 ? matchingDesigns[0].design_no : '',
+            design_no: matchingDesigns.length === 1 ? (matchingDesigns[0].ds_ref_no || matchingDesigns[0].design_no) : '',
             agent_name: selectedOrder.agent_name || form.agent_name || '',
             supplier_name: supplierName,
             delivery_at: selectedOrder.delivery_at || form.delivery_at || '',
@@ -1715,11 +1715,20 @@ export default function YarnPurchaseOrder() {
                         onChange={handleChange}
                       >
                         <option value="">Select...</option>
-                        {designEntries.map(de => (
-                          <option key={de.id} value={de.design_no}>
-                            {de.design_no} {de.ibpo_no ? `(IBPO: ${de.ibpo_no})` : ''}
-                          </option>
-                        ))}
+                        {form.design_no && !designEntries.some(de => (de.ds_ref_no === form.design_no || de.design_no === form.design_no)) && (
+                          <option value={form.design_no}>{form.design_no}</option>
+                        )}
+                        {designEntries.map(de => {
+                          const val = de.ds_ref_no || de.design_no || `DE-${de.id}`;
+                          const display = de.ds_ref_no && de.design_no && de.ds_ref_no !== de.design_no
+                            ? `${de.ds_ref_no} (${de.design_no})`
+                            : (de.ds_ref_no || de.design_no || `DE-${de.id}`);
+                          return (
+                            <option key={de.id} value={val}>
+                              {display} {de.ibpo_no ? `(IBPO: ${de.ibpo_no})` : ''}
+                            </option>
+                          );
+                        })}
                       </select>
                     </div>
                     <div className="form-group"><label>Agent Name</label><input className="form-control" name="agent_name" value={form.agent_name} onChange={handleChange} /></div>
