@@ -42,6 +42,8 @@ export default function PurchaseOrder() {
   // Modal toggle state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('order_info'); // order_info, item_details, tax_logistics
+  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null, name: '' });
+  const [editingId, setEditingId] = useState(null);
 
   const [formData, setFormData] = useState({
     quotation_id: '',
@@ -253,9 +255,19 @@ export default function PurchaseOrder() {
         }))
       };
 
-      await storesService.createPurchaseOrder(payload);
-      showToast('Purchase Order placed successfully!');
+      if (editingId) {
+        if (storesService.updatePurchaseOrder) {
+          await storesService.updatePurchaseOrder(editingId, payload);
+          showToast('Purchase Order updated successfully!');
+        } else {
+          showToast('Update endpoint missing in storesService.', false);
+        }
+      } else {
+        await storesService.createPurchaseOrder(payload);
+        showToast('Purchase Order placed successfully!');
+      }
       setIsModalOpen(false);
+      setEditingId(null);
       loadData();
     } catch (err) {
       console.error(err);
@@ -265,15 +277,28 @@ export default function PurchaseOrder() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this purchase order?')) return;
-    try {
-      await storesService.deletePurchaseOrder(id);
-      showToast('PO deleted successfully.');
-      loadData();
-    } catch (err) {
-      console.error(err);
-    }
+  const handleEdit = async (po) => {
+    const detailedPO = await storesService.getPurchaseOrder(po.id);
+    setFormData({
+      quotation_id: detailedPO.quotation_id || '',
+      vendor_id: detailedPO.vendor_id ? detailedPO.vendor_id.toString() : '',
+      expected_delivery_date: detailedPO.expected_delivery_date ? new Date(detailedPO.expected_delivery_date).toISOString().slice(0, 10) : '',
+      delivery_warehouse_id: detailedPO.delivery_warehouse_id ? detailedPO.delivery_warehouse_id.toString() : '',
+      payment_terms: detailedPO.payment_terms || '30 Days Credit',
+      delivery_instructions: detailedPO.delivery_instructions || '',
+      discount_amount: detailedPO.discount_amount || 0,
+      taxable_subtotal_override: detailedPO.total_amount_override,
+      gst_amount_override: detailedPO.tax_amount_override,
+      grand_total_override: detailedPO.grand_total_override,
+      items: detailedPO.items || []
+    });
+    setEditingId(po.id);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = (id, name, e) => {
+    if (e) e.stopPropagation();
+    setDeleteConfirm({ show: true, id, name });
   };
 
   // Browser Print Window
@@ -648,6 +673,14 @@ export default function PurchaseOrder() {
                           <button
                             className="btn btn-secondary"
                             style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            onClick={() => handleEdit(po)}
+                            title="Edit"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          <button
+                            className="btn btn-secondary"
+                            style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                             onClick={async () => {
                               const detailedPO = await storesService.getPurchaseOrder(po.id);
                               setSelectedViewItem(detailedPO);
@@ -657,7 +690,7 @@ export default function PurchaseOrder() {
                             <Eye size={16} color="var(--primary)" />
                           </button>
                           <button
-                            onClick={() => handleDelete(po.id)}
+                            onClick={(e) => handleDelete(po.id, `PO-${po.id}`, e)}
                             className="btn btn-secondary"
                             style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                             title="Delete PO"
@@ -1191,6 +1224,86 @@ export default function PurchaseOrder() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Premium React Delete Confirmation Modal Popup */}
+      {deleteConfirm.show && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          animation: 'fadeIn 0.2s ease-out'
+        }}>
+          <div className="card animate-scale" style={{
+            width: 420,
+            padding: 24,
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            borderRadius: 16,
+            textAlign: 'center'
+          }}>
+            <div style={{
+              width: 56,
+              height: 56,
+              borderRadius: 28,
+              background: '#fef2f2',
+              color: '#ef4444',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px',
+              border: '1px solid #fee2e2'
+            }}>
+              <Trash2 size={24} />
+            </div>
+
+            <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>
+              Confirm Deletion
+            </h3>
+
+            <p style={{ margin: '0 0 24px', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              Are you sure you want to delete <strong style={{ color: 'var(--text-primary)' }}>"{deleteConfirm.name}"</strong>? This action cannot be undone.
+            </p>
+
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ flex: 1, padding: '10px 16px', fontWeight: 600, fontSize: 13 }}
+                onClick={() => setDeleteConfirm({ show: false, id: null, name: '' })}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ flex: 1, padding: '10px 16px', fontWeight: 600, fontSize: 13, background: '#ef4444', borderColor: '#ef4444', color: 'white' }}
+                onClick={async () => {
+                  const { id } = deleteConfirm;
+                  setDeleteConfirm({ show: false, id: null, name: '' });
+                  try {
+                    await storesService.deletePurchaseOrder(id);
+                    showToast("PO deleted successfully.");
+                    loadData();
+                    if (typeof setSelectedViewItem === 'function' && selectedViewItem?.id === id) setSelectedViewItem(null);
+                  } catch (err) {
+                    showToast("Error deleting PO. It may be in use.", 'error');
+                  }
+                }}
+              >
+                Yes, Delete
+              </button>
             </div>
           </div>
         </div>

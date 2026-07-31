@@ -509,5 +509,7 @@ export const buyerOrderAmendmentAPI = createAPI('/buyer-order-amendments');
 export const buyerOrderCompletionAPI = createAPI('/buyer-order-completions');
 export const orderExpenseAPI = createAPI('/order-expenses');
 
-
-
+export const yarnRateMasterAPI = createAPI('/costing-masters/yarn-rates');
+export const washTypeMasterAPI = createAPI('/costing-masters/wash-types');
+export const constructionMasterAPI = createAPI('/costing-masters/constructions');
+export const wastageMasterAPI = createAPI('/costing-masters/wastages');

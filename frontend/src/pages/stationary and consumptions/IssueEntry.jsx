@@ -48,6 +48,8 @@ export default function IssueEntry() {
   });
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null, name: '' });
+  const [editingId, setEditingId] = useState(null);
 
   /* ─── initial load ─── */
   useEffect(() => { loadData(); }, [view]);
@@ -162,6 +164,7 @@ export default function IssueEntry() {
         requesting_department_id: parseInt(formData.requesting_department_id),
         issued_by_id: parseInt(formData.issued_by_id),
         received_by_id: formData.received_by_id ? parseInt(formData.received_by_id) : null,
+        purpose: formData.purpose || '',
         items: formData.items.map(item => ({
           item_id: parseInt(item.item_id),
           category_id: parseInt(item.category_id),
@@ -172,9 +175,20 @@ export default function IssueEntry() {
           remarks: item.remarks
         }))
       };
-      await storesService.createDepartmentIssue(payload);
-      alert('Stock issued successfully! Stock levels updated.');
+
+      if (editingId) {
+        if (storesService.updateDepartmentIssue) {
+          await storesService.updateDepartmentIssue(editingId, payload);
+          alert('Stock issue updated successfully!');
+        } else {
+          alert('Update endpoint missing in storesService.');
+        }
+      } else {
+        await storesService.createDepartmentIssue(payload);
+        alert('Stock issued successfully! Stock levels updated.');
+      }
       setView('list');
+      setEditingId(null);
       await loadData();
     } catch (err) {
       console.error(err);
@@ -184,12 +198,22 @@ export default function IssueEntry() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Cancel this issue record?')) return;
-    try {
-      await storesService.deleteDepartmentIssue(id);
-      loadData();
-    } catch (err) { console.error(err); }
+  const handleEdit = async (issue) => {
+    const detailedIssue = await storesService.getDepartmentIssue(issue.id);
+    setFormData({
+      requesting_department_id: detailedIssue.requesting_department_id ? detailedIssue.requesting_department_id.toString() : '',
+      issued_by_id: detailedIssue.issued_by_id ? detailedIssue.issued_by_id.toString() : '',
+      received_by_id: detailedIssue.received_by_id ? detailedIssue.received_by_id.toString() : '',
+      purpose: detailedIssue.purpose || '',
+      items: detailedIssue.items || []
+    });
+    setEditingId(issue.id);
+    setView('form');
+  };
+
+  const handleDelete = (id, name, e) => {
+    if (e) e.stopPropagation();
+    setDeleteConfirm({ show: true, id, name });
   };
 
   /* ─── computed ─── */
@@ -269,14 +293,8 @@ export default function IssueEntry() {
                 { header: 'Status', key: 'status' }
               ]}
             />
-            <button
-              onClick={() => {
-                setFormData({ requesting_department_id: '', issued_by_id: '', received_by_id: '', purpose: '', items: [] });
-                setDeptSearch('');
-                setView('form');
-              }}
-              className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px' }}
-            >
+            <button onClick={() => { setFormData({ requesting_department_id: '', issued_by_id: '', received_by_id: '', purpose: '', items: [] }); setEditingId(null); setView('form'); }}
+              className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px' }}>
               <Plus size={16} /> New Issue
             </button>
           </div>
@@ -372,6 +390,14 @@ export default function IssueEntry() {
                             <button
                               className="btn btn-secondary"
                               style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              onClick={() => handleEdit(i)}
+                              title="Edit"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              className="btn btn-secondary"
+                              style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                               onClick={async () => {
                                 const detailedIssue = await storesService.getDepartmentIssue(i.id);
                                 setSelectedViewItem(detailedIssue);
@@ -381,7 +407,7 @@ export default function IssueEntry() {
                               <Eye size={16} color="var(--primary)" />
                             </button>
                             <button
-                              onClick={() => handleDelete(i.id)}
+                              onClick={(e) => handleDelete(i.id, i.issue_no, e)}
                               className="btn btn-secondary"
                               style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                               title="Cancel Issue"
@@ -707,6 +733,85 @@ export default function IssueEntry() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Premium React Delete Confirmation Modal Popup */}
+      {deleteConfirm.show && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          animation: 'fadeIn 0.2s ease-out'
+        }}>
+          <div className="card animate-scale" style={{
+            width: 420,
+            padding: 24,
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            borderRadius: 16,
+            textAlign: 'center'
+          }}>
+            <div style={{
+              width: 56,
+              height: 56,
+              borderRadius: 28,
+              background: '#fef2f2',
+              color: '#ef4444',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px',
+              border: '1px solid #fee2e2'
+            }}>
+              <Trash2 size={24} />
+            </div>
+
+            <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>
+              Confirm Deletion
+            </h3>
+
+            <p style={{ margin: '0 0 24px', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              Are you sure you want to delete <strong style={{ color: 'var(--text-primary)' }}>"{deleteConfirm.name}"</strong>? This action cannot be undone.
+            </p>
+
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ flex: 1, padding: '10px 16px', fontWeight: 600, fontSize: 13 }}
+                onClick={() => setDeleteConfirm({ show: false, id: null, name: '' })}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ flex: 1, padding: '10px 16px', fontWeight: 600, fontSize: 13, background: '#ef4444', borderColor: '#ef4444', color: 'white' }}
+                onClick={async () => {
+                  const { id } = deleteConfirm;
+                  setDeleteConfirm({ show: false, id: null, name: '' });
+                  try {
+                    await storesService.deleteDepartmentIssue(id);
+                    loadData();
+                    if (typeof setSelectedViewItem === 'function' && selectedViewItem?.id === id) setSelectedViewItem(null);
+                  } catch (err) {
+                    alert("Error deleting issue. It may be in use.");
+                  }
+                }}
+              >
+                Yes, Delete
+              </button>
             </div>
           </div>
         </div>

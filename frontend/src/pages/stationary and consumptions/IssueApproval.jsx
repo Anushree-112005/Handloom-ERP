@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Briefcase, Check, CheckCircle, Clock, Download, Edit2, Eye, FileText, IndianRupee, MapPin, Phone, Trash2, User, X, XCircle, Search, Filter, Globe, Mail, ClipboardList } from 'lucide-react';
 
-import { mockDb } from './mockDb';
+import api from '../../services/api';
 import ExportButton from '../../components/ExportButton';
 
 import { downloadElementAsPdf } from '../../components/A4DocumentPreview';
@@ -29,16 +29,33 @@ export default function IssueApproval() {
   const [itemsList, setItemsList] = useState([]);
   const [selectedIssue, setSelectedIssue] = useState(null);
 
+  const fetchData = async () => {
+    try {
+      const [issuesRes, itemsRes] = await Promise.all([
+        api.get('/stationary/consumables_issues'),
+        api.get('/stationary/consumables_items')
+      ]);
+      setIssues(issuesRes.data || []);
+      setItemsList(itemsRes.data || []);
+    } catch (err) {
+      console.error("Failed to fetch data:", err);
+    }
+  };
+
   useEffect(() => {
-    setIssues(mockDb.get('consumables_issues'));
-    setItemsList(mockDb.get('consumables_items'));
+    fetchData();
   }, []);
 
-  const handleApprove = (issId) => {
-    mockDb.update('consumables_issues', issId, { ...selectedIssue, status: 'Approved' });
-    setIssues(mockDb.get('consumables_issues'));
-    setSelectedIssue(null);
-    alert('Issue voucher approved successfully!');
+  const handleApprove = async (issId) => {
+    try {
+      await api.put(`/stationary/consumables_issues/${issId}`, { ...selectedIssue, status: 'Approved' });
+      await fetchData();
+      setSelectedIssue(null);
+      alert('Issue voucher approved successfully!');
+    } catch (err) {
+      console.error("Failed to approve:", err);
+      alert('Failed to approve issue voucher');
+    }
   };
 
   const [view, setView] = useState('list');
@@ -162,8 +179,7 @@ export default function IssueApproval() {
                           </button>
                         )}
                         <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setSelectedViewItem(iss)} title="Preview"><Eye size={16} color="var(--primary)" /></button>
-                        <button onClick={() => { setSelectedIssue(iss); setView('form'); }} className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Edit"><Edit2 size={16} color="var(--text-primary)" /></button>
-                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Delete"><Trash2 size={16} color="#ef4444" /></button>
+
                       </td>
                     </tr>
                   ))}

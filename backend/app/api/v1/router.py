@@ -140,6 +140,8 @@ api_router.include_router(twisting_doubling_po.router, prefix="/twisting-doublin
 api_router.include_router(twisting_doubling_po.router, prefix="/purchase/twisting-doubling", tags=["Purchase Orders - Twisting & Doubling"])
 api_router.include_router(calendar_events.router, prefix="/calendar-events", tags=["Calendar Events"])
 api_router.include_router(costing_sheet.router, prefix="/costing-sheet", tags=["Costing Sheet"])
+from app.api.v1.endpoints import costing_masters
+api_router.include_router(costing_masters.router, prefix="/costing-masters", tags=["Costing Masters"])
 api_router.include_router(stock_sheet.router, prefix="/stock-sheet", tags=["Stock Sheet"])
 
 api_router.include_router(yarn_dyeing_po.router, prefix="/yarn-dyeing-po", tags=["Yarn Dyeing PO"])

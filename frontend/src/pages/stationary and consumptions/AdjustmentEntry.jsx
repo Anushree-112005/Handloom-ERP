@@ -46,6 +46,8 @@ export default function AdjustmentEntry() {
   const [employees, setEmployees] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [toast, setToast] = useState({ show: false, msg: '', ok: true });
+  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null, name: '' });
+  const [editingId, setEditingId] = useState(null);
 
   const [formData, setFormData] = useState({
     adjusted_by_id: '', authorized_by_id: '',
@@ -145,7 +147,7 @@ export default function AdjustmentEntry() {
     setSubmitLoading(true);
     try {
       const factor = isNegative ? -1 : 1;
-      await storesService.createStockAdjustment({
+      const payload = {
         adjusted_by_id: parseInt(formData.adjusted_by_id),
         authorized_by_id: parseInt(formData.authorized_by_id),
         type: formData.type, reason: formData.reason,
@@ -154,18 +156,42 @@ export default function AdjustmentEntry() {
           current_stock: i.current_stock, quantity_adjusted: i.quantity_adjusted * factor,
           new_stock: i.new_stock, remarks: i.remarks
         }))
-      });
-      showToast('Stock adjustment applied and ledger updated!');
+      };
+
+      if (editingId) {
+        if (storesService.updateStockAdjustment) {
+          await storesService.updateStockAdjustment(editingId, payload);
+          showToast('Stock adjustment updated successfully!');
+        } else {
+          showToast('Update endpoint missing in storesService.', false);
+        }
+      } else {
+        await storesService.createStockAdjustment(payload);
+        showToast('Stock adjustment applied and ledger updated!');
+      }
       setView('list');
+      setEditingId(null);
       loadData();
     } catch (err) { console.error(err); showToast('Failed to apply adjustment.', false); }
     finally { setSubmitLoading(false); }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Cancel this adjustment?')) return;
-    try { await storesService.deleteStockAdjustment(id); loadData(); }
-    catch (err) { console.error(err); }
+  const handleEdit = async (adj) => {
+    const detailedAdjustment = await storesService.getStockAdjustment(adj.id);
+    setFormData({
+      adjusted_by_id: detailedAdjustment.adjusted_by_id ? detailedAdjustment.adjusted_by_id.toString() : '',
+      authorized_by_id: detailedAdjustment.authorized_by_id ? detailedAdjustment.authorized_by_id.toString() : '',
+      type: detailedAdjustment.type || 'Damage',
+      reason: detailedAdjustment.reason || '',
+      items: detailedAdjustment.items || []
+    });
+    setEditingId(adj.id);
+    setView('form');
+  };
+
+  const handleDelete = (id, name, e) => {
+    if (e) e.stopPropagation();
+    setDeleteConfirm({ show: true, id, name });
   };
 
   const filteredAdj = adjustments.filter(a =>
@@ -226,7 +252,7 @@ export default function AdjustmentEntry() {
                 { header: 'Reason', key: 'reason' }
               ]}
             />
-            <button onClick={() => { setFormData({ adjusted_by_id: '', authorized_by_id: '', type: 'Damage', reason: '', items: [] }); setView('form'); }}
+            <button onClick={() => { setFormData({ adjusted_by_id: '', authorized_by_id: '', type: 'Damage', reason: '', items: [] }); setEditingId(null); setView('form'); }}
               className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px' }}>
               <Plus size={16} /> New Adjustment
             </button>
@@ -320,6 +346,14 @@ export default function AdjustmentEntry() {
                             <button
                               className="btn btn-secondary"
                               style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              onClick={() => handleEdit(a)}
+                              title="Edit"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              className="btn btn-secondary"
+                              style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                               onClick={async () => {
                                 const detailedAdjustment = await storesService.getStockAdjustment(a.id);
                                 setSelectedViewItem(detailedAdjustment);
@@ -328,7 +362,7 @@ export default function AdjustmentEntry() {
                             >
                               <Eye size={16} color="var(--primary)" />
                             </button>
-                            <button onClick={() => handleDelete(a.id)} className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Delete Adjustment">
+                            <button onClick={(e) => handleDelete(a.id, a.adjustment_no, e)} className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Delete Adjustment">
                               <Trash2 size={16} color="var(--danger, #ef4444)" />
                             </button>
                           </div>
@@ -631,6 +665,86 @@ export default function AdjustmentEntry() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Premium React Delete Confirmation Modal Popup */}
+      {deleteConfirm.show && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          animation: 'fadeIn 0.2s ease-out'
+        }}>
+          <div className="card animate-scale" style={{
+            width: 420,
+            padding: 24,
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            borderRadius: 16,
+            textAlign: 'center'
+          }}>
+            <div style={{
+              width: 56,
+              height: 56,
+              borderRadius: 28,
+              background: '#fef2f2',
+              color: '#ef4444',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px',
+              border: '1px solid #fee2e2'
+            }}>
+              <Trash2 size={24} />
+            </div>
+
+            <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>
+              Confirm Deletion
+            </h3>
+
+            <p style={{ margin: '0 0 24px', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              Are you sure you want to delete <strong style={{ color: 'var(--text-primary)' }}>"{deleteConfirm.name}"</strong>? This action cannot be undone.
+            </p>
+
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ flex: 1, padding: '10px 16px', fontWeight: 600, fontSize: 13 }}
+                onClick={() => setDeleteConfirm({ show: false, id: null, name: '' })}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ flex: 1, padding: '10px 16px', fontWeight: 600, fontSize: 13, background: '#ef4444', borderColor: '#ef4444', color: 'white' }}
+                onClick={async () => {
+                  const { id } = deleteConfirm;
+                  setDeleteConfirm({ show: false, id: null, name: '' });
+                  try {
+                    await storesService.deleteStockAdjustment(id);
+                    showToast("Adjustment deleted successfully.");
+                    loadData();
+                    if (typeof setSelectedViewItem === 'function' && selectedViewItem?.id === id) setSelectedViewItem(null);
+                  } catch (err) {
+                    showToast("Error deleting adjustment. It may be in use.", 'error');
+                  }
+                }}
+              >
+                Yes, Delete
+              </button>
             </div>
           </div>
         </div>

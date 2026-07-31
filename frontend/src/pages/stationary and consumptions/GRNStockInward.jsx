@@ -44,6 +44,8 @@ export default function GRNStockInward() {
   const [itemsList, setItemsList] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [toast, setToast] = useState({ show: false, msg: '', ok: true });
+  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null, name: '' });
+  const [editingId, setEditingId] = useState(null);
 
   const [formData, setFormData] = useState({
     po_id: '', received_by_id: '', warehouse_id: '', items: []
@@ -130,7 +132,7 @@ export default function GRNStockInward() {
     }
     setSubmitLoading(true);
     try {
-      await storesService.createStockInward({
+      const payload = {
         po_id: parseInt(formData.po_id),
         received_by_id: parseInt(formData.received_by_id),
         warehouse_id: parseInt(formData.warehouse_id),
@@ -148,18 +150,41 @@ export default function GRNStockInward() {
           rack_no: i.rack_no || null,
           remarks: i.remarks || null
         }))
-      });
-      showToast('GRN logged successfully! Stock levels updated.');
+      };
+
+      if (editingId) {
+        if (storesService.updateStockInward) {
+          await storesService.updateStockInward(editingId, payload);
+          showToast('GRN updated successfully!');
+        } else {
+          showToast('Update endpoint missing in storesService.', false);
+        }
+      } else {
+        await storesService.createStockInward(payload);
+        showToast('GRN logged successfully! Stock levels updated.');
+      }
       setView('list');
+      setEditingId(null);
       loadData();
     } catch (err) { console.error(err); showToast('Failed to log GRN.', false); }
     finally { setSubmitLoading(false); }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this GRN entry?')) return;
-    try { await storesService.deleteStockInward(id); loadData(); }
-    catch (err) { console.error(err); }
+  const handleEdit = async (grn) => {
+    const detailedGRN = await storesService.getStockInward(grn.id);
+    setFormData({
+      po_id: detailedGRN.po_id ? detailedGRN.po_id.toString() : '',
+      received_by_id: detailedGRN.received_by_id ? detailedGRN.received_by_id.toString() : '',
+      warehouse_id: detailedGRN.warehouse_id ? detailedGRN.warehouse_id.toString() : '',
+      items: detailedGRN.items || []
+    });
+    setEditingId(grn.id);
+    setView('form');
+  };
+
+  const handleDelete = (id, name, e) => {
+    if (e) e.stopPropagation();
+    setDeleteConfirm({ show: true, id, name });
   };
 
   const filteredGrns = grns.filter(g =>
@@ -218,7 +243,7 @@ export default function GRNStockInward() {
                 { header: 'Received By', key: 'received_by_name' }
               ]}
             />
-            <button onClick={() => { setFormData({ po_id: '', received_by_id: '', warehouse_id: '', items: [] }); setView('form'); }}
+            <button onClick={() => { setFormData({ po_id: '', received_by_id: '', warehouse_id: '', items: [] }); setEditingId(null); setView('form'); }}
               className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px' }}>
               <Plus size={16} /> New GRN
             </button>
@@ -315,6 +340,14 @@ export default function GRNStockInward() {
                               <button
                                 className="btn btn-secondary"
                                 style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                onClick={() => handleEdit(g)}
+                                title="Edit"
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                              <button
+                                className="btn btn-secondary"
+                                style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                 onClick={async () => {
                                   const detailedGRN = await storesService.getStockInward(g.id);
                                   setSelectedViewItem(detailedGRN);
@@ -323,7 +356,7 @@ export default function GRNStockInward() {
                               >
                                 <Eye size={16} color="var(--primary)" />
                               </button>
-                              <button onClick={() => handleDelete(g.id)} className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Delete GRN">
+                              <button onClick={(e) => handleDelete(g.id, g.grn_no, e)} className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Delete GRN">
                                 <Trash2 size={16} color="var(--danger, #ef4444)" />
                               </button>
                             </div>
@@ -602,6 +635,86 @@ export default function GRNStockInward() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Premium React Delete Confirmation Modal Popup */}
+      {deleteConfirm.show && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          animation: 'fadeIn 0.2s ease-out'
+        }}>
+          <div className="card animate-scale" style={{
+            width: 420,
+            padding: 24,
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            borderRadius: 16,
+            textAlign: 'center'
+          }}>
+            <div style={{
+              width: 56,
+              height: 56,
+              borderRadius: 28,
+              background: '#fef2f2',
+              color: '#ef4444',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px',
+              border: '1px solid #fee2e2'
+            }}>
+              <Trash2 size={24} />
+            </div>
+
+            <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>
+              Confirm Deletion
+            </h3>
+
+            <p style={{ margin: '0 0 24px', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              Are you sure you want to delete <strong style={{ color: 'var(--text-primary)' }}>"{deleteConfirm.name}"</strong>? This action cannot be undone.
+            </p>
+
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ flex: 1, padding: '10px 16px', fontWeight: 600, fontSize: 13 }}
+                onClick={() => setDeleteConfirm({ show: false, id: null, name: '' })}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ flex: 1, padding: '10px 16px', fontWeight: 600, fontSize: 13, background: '#ef4444', borderColor: '#ef4444', color: 'white' }}
+                onClick={async () => {
+                  const { id } = deleteConfirm;
+                  setDeleteConfirm({ show: false, id: null, name: '' });
+                  try {
+                    await storesService.deleteStockInward(id);
+                    showToast("GRN deleted successfully.");
+                    loadData();
+                    if (typeof setSelectedViewItem === 'function' && selectedViewItem?.id === id) setSelectedViewItem(null);
+                  } catch (err) {
+                    showToast("Error deleting GRN. It may be in use.", 'error');
+                  }
+                }}
+              >
+                Yes, Delete
+              </button>
             </div>
           </div>
         </div>

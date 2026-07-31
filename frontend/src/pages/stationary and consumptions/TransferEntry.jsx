@@ -42,6 +42,8 @@ export default function TransferEntry() {
   const [employees, setEmployees] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [toast, setToast] = useState({ show: false, msg: '', ok: true });
+  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null, name: '' });
+  const [editingId, setEditingId] = useState(null);
 
   const [formData, setFormData] = useState({
     source_warehouse_id: '',
@@ -130,7 +132,7 @@ export default function TransferEntry() {
     }
     setSubmitLoading(true);
     try {
-      await storesService.createStoreTransfer({
+      const payload = {
         source_warehouse_id: parseInt(formData.source_warehouse_id),
         destination_warehouse_id: parseInt(formData.destination_warehouse_id),
         transferred_by_id: parseInt(formData.transferred_by_id),
@@ -138,9 +140,21 @@ export default function TransferEntry() {
           item_id: parseInt(i.item_id), category_id: parseInt(i.category_id),
           uom_id: parseInt(i.uom_id), quantity: i.quantity, remarks: i.remarks
         }))
-      });
-      showToast('Stock transfer completed successfully!');
+      };
+
+      if (editingId) {
+        if (storesService.updateStoreTransfer) {
+          await storesService.updateStoreTransfer(editingId, payload);
+          showToast('Stock transfer updated successfully!');
+        } else {
+          showToast('Update endpoint missing in storesService.', false);
+        }
+      } else {
+        await storesService.createStoreTransfer(payload);
+        showToast('Stock transfer completed successfully!');
+      }
       setView('list');
+      setEditingId(null);
       loadData();
     } catch (err) {
       console.error(err);
@@ -151,10 +165,21 @@ export default function TransferEntry() {
     finally { setSubmitLoading(false); }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this transfer?')) return;
-    try { await storesService.deleteStoreTransfer(id); loadData(); }
-    catch (err) { console.error(err); }
+  const handleEdit = async (transfer) => {
+    const detailedTransfer = await storesService.getStoreTransfer(transfer.id);
+    setFormData({
+      source_warehouse_id: detailedTransfer.source_warehouse_id ? detailedTransfer.source_warehouse_id.toString() : '',
+      destination_warehouse_id: detailedTransfer.destination_warehouse_id ? detailedTransfer.destination_warehouse_id.toString() : '',
+      transferred_by_id: detailedTransfer.transferred_by_id ? detailedTransfer.transferred_by_id.toString() : '',
+      items: detailedTransfer.items || []
+    });
+    setEditingId(transfer.id);
+    setView('form');
+  };
+
+  const handleDelete = (id, name, e) => {
+    if (e) e.stopPropagation();
+    setDeleteConfirm({ show: true, id, name });
   };
 
   const filteredTransfers = transfers.filter(t =>
@@ -215,7 +240,7 @@ export default function TransferEntry() {
                 { header: 'Status', key: 'status' }
               ]}
             />
-            <button onClick={() => { setFormData({ source_warehouse_id: '', destination_warehouse_id: '', transferred_by_id: '', items: [] }); setView('form'); }}
+            <button onClick={() => { setFormData({ source_warehouse_id: '', destination_warehouse_id: '', transferred_by_id: '', items: [] }); setEditingId(null); setView('form'); }}
               className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px' }}>
               <Plus size={16} /> New Transfer
             </button>
@@ -312,6 +337,14 @@ export default function TransferEntry() {
                             <button
                               className="btn btn-secondary"
                               style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              onClick={() => handleEdit(t)}
+                              title="Edit"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              className="btn btn-secondary"
+                              style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                               onClick={async () => {
                                 const detailedTransfer = await storesService.getStoreTransfer(t.id);
                                 setSelectedViewItem(detailedTransfer);
@@ -320,7 +353,7 @@ export default function TransferEntry() {
                             >
                               <Eye size={16} color="var(--primary)" />
                             </button>
-                            <button onClick={() => handleDelete(t.id)} className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Delete Transfer">
+                            <button onClick={(e) => handleDelete(t.id, t.transfer_no, e)} className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Delete Transfer">
                               <Trash2 size={16} color="var(--danger, #ef4444)" />
                             </button>
                           </div>
@@ -605,6 +638,86 @@ export default function TransferEntry() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Premium React Delete Confirmation Modal Popup */}
+      {deleteConfirm.show && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          animation: 'fadeIn 0.2s ease-out'
+        }}>
+          <div className="card animate-scale" style={{
+            width: 420,
+            padding: 24,
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            borderRadius: 16,
+            textAlign: 'center'
+          }}>
+            <div style={{
+              width: 56,
+              height: 56,
+              borderRadius: 28,
+              background: '#fef2f2',
+              color: '#ef4444',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px',
+              border: '1px solid #fee2e2'
+            }}>
+              <Trash2 size={24} />
+            </div>
+
+            <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>
+              Confirm Deletion
+            </h3>
+
+            <p style={{ margin: '0 0 24px', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              Are you sure you want to delete <strong style={{ color: 'var(--text-primary)' }}>"{deleteConfirm.name}"</strong>? This action cannot be undone.
+            </p>
+
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ flex: 1, padding: '10px 16px', fontWeight: 600, fontSize: 13 }}
+                onClick={() => setDeleteConfirm({ show: false, id: null, name: '' })}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ flex: 1, padding: '10px 16px', fontWeight: 600, fontSize: 13, background: '#ef4444', borderColor: '#ef4444', color: 'white' }}
+                onClick={async () => {
+                  const { id } = deleteConfirm;
+                  setDeleteConfirm({ show: false, id: null, name: '' });
+                  try {
+                    await storesService.deleteStoreTransfer(id);
+                    showToast("Transfer deleted successfully.");
+                    loadData();
+                    if (typeof setSelectedViewItem === 'function' && selectedViewItem?.id === id) setSelectedViewItem(null);
+                  } catch (err) {
+                    showToast("Error deleting transfer. It may be in use.", 'error');
+                  }
+                }}
+              >
+                Yes, Delete
+              </button>
             </div>
           </div>
         </div>

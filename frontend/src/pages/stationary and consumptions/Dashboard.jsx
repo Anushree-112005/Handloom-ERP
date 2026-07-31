@@ -207,7 +207,7 @@ export default function Dashboard() {
           </h2>
         </div>
 
-        <div className="card" style={{ border: 'none', boxShadow: 'none', boxShadow: 'none' }}>
+        <div className="card" style={{ border: 'none', boxShadow: 'none' }}>
           <form onSubmit={handleLocSubmit}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16 }}>
               <div>
@@ -455,7 +455,7 @@ export default function Dashboard() {
         </div>
 
         {/* Right Column: Recent Movement Ledger */}
-        <div className="card" style={{ border: 'none', boxShadow: 'none', overflow: 'hidden', border: 'none', boxShadow: 'none' }}>
+        <div className="card" style={{ border: 'none', boxShadow: 'none', overflow: 'hidden' }}>
           <div className="card-header">
             <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <ClipboardList style={{ color: 'var(--primary)' }} size={20} /> Recent Stock Movements

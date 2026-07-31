@@ -28,6 +28,8 @@ const InfoRow2 = ({ label, value }) => (
 export default function PurchaseRequisition() {
   // Navigation tabs: 'list', 'new', 'view', 'analytics'
   const [activeTab, setActiveTab] = useState('list');
+  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null, name: '' });
+  const [editingId, setEditingId] = useState(null);
 
   const [selectedViewItem, setSelectedViewItem] = useState(null);
   const printRef = useRef(null);
@@ -460,9 +462,19 @@ export default function PurchaseRequisition() {
         }))
       };
 
-      await storesService.createPR(payload);
-      showToast('Purchase Requisition submitted successfully!');
+      if (editingId) {
+        if (storesService.updatePR) {
+          await storesService.updatePR(editingId, payload);
+          showToast('Purchase Requisition updated successfully!');
+        } else {
+          showToast('Update endpoint not configured in storesService.', 'error');
+        }
+      } else {
+        await storesService.createPR(payload);
+        showToast('Purchase Requisition submitted successfully!');
+      }
       setActiveTab('list');
+      setEditingId(null);
       loadPRData();
       // Re-initialize form
       setForm(prev => ({
@@ -778,6 +790,44 @@ export default function PurchaseRequisition() {
                             <td style={{ textAlign: "right", fontWeight: 700 }}>{totalCost.toLocaleString()} INR</td>
                             <td onClick={e => e.stopPropagation()}>
                               <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                                {pr.status === 'Requested' && (
+                                  <button
+                                    className="btn btn-secondary"
+                                    style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                    onClick={async () => {
+                                      const detail = await storesService.getPRDetail(pr.id);
+                                      setForm({
+                                        required_date: detail.required_date ? new Date(detail.required_date).toISOString().slice(0, 10) : '',
+                                        request_type: detail.request_type || 'Normal',
+                                        priority: detail.priority || 'Medium',
+                                        description: detail.description || '',
+                                        requester_id: detail.requester_id || '',
+                                        department_id: detail.department_id || '',
+                                        cost_center_id: detail.cost_center_id || '',
+                                        branch_factory: detail.branch_factory || '',
+                                        delivery_warehouse_id: detail.delivery_warehouse_id || '',
+                                        delivery_plant: detail.delivery_plant || '',
+                                        delivery_department_id: detail.delivery_department_id || '',
+                                        delivery_address: detail.delivery_address || '',
+                                        expected_delivery_date: detail.expected_delivery_date ? new Date(detail.expected_delivery_date).toISOString().slice(0, 10) : '',
+                                        budget_id: detail.budget_id || '',
+                                        items: detail.items && detail.items.length > 0 ? detail.items : [
+                                          {
+                                            item_id: '', category_id: '', subcategory_id: '', uom_id: '', vendor_id: '', warehouse_id: '',
+                                            quantity: '', estimated_unit_price: '', gst: '', currency: '', rack_bin: '', brand: '',
+                                            specification: '', remarks: '', current_stock: '', reserved_stock: '', available_stock: '',
+                                            reorder_level: '', suggested_qty: '', history: null, recs: []
+                                          }
+                                        ]
+                                      });
+                                      setEditingId(pr.id);
+                                      setActiveTab('new');
+                                    }}
+                                    title="Edit"
+                                  >
+                                    <Edit2 size={16} />
+                                  </button>
+                                )}
                                 <button
                                   className="btn btn-secondary"
                                   style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -793,12 +843,9 @@ export default function PurchaseRequisition() {
                                   <button
                                     className="btn btn-secondary"
                                     style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                    onClick={async () => {
-                                      if (confirm("Are you sure you want to cancel/delete this requisition?")) {
-                                        await storesService.deletePR(pr.id);
-                                        showToast("PR deleted successfully.");
-                                        loadPRData();
-                                      }
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setDeleteConfirm({ show: true, id: pr.id, name: pr.pr_number });
                                     }}
                                     title="Cancel Requisition"
                                   >
@@ -1388,6 +1435,87 @@ export default function PurchaseRequisition() {
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Premium React Delete Confirmation Modal Popup */}
+      {deleteConfirm.show && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          animation: 'fadeIn 0.2s ease-out'
+        }}>
+          <div className="card animate-scale" style={{
+            width: 420,
+            padding: 24,
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            borderRadius: 16,
+            textAlign: 'center'
+          }}>
+            <div style={{
+              width: 56,
+              height: 56,
+              borderRadius: 28,
+              background: '#fef2f2',
+              color: '#ef4444',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px',
+              border: '1px solid #fee2e2'
+            }}>
+              <Trash2 size={24} />
+            </div>
+
+            <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>
+              Confirm Deletion
+            </h3>
+
+            <p style={{ margin: '0 0 24px', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              Are you sure you want to cancel/delete <strong style={{ color: 'var(--text-primary)' }}>"{deleteConfirm.name}"</strong>? This action cannot be undone.
+            </p>
+
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ flex: 1, padding: '10px 16px', fontWeight: 600, fontSize: 13 }}
+                onClick={() => setDeleteConfirm({ show: false, id: null, name: '' })}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ flex: 1, padding: '10px 16px', fontWeight: 600, fontSize: 13, background: '#ef4444', borderColor: '#ef4444', color: 'white' }}
+                onClick={async () => {
+                  const { id } = deleteConfirm;
+                  setDeleteConfirm({ show: false, id: null, name: '' });
+                  try {
+                    await storesService.deletePR(id);
+                    showToast("PR deleted successfully.");
+                    loadPRData();
+                    if (typeof setSelectedViewItem === 'function' && selectedViewItem?.id === id) setSelectedViewItem(null);
+                  } catch (err) {
+                    showToast("Error deleting PR. It may be in use.", 'error');
+                  }
+                }}
+              >
+                Yes, Delete
+              </button>
+            </div>
           </div>
         </div>
       )}

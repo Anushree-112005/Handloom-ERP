@@ -19,6 +19,8 @@ const InfoRow2 = ({ label, value }) => (
 
 export default function MaterialRequest() {
   const [view, setView] = useState('list');
+  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null, name: '' });
+  const [editingId, setEditingId] = useState(null);
 
   const [selectedViewItem, setSelectedViewItem] = useState(null);
   const printRef = useRef(null);
@@ -126,36 +128,42 @@ export default function MaterialRequest() {
     }
   };
 
-  const handleOpenForm = () => {
+  const handleOpenForm = (req = null) => {
     setError('');
     fetchDropdowns();
-    setFormData({
-      department_id: '',
-      category_id: '',
-      item_id: '',
-      uom_id: '',
-      vendor_id: '',
-      quantity: '',
-      requested_by: '',
-      priority: '',
-      remarks: ''
-    });
+    if (req) {
+      setFormData({
+        department_id: req.department_id || '',
+        category_id: req.category_id || '',
+        item_id: req.item_id || '',
+        uom_id: req.uom_id || '',
+        vendor_id: req.vendor_id || '',
+        quantity: req.quantity || '',
+        requested_by: req.requested_by || '',
+        priority: req.priority || 'Normal',
+        remarks: req.remarks || ''
+      });
+      setEditingId(req.id);
+    } else {
+      setFormData({
+        department_id: '',
+        category_id: '',
+        item_id: '',
+        uom_id: '',
+        vendor_id: '',
+        quantity: '',
+        requested_by: '',
+        priority: '',
+        remarks: ''
+      });
+      setEditingId(null);
+    }
     setView('form');
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to cancel/delete this material request?')) {
-      try {
-        setLoading(true);
-        await storesService.deleteMaterialRequest(id);
-        await fetchRequests();
-      } catch (err) {
-        console.error(err);
-        alert('Failed to delete material request.');
-      } finally {
-        setLoading(false);
-      }
-    }
+  const handleDelete = (id, name = 'this request', e = null) => {
+    if (e) e.stopPropagation();
+    setDeleteConfirm({ show: true, id, name });
   };
 
   const handleSubmit = async (e) => {
@@ -190,8 +198,17 @@ export default function MaterialRequest() {
     };
 
     try {
-      await storesService.createMaterialRequest(payload);
-      alert('Material Request saved successfully!');
+      if (editingId) {
+        if (storesService.updateMaterialRequest) {
+          await storesService.updateMaterialRequest(editingId, payload);
+          alert('Material Request updated successfully!');
+        } else {
+          alert('Update endpoint not configured in storesService.');
+        }
+      } else {
+        await storesService.createMaterialRequest(payload);
+        alert('Material Request saved successfully!');
+      }
       setView('list');
       await fetchRequests();
     } catch (err) {
@@ -393,6 +410,14 @@ export default function MaterialRequest() {
                             <button
                               className="btn btn-secondary"
                               style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              onClick={() => handleOpenForm(req)}
+                              title="Edit"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              className="btn btn-secondary"
+                              style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                               onClick={() => setSelectedViewItem(req)}
                               title="Preview"
                             >
@@ -401,7 +426,7 @@ export default function MaterialRequest() {
                             <button
                               className="btn btn-secondary"
                               style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                              onClick={() => handleDelete(req.id)}
+                              onClick={(e) => handleDelete(req.id, req.request_no, e)}
                               title="Delete"
                             >
                               <Trash2 size={16} color="var(--danger, #ef4444)" />
@@ -575,6 +600,89 @@ export default function MaterialRequest() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Premium React Delete Confirmation Modal Popup */}
+      {deleteConfirm.show && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          animation: 'fadeIn 0.2s ease-out'
+        }}>
+          <div className="card animate-scale" style={{
+            width: 420,
+            padding: 24,
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            borderRadius: 16,
+            textAlign: 'center'
+          }}>
+            <div style={{
+              width: 56,
+              height: 56,
+              borderRadius: 28,
+              background: '#fef2f2',
+              color: '#ef4444',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px',
+              border: '1px solid #fee2e2'
+            }}>
+              <Trash2 size={24} />
+            </div>
+
+            <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>
+              Confirm Deletion
+            </h3>
+
+            <p style={{ margin: '0 0 24px', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              Are you sure you want to delete <strong style={{ color: 'var(--text-primary)' }}>"{deleteConfirm.name}"</strong>? This action cannot be undone.
+            </p>
+
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ flex: 1, padding: '10px 16px', fontWeight: 600, fontSize: 13 }}
+                onClick={() => setDeleteConfirm({ show: false, id: null, name: '' })}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ flex: 1, padding: '10px 16px', fontWeight: 600, fontSize: 13, background: '#ef4444', borderColor: '#ef4444', color: 'white' }}
+                onClick={async () => {
+                  const { id } = deleteConfirm;
+                  setDeleteConfirm({ show: false, id: null, name: '' });
+                  try {
+                    setLoading(true);
+                    await storesService.deleteMaterialRequest(id);
+                    await fetchRequests();
+                    if (typeof setSelectedViewItem === 'function' && selectedViewItem?.id === id) setSelectedViewItem(null);
+                  } catch (err) {
+                    alert("Error deleting record. It may be in use.");
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+              >
+                Yes, Delete
+              </button>
             </div>
           </div>
         </div>

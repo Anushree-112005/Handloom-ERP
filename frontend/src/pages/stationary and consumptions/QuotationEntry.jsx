@@ -51,6 +51,8 @@ export default function QuotationEntry() {
   // Modal toggle state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('order_info'); // order_info, item_details, tax_logistics
+  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null, name: '', type: '' });
+  const [editingId, setEditingId] = useState(null);
 
   // New Vendor Form inside modal
   const [showAddVendorForm, setShowAddVendorForm] = useState(false);
@@ -208,45 +210,26 @@ export default function QuotationEntry() {
   };
 
   // Delete vendor from Vendor Master
-  const handleDeleteVendor = async (id, e) => {
+  const handleDeleteVendor = (id, name, e) => {
     if (e) e.stopPropagation();
-    if (!window.confirm('Are you sure you want to delete this vendor from Vendor Master?')) return;
-    try {
-      await storesService.deleteVendor(id);
-      setVendors(prev => prev.filter(v => v.vendor_id !== id));
-      if (formData.vendor_id === id.toString() || formData.vendor_id === id) {
-        setFormData(prev => ({ ...prev, vendor_id: '' }));
-      }
-      showToast('Vendor deleted from Vendor Master successfully.');
-    } catch (err) {
-      console.error(err);
-      showToast('Failed to delete vendor.', false);
-    }
+    setDeleteConfirm({ show: true, id, name, type: 'vendor' });
   };
 
   // Delete quotation bid
-  
   const handleEdit = (q) => {
     setFormData({
-      id: q.id,
+      id: q.quotation_id,
       company_name: q.company_name || 'Dinesh Textiles',
-      date: q.date ? new Date(q.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      date: q.date_created ? new Date(q.date_created).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       vendor_id: q.vendor_id ? q.vendor_id.toString() : (vendors[0]?.vendor_id.toString() || ''),
       items: q.items || []
     });
+    setEditingId(q.quotation_id);
     setIsModalOpen(true);
   };
-  const handleDeleteQuotation = async (id, e) => {
+  const handleDeleteQuotation = (id, name, e) => {
     if (e) e.stopPropagation();
-    if (!window.confirm('Are you sure you want to delete this quotation bid?')) return;
-    try {
-      await storesService.deleteProcurementQuotation(id);
-      showToast('Quotation deleted successfully.');
-      loadData();
-    } catch (err) {
-      console.error(err);
-      showToast('Failed to delete quotation.', false);
-    }
+    setDeleteConfirm({ show: true, id, name, type: 'quotation' });
   };
 
   // Submit quotation to database
@@ -279,9 +262,19 @@ export default function QuotationEntry() {
           gst_percentage: parseFloat(item.gst_percentage) || 0
         }))
       };
-      await storesService.createProcurementQuotation(payload);
-      showToast('Quotation saved successfully!');
+      if (editingId) {
+        if (storesService.updateProcurementQuotation) {
+          await storesService.updateProcurementQuotation(editingId, payload);
+          showToast('Quotation updated successfully!');
+        } else {
+          showToast('Update endpoint missing in storesService.', false);
+        }
+      } else {
+        await storesService.createProcurementQuotation(payload);
+        showToast('Quotation saved successfully!');
+      }
       setIsModalOpen(false);
+      setEditingId(null);
       loadData();
     } catch (err) {
       console.error(err);
@@ -722,6 +715,14 @@ export default function QuotationEntry() {
                           <button
                             className="btn btn-secondary"
                             style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            onClick={() => handleEdit(q)}
+                            title="Edit"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          <button
+                            className="btn btn-secondary"
+                            style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                             onClick={async () => {
                               const detailedQuote = await storesService.getProcurementQuotation(q.quotation_id);
                               setSelectedViewItem(detailedQuote);
@@ -731,15 +732,7 @@ export default function QuotationEntry() {
                             <Eye size={16} color="var(--primary)" />
                           </button>
                           <button
-                            className="btn btn-secondary"
-                            style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            onClick={() => handleEdit(q)}
-                            title="Edit"
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          <button
-                            onClick={(e) => handleDeleteQuotation(q.quotation_id, e)}
+                            onClick={(e) => handleDeleteQuotation(q.quotation_id, `QTN-${q.quotation_id}`, e)}
                             className="btn btn-secondary"
                             style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                             title="Delete Quotation"
@@ -1375,6 +1368,95 @@ export default function QuotationEntry() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Premium React Delete Confirmation Modal Popup */}
+      {deleteConfirm.show && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          animation: 'fadeIn 0.2s ease-out'
+        }}>
+          <div className="card animate-scale" style={{
+            width: 420,
+            padding: 24,
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            borderRadius: 16,
+            textAlign: 'center'
+          }}>
+            <div style={{
+              width: 56,
+              height: 56,
+              borderRadius: 28,
+              background: '#fef2f2',
+              color: '#ef4444',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px',
+              border: '1px solid #fee2e2'
+            }}>
+              <Trash2 size={24} />
+            </div>
+
+            <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>
+              Confirm Deletion
+            </h3>
+
+            <p style={{ margin: '0 0 24px', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              Are you sure you want to delete <strong style={{ color: 'var(--text-primary)' }}>"{deleteConfirm.name}"</strong>? This action cannot be undone.
+            </p>
+
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ flex: 1, padding: '10px 16px', fontWeight: 600, fontSize: 13 }}
+                onClick={() => setDeleteConfirm({ show: false, id: null, name: '', type: '' })}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ flex: 1, padding: '10px 16px', fontWeight: 600, fontSize: 13, background: '#ef4444', borderColor: '#ef4444', color: 'white' }}
+                onClick={async () => {
+                  const { id, type } = deleteConfirm;
+                  setDeleteConfirm({ show: false, id: null, name: '', type: '' });
+                  try {
+                    if (type === 'vendor') {
+                      await storesService.deleteVendor(id);
+                      setVendors(prev => prev.filter(v => v.vendor_id !== id));
+                      if (formData.vendor_id === id.toString() || formData.vendor_id === id) {
+                        setFormData(prev => ({ ...prev, vendor_id: '' }));
+                      }
+                      showToast('Vendor deleted from Vendor Master successfully.');
+                    } else if (type === 'quotation') {
+                      await storesService.deleteProcurementQuotation(id);
+                      showToast('Quotation deleted successfully.');
+                      loadData();
+                    }
+                    if (typeof setSelectedViewItem === 'function' && selectedViewItem?.quotation_id === id) setSelectedViewItem(null);
+                  } catch (err) {
+                    showToast('Failed to delete record. It may be in use.', false);
+                  }
+                }}
+              >
+                Yes, Delete
+              </button>
             </div>
           </div>
         </div>

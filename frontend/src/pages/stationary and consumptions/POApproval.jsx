@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Briefcase, Check, CheckCircle, Clock, Download, Edit2, Eye, FileText, IndianRupee, MapPin, Phone, Trash2, User, X, XCircle, Search, Filter, Globe, Mail, ClipboardList } from 'lucide-react';
 
-import { mockDb } from './mockDb';
+import api from '../../services/api';
 import ExportButton from '../../components/ExportButton';
 
 import { downloadElementAsPdf } from '../../components/A4DocumentPreview';
@@ -29,23 +29,45 @@ export default function POApproval() {
   const [itemsList, setItemsList] = useState([]);
   const [selectedPO, setSelectedPO] = useState(null);
 
-  useEffect(() => {
-    setPOs(mockDb.get('consumables_pos'));
-    setItemsList(mockDb.get('consumables_items'));
-  }, []);
-
-  const handleApprove = (poId) => {
-    mockDb.update('consumables_pos', poId, { status: 'Approved' });
-    setPOs(mockDb.get('consumables_pos'));
-    setSelectedPO(null);
-    alert('Purchase Order approved successfully!');
+  const fetchData = async () => {
+    try {
+      const [posRes, itemsRes] = await Promise.all([
+        api.get('/stationary/consumables_pos'),
+        api.get('/stationary/consumables_items')
+      ]);
+      setPOs(posRes.data || []);
+      setItemsList(itemsRes.data || []);
+    } catch (err) {
+      console.error("Failed to fetch data:", err);
+    }
   };
 
-  const handleReject = (poId) => {
-    mockDb.update('consumables_pos', poId, { status: 'Rejected' });
-    setPOs(mockDb.get('consumables_pos'));
-    setSelectedPO(null);
-    alert('Purchase Order rejected.');
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleApprove = async (poId) => {
+    try {
+      await api.put(`/stationary/consumables_pos/${poId}`, { ...selectedPO, status: 'Approved' });
+      await fetchData();
+      setSelectedPO(null);
+      alert('Purchase Order approved successfully!');
+    } catch (err) {
+      console.error("Failed to approve:", err);
+      alert('Failed to approve purchase order');
+    }
+  };
+
+  const handleReject = async (poId) => {
+    try {
+      await api.put(`/stationary/consumables_pos/${poId}`, { ...selectedPO, status: 'Rejected' });
+      await fetchData();
+      setSelectedPO(null);
+      alert('Purchase Order rejected.');
+    } catch (err) {
+      console.error("Failed to reject:", err);
+      alert('Failed to reject purchase order');
+    }
   };
 
   const [view, setView] = useState('list');
@@ -170,8 +192,7 @@ export default function POApproval() {
                             </button>
                           )}
                           <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setSelectedViewItem(po)} title="Preview"><Eye size={16} color="var(--primary)" /></button>
-                          <button onClick={() => { setSelectedPO(po); setView('form'); }} className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Edit"><Edit2 size={16} color="var(--text-primary)" /></button>
-                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Delete"><Trash2 size={16} color="#ef4444" /></button>
+
                         </td>
                       </tr>
                     );
