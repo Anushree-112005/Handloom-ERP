@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Box, Search, Download, Filter, Layers, Database, ArrowRightLeft, FileText, Eye } from 'lucide-react';
-import api, { erpStockAPI } from '../../services/api';
+import api, { erpStockAPI, yarnInwardAPI } from '../../services/api';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -18,31 +18,69 @@ export default function YarnStock() {
       try {
         setLoading(true);
         let stockItems = [];
+        
+        // Primary source: Lot-wise items from Yarn Inwards
         try {
-          const res = await api.get('/inventory/stock-summary/');
-          if (res.data && res.data.length > 0) {
-            stockItems = res.data.map(item => {
-              const qty = item.closing_qty || 0;
-              const val = item.closing_value || 0;
-              const unitRate = qty > 0 ? (val / qty) : 300;
-              return {
-                id: item.id,
-                count: item.item_name || item.item_code || 'N/A',
-                mill: 'Premier Mills',
-                lotNo: item.lot_no || 'LOT-MAIN',
-                bags: Math.round(qty / 50) || (qty > 0 ? 1 : 0),
-                netWeight: qty,
-                rate: unitRate,
-                godown: item.godown_id ? `Godown ${item.godown_id}` : 'Main Warehouse',
-                status: item.status === 'AVAILABLE' ? 'Available' : 'Reserved',
-                colour: ''
-              };
+          const resInward = await yarnInwardAPI.list();
+          if (resInward.data && resInward.data.length > 0) {
+            const items = [];
+            resInward.data.forEach(inward => {
+              (inward.items || []).forEach((item, idx) => {
+                if (item.yarn_count || item.lot_no) {
+                  const qty = Number(item.kgs) || 0;
+                  const rate = Number(item.rate) || 300;
+                  items.push({
+                    id: item.id || `${inward.id}-${idx}`,
+                    count: item.yarn_count || 'N/A',
+                    mill: item.mill_name || inward.received_from || 'Premier Mills',
+                    colour: item.colour || '-',
+                    lotNo: item.lot_no || 'N/A',
+                    bags: Number(item.bags) || (qty > 0 ? Math.round(qty / 50) : 0),
+                    netWeight: qty,
+                    rate: rate,
+                    godown: inward.stock_godown || (inward.godown_id ? `Godown ${inward.godown_id}` : 'Main Warehouse'),
+                    status: inward.status === 'Received' ? 'Available' : (inward.status || 'Available')
+                  });
+                }
+              });
             });
+            if (items.length > 0) {
+              stockItems = items;
+            }
           }
         } catch (e) {
-          console.warn('Inventory stock summary endpoint fallback', e);
+          console.warn('Yarn inward list fetch fallback', e);
         }
 
+        // Fallback 1: Stock Summary API
+        if (stockItems.length === 0) {
+          try {
+            const res = await api.get('/inventory/stock-summary/');
+            if (res.data && res.data.length > 0) {
+              stockItems = res.data.map(item => {
+                const qty = item.closing_qty || 0;
+                const val = item.closing_value || 0;
+                const unitRate = qty > 0 ? (val / qty) : 300;
+                return {
+                  id: item.id,
+                  count: item.item_name || item.item_code || 'N/A',
+                  mill: 'Premier Mills',
+                  lotNo: item.lot_no || 'LOT-MAIN',
+                  bags: Math.round(qty / 50) || (qty > 0 ? 1 : 0),
+                  netWeight: qty,
+                  rate: unitRate,
+                  godown: item.godown_id ? `Godown ${item.godown_id}` : 'Main Warehouse',
+                  status: item.status === 'AVAILABLE' ? 'Available' : 'Reserved',
+                  colour: ''
+                };
+              });
+            }
+          } catch (e) {
+            console.warn('Inventory stock summary endpoint fallback', e);
+          }
+        }
+
+        // Fallback 2: ERP Current Stock API
         if (stockItems.length === 0) {
           const { data } = await erpStockAPI.getCurrentStock('?category=yarn');
           stockItems = (data || []).map(item => ({
