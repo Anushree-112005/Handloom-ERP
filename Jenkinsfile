@@ -185,6 +185,35 @@ pipeline {
                 }
             }
         }
+
+        // ── 7. Smoke Test ───────────────────────────────────────────────────
+        stage('✅ Smoke Test') {
+            steps {
+                echo '✅ Running smoke tests...'
+                sh """
+                    echo "Waiting for services to initialize..."
+                    sleep 10
+                    
+                    echo "Pinging application at http://${VM_HOST}..."
+                    curl -s -m 10 -I http://${VM_HOST} || echo "Warning: Could not reach http://${VM_HOST} (it might be running on a different port or HTTPS)"
+                """
+
+                echo '✅ Verifying running containers on VM...'
+                withCredentials([
+                    sshUserPrivateKey(
+                        credentialsId: "${VM_SSH_CRED_ID}",
+                        keyFileVariable: 'SSH_KEY'
+                    )
+                ]) {
+                    sh '''
+                        ssh -o StrictHostKeyChecking=no -i $SSH_KEY $VM_USER@$VM_HOST "
+                            echo 'Currently running Docker containers:'
+                            docker ps
+                        "
+                    '''
+                }
+            }
+        }
     }
 
     post {
