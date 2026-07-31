@@ -58,6 +58,10 @@ backend/uploads/designs/*
 *.traineddata
 *.odt
 *.docx
+*.doc
+*.pdf
+*.xlsx
+*.xls
 
 # Docker
 .docker/

@@ -55,7 +55,7 @@ export default function YarnStock() {
         // Fallback 1: Stock Summary API
         if (stockItems.length === 0) {
           try {
-            const res = await api.get('/inventory/stock-summary/');
+            const res = await inventoryAPI.getStockSummary();
             if (res.data && res.data.length > 0) {
               stockItems = res.data.map(item => {
                 const qty = item.closing_qty || 0;

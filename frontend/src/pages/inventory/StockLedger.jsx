@@ -13,7 +13,7 @@ export default function StockLedger() {
       try {
         let mapped = [];
         try {
-          const res = await api.get('/inventory/stock-ledger/');
+          const res = await inventoryAPI.getStockLedger();
           if (res.data && res.data.length > 0) {
             mapped = res.data.map(mov => ({
               id: mov.id,

@@ -36,8 +36,10 @@ with engine.begin() as conn:
                     if col_name.lower() not in db_columns:
                         type_str = str(column.type.compile(dialect=connection.dialect))
                         default_val = "NULL"
-                        if column.default is not None and not callable(column.default.arg):
-                            val = column.default.arg
+                        default_obj = column.default
+                        default_arg = getattr(default_obj, "arg", None) if default_obj is not None else None
+                        if default_arg is not None and not callable(default_arg):
+                            val = default_arg
                             if isinstance(val, str):
                                 escaped_val = val.replace("'", "''")
                                 default_val = f"'{escaped_val}'"
@@ -71,14 +73,7 @@ app = FastAPI(title="CubeBook API", version="2.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:3000",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:5174",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

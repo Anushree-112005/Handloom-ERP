@@ -371,6 +371,25 @@ class AuditMiddleware(BaseHTTPMiddleware):
                 )
         return response
 
+@app.middleware("http")
+async def fix_proxy_and_https_redirects(request: Request, call_next):
+    forwarded_proto = request.headers.get("x-forwarded-proto")
+    if forwarded_proto:
+        request.scope["scheme"] = forwarded_proto
+    elif request.headers.get("x-forwarded-ssl") == "on" or request.headers.get("x-scheme") == "https":
+        request.scope["scheme"] = "https"
+    
+    response = await call_next(request)
+    
+    if response.status_code in (301, 302, 307, 308):
+        location = response.headers.get("location")
+        if location:
+            is_https = (request.scope.get("scheme") == "https") or (forwarded_proto == "https") or (request.url.scheme == "https")
+            if is_https and location.startswith("http://"):
+                response.headers["location"] = location.replace("http://", "https://", 1)
+                
+    return response
+
 app.add_middleware(AuditMiddleware)
 
 app.add_middleware(

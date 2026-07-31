@@ -18,7 +18,8 @@ export default function StockSummary() {
       setLoading(true);
       let items = [];
       try {
-        const resInv = await api.get('/inventory/stock-summary/');
+        const urlParams = categoryFilter ? { category: categoryFilter } : {};
+        const resInv = await inventoryAPI.getStockSummary(urlParams);
         if (resInv.data && resInv.data.length > 0) {
           items = resInv.data.map(item => ({
             id: item.id,

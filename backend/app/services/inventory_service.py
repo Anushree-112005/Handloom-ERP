@@ -1,9 +1,16 @@
+from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from datetime import datetime
 from decimal import Decimal
+import logging
 
 from app.models.inventory import StockLedger, StockBalance
+
+logger = logging.getLogger("inventory_service")
+
+ALLOWED_STATUSES = {'AVAILABLE', 'AT_JOB_WORK', 'IN_TRANSIT', 'RESERVED', 'HOLD_REJECTED', 'SOLD', 'SURPLUS'}
+ALLOWED_MOVEMENTS = {'INWARD', 'OUTWARD', 'TRANSFER_IN', 'TRANSFER_OUT', 'ADJUSTMENT_IN', 'ADJUSTMENT_OUT'}
 
 async def post_stock_ledger(
     db: AsyncSession,
@@ -11,40 +18,63 @@ async def post_stock_ledger(
     status: str,
     movement_type: str,
     qty: float,
-    txn_date: datetime = None,
-    lot_no: str = None,
-    design_id: int = None,
-    ibpo_id: int = None,
-    party_id: int = None,
-    godown_id: int = None,
-    rate: float = None,
-    ref_voucher_type: str = None,
-    ref_voucher_no: str = None,
-    grade: str = None,
-    remarks: str = None,
-    created_by: int = None,
+    txn_date: Optional[datetime] = None,
+    lot_no: Optional[str] = None,
+    design_id: Optional[int] = None,
+    ibpo_id: Optional[int] = None,
+    party_id: Optional[int] = None,
+    godown_id: Optional[int] = None,
+    rate: Optional[float] = None,
+    ref_voucher_type: Optional[str] = None,
+    ref_voucher_no: Optional[str] = None,
+    grade: Optional[str] = None,
+    remarks: Optional[str] = None,
+    created_by: Optional[int] = None,
     allow_negative: bool = False
 ):
+    # Normalize godown_id default to 1 (Main Godown) if None
+    effective_godown_id = godown_id if godown_id is not None else 1
+
+    # Normalize status and movement_type
+    norm_status = (status or "AVAILABLE").upper()
+    if norm_status not in ALLOWED_STATUSES:
+        norm_status = "AVAILABLE"
+
+    norm_movement_type = (movement_type or "INWARD").upper()
+    if norm_movement_type not in ALLOWED_MOVEMENTS:
+        norm_movement_type = "INWARD"
+
+    # Normalize qty sign based on movement direction
+    is_outward = norm_movement_type in ['OUTWARD', 'TRANSFER_OUT', 'ADJUSTMENT_OUT']
+    if is_outward and qty > 0:
+        qty = -qty
+    elif not is_outward and norm_movement_type in ['INWARD', 'TRANSFER_IN', 'ADJUSTMENT_IN'] and qty < 0:
+        qty = abs(qty)
+
     if txn_date is None:
         txn_date = datetime.utcnow()
         
     value = None
     if rate is not None:
-        value = float(Decimal(str(qty)) * Decimal(str(rate)))
+        try:
+            value = float(Decimal(str(qty)) * Decimal(str(rate)))
+        except Exception:
+            value = qty * rate
         
     # Check rule 4 - Stock never goes negative (for outward movements unless allow_negative=True)
-    if not allow_negative and movement_type in ['OUTWARD', 'TRANSFER_OUT', 'ADJUSTMENT_OUT'] and qty < 0:
+    if not allow_negative and is_outward:
         abs_qty = abs(qty)
         stmt = select(StockBalance).where(
             StockBalance.stock_item_id == stock_item_id,
-            StockBalance.godown_id == godown_id,
-            StockBalance.status == status
+            StockBalance.godown_id == effective_godown_id,
+            StockBalance.status == norm_status
         )
         result = await db.execute(stmt)
         balance = result.scalars().first()
         
-        if not balance or balance.closing_qty < abs_qty:
-            raise ValueError(f"Insufficient stock for item_id={stock_item_id}, godown_id={godown_id}, status={status}. Requested: {abs_qty}, Available: {balance.closing_qty if balance else 0}")
+        closing_qty = float(getattr(balance, 'closing_qty', 0.0) or 0.0) if balance else 0.0
+        if not balance or closing_qty < abs_qty:
+            raise ValueError(f"Insufficient stock for item_id={stock_item_id}, godown_id={effective_godown_id}, status={norm_status}. Requested: {abs_qty}, Available: {closing_qty}")
             
     # Insert Stock Ledger
     ledger_entry = StockLedger(
@@ -54,9 +84,9 @@ async def post_stock_ledger(
         design_id=design_id,
         ibpo_id=ibpo_id,
         party_id=party_id,
-        godown_id=godown_id,
-        status=status,
-        movement_type=movement_type,
+        godown_id=effective_godown_id,
+        status=norm_status,
+        movement_type=norm_movement_type,
         qty=qty,
         rate=rate,
         value=value,
@@ -71,21 +101,25 @@ async def post_stock_ledger(
     # Update Stock Balance
     stmt = select(StockBalance).where(
         StockBalance.stock_item_id == stock_item_id,
-        StockBalance.godown_id == godown_id,
-        StockBalance.status == status
+        StockBalance.godown_id == effective_godown_id,
+        StockBalance.status == norm_status
     )
     result = await db.execute(stmt)
     balance = result.scalars().first()
     
     if balance:
-        balance.closing_qty = float(Decimal(str(balance.closing_qty)) + Decimal(str(qty)))
+        raw_qty = getattr(balance, "closing_qty", 0) or 0
+        curr_qty = Decimal(str(raw_qty))
+        setattr(balance, "closing_qty", float(curr_qty + Decimal(str(qty))))
         if value is not None:
-            balance.closing_value = float(Decimal(str(balance.closing_value)) + Decimal(str(value)))
+            raw_val = getattr(balance, "closing_value", 0) or 0
+            curr_val = Decimal(str(raw_val))
+            setattr(balance, "closing_value", float(curr_val + Decimal(str(value))))
     else:
         balance = StockBalance(
             stock_item_id=stock_item_id,
-            godown_id=godown_id,
-            status=status,
+            godown_id=effective_godown_id,
+            status=norm_status,
             closing_qty=qty,
             closing_value=value if value is not None else 0.0
         )
@@ -102,44 +136,49 @@ async def post_stock_ledger(
         stmt_stk = select(StockItem).where(StockItem.id == stock_item_id)
         res_stk = await db.execute(stmt_stk)
         stk_obj = res_stk.scalars().first()
-        item_id_str = stk_obj.name if stk_obj else f"YRN-{stock_item_id}"
+        stk_name = getattr(stk_obj, "name", None) if stk_obj else None
+        item_id_str = stk_name if stk_name else f"YRN-{stock_item_id}"
 
         movement_entry = StockMovement(
             item_id=item_id_str,
-            dest_location_id=godown_id,
+            dest_location_id=effective_godown_id,
             location_type="MAIN",
-            transaction_type="RECEIPT" if movement_type == "INWARD" else movement_type,
+            transaction_type="RECEIPT" if norm_movement_type == "INWARD" else norm_movement_type,
             quantity=float(qty),
             tracking_id=ref_voucher_no or lot_no or str(stock_item_id),
             user_id=created_by,
-            status=status or "AVAILABLE"
+            status=norm_status
         )
         db.add(movement_entry)
 
         stmt_curr = select(CurrentStock).where(
             CurrentStock.item_id == item_id_str,
-            CurrentStock.status == (status or "AVAILABLE")
+            CurrentStock.status == norm_status
         )
         res_curr = await db.execute(stmt_curr)
         curr_obj = res_curr.scalars().first()
         if curr_obj:
-            curr_obj.quantity = float(Decimal(str(curr_obj.quantity)) + Decimal(str(qty)))
+            raw_curr_qty = getattr(curr_obj, "quantity", 0) or 0
+            curr_qty = Decimal(str(raw_curr_qty))
+            setattr(curr_obj, "quantity", float(curr_qty + Decimal(str(qty))))
+            if getattr(curr_obj, "reserved_quantity", None) is None:
+                setattr(curr_obj, "reserved_quantity", 0.0)
             if lot_no:
-                curr_obj.lot_id = lot_no
+                setattr(curr_obj, "lot_id", lot_no)
         else:
             new_curr = CurrentStock(
                 item_id=item_id_str,
-                location_id=godown_id or 1,
+                location_id=effective_godown_id,
                 location_type="MAIN",
                 quantity=float(qty),
+                reserved_quantity=0.0,
                 batch_id=ref_voucher_no,
                 lot_id=lot_no,
-                status=status or "AVAILABLE"
+                status=norm_status
             )
             db.add(new_curr)
         await db.flush()
     except Exception as err:
-        import logging
-        logging.getLogger("post_stock_ledger").error(f"Syncing CurrentStock failed: {err}")
+        logger.error(f"Syncing CurrentStock failed: {err}")
 
     return ledger_entry
