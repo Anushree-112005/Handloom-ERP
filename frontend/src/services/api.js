@@ -158,16 +158,16 @@ export const textileDesignAPI = {
 };
 
 export const yarnPurchaseOrderAPI = {
-  list: () => api.get('/yarn-purchase-orders'),
+  list: () => api.get('/yarn-purchase-orders/'),
   get: (id) => api.get(`/yarn-purchase-orders/${id}`),
-  create: (data) => api.post('/yarn-purchase-orders', data),
+  create: (data) => api.post('/yarn-purchase-orders/', data),
   update: (id, data) => api.put(`/yarn-purchase-orders/${id}`, data),
   delete: (id) => api.delete(`/yarn-purchase-orders/${id}`)
 };
 
 export const twistingDoublingPOAPI = {
-  list: () => api.get('/purchase/twisting-doubling'),
-  create: (data) => api.post('/purchase/twisting-doubling', data),
+  list: () => api.get('/purchase/twisting-doubling/'),
+  create: (data) => api.post('/purchase/twisting-doubling/'),
   getById: (id) => api.get(`/purchase/twisting-doubling/${id}`),
   update: (id, data) => api.put(`/purchase/twisting-doubling/${id}`, data),
   delete: (id) => api.delete(`/purchase/twisting-doubling/${id}`)
@@ -190,41 +190,41 @@ export const fabricDyeingPOAPI = {
 };
 
 export const warpingSizingPOAPI = {
-  list: () => api.get('/warping-sizing-po'),
-  create: (data) => api.post('/warping-sizing-po', data),
+  list: () => api.get('/warping-sizing-po/'),
+  create: (data) => api.post('/warping-sizing-po/'),
   getById: (id) => api.get(`/warping-sizing-po/${id}`),
   update: (id, data) => api.put(`/warping-sizing-po/${id}`, data),
   delete: (id) => api.delete(`/warping-sizing-po/${id}`)
 };
 
 export const weavingPOAPI = {
-  list: () => api.get('/weaving-po'),
-  create: (data) => api.post('/weaving-po', data),
+  list: () => api.get('/weaving-po/'),
+  create: (data) => api.post('/weaving-po/'),
   getById: (id) => api.get(`/weaving-po/${id}`),
   update: (id, data) => api.put(`/weaving-po/${id}`, data),
   delete: (id) => api.delete(`/weaving-po/${id}`)
 };
 
 export const processingPOAPI = {
-  list: () => api.get('/processing-po'),
-  create: (data) => api.post('/processing-po', data),
+  list: () => api.get('/processing-po/'),
+  create: (data) => api.post('/processing-po/'),
   getById: (id) => api.get(`/processing-po/${id}`),
   update: (id, data) => api.put(`/processing-po/${id}`, data),
   delete: (id) => api.delete(`/processing-po/${id}`)
 };
 
 export const clothPurchasePOAPI = {
-  list: () => api.get('/cloth-purchase-po'),
-  create: (data) => api.post('/cloth-purchase-po', data),
+  list: () => api.get('/cloth-purchase-po/'),
+  create: (data) => api.post('/cloth-purchase-po/'),
   getById: (id) => api.get(`/cloth-purchase-po/${id}`),
   update: (id, data) => api.put(`/cloth-purchase-po/${id}`, data),
   delete: (id) => api.delete(`/cloth-purchase-po/${id}`)
 };
 
 export const genericPurchaseOrderAPI = {
-  list: (poType) => api.get(`/generic-po${poType ? `?po_type=${poType}` : ''}`),
+  list: (poType) => api.get(`/generic-po/${poType ? `?po_type=${poType}` : ''}`),
   get: (id) => api.get(`/generic-po/${id}`),
-  create: (data) => api.post('/generic-po', data),
+  create: (data) => api.post('/generic-po/', data),
   delete: (id) => api.delete(`/generic-po/${id}`)
 };
 
@@ -238,41 +238,41 @@ export const yarnInwardAPI = {
 };
 
 export const greyYarnDeliveryAPI = {
-  list: () => api.get('/grey-yarn-deliveries'),
+  list: () => api.get('/grey-yarn-deliveries/'),
   get: (id) => api.get(`/grey-yarn-deliveries/${id}`),
-  create: (data) => api.post('/grey-yarn-deliveries', data),
+  create: (data) => api.post('/grey-yarn-deliveries/', data),
   update: (id, data) => api.put(`/grey-yarn-deliveries/${id}`, data),
   delete: (id) => api.delete(`/grey-yarn-deliveries/${id}`)
 };
 
 export const dyedYarnReceiptAPI = {
-  list: () => api.get('/dyed-yarn-receipts'),
+  list: () => api.get('/dyed-yarn-receipts/'),
   get: (id) => api.get(`/dyed-yarn-receipts/${id}`),
-  create: (data) => api.post('/dyed-yarn-receipts', data),
+  create: (data) => api.post('/dyed-yarn-receipts/', data),
   update: (id, data) => api.put(`/dyed-yarn-receipts/${id}`, data),
   delete: (id) => api.delete(`/dyed-yarn-receipts/${id}`)
 };
 
 export const dyedYarnDeliveryAPI = {
-  list: () => api.get('/dyed-yarn-deliveries'),
+  list: () => api.get('/dyed-yarn-deliveries/'),
   get: (id) => api.get(`/dyed-yarn-deliveries/${id}`),
-  create: (data) => api.post('/dyed-yarn-deliveries', data),
+  create: (data) => api.post('/dyed-yarn-deliveries/', data),
   update: (id, data) => api.put(`/dyed-yarn-deliveries/${id}`, data),
   delete: (id) => api.delete(`/dyed-yarn-deliveries/${id}`)
 };
 
 export const warpBeamReceiptAPI = {
-  list: () => api.get('/warp-beam-receipts'),
+  list: () => api.get('/warp-beam-receipts/'),
   get: (id) => api.get(`/warp-beam-receipts/${id}`),
-  create: (data) => api.post('/warp-beam-receipts', data),
+  create: (data) => api.post('/warp-beam-receipts/', data),
   update: (id, data) => api.put(`/warp-beam-receipts/${id}`, data),
   delete: (id) => api.delete(`/warp-beam-receipts/${id}`)
 };
 
 export const warpDeliveryAPI = {
-  list: () => api.get('/warp-deliveries'),
+  list: () => api.get('/warp-deliveries/'),
   get: (id) => api.get(`/warp-deliveries/${id}`),
-  create: (data) => api.post('/warp-deliveries', data),
+  create: (data) => api.post('/warp-deliveries/', data),
   update: (id, data) => api.put(`/warp-deliveries/${id}`, data),
   delete: (id) => api.delete(`/warp-deliveries/${id}`)
 };
@@ -491,23 +491,44 @@ export const rackAPI = {
 export const getBackendURL = (path) => {
   if (!path) return '';
   if (path.startsWith('http') || path.startsWith('blob:')) return path;
-  const base = window.location.port === '5173' ? 'http://localhost:8000' : window.location.origin;
+  const base = window.location.port === '5173' ? `${window.location.protocol}//${window.location.hostname}:8000` : window.location.origin;
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   return `${base}${cleanPath}`;
 };
 
-export default api;
+export const inventoryAPI = {
+  getStockDashboard: () => api.get('/inventory/stock-dashboard/'),
+  getStockSummary: (params) => api.get('/inventory/stock-summary/', { params }),
+  getStockLedger: () => api.get('/inventory/stock-ledger/'),
+  getLowStockAlerts: () => api.get('/inventory/alerts/low-stock/'),
+};
+
 export const erpStockAPI = {
-  getCurrentStock: (query = '') => api.get(`/erp/stock/current${query}`),
-  getMovements: (query = '') => api.get(`/erp/stock/movements${query}`),
-  getLowStockAlerts: () => api.get('/erp/stock/alerts'),
-  submitAudit: (data) => api.post('/erp/stock/audit', data),
+  getCurrentStock: (query = '') => {
+    let cleanQuery = query || '';
+    if (cleanQuery.startsWith('?')) {
+      return api.get(`/erp/stock/current/${cleanQuery}`);
+    }
+    return api.get('/erp/stock/current/');
+  },
+  getMovements: (query = '') => {
+    let cleanQuery = query || '';
+    if (cleanQuery.startsWith('?')) {
+      return api.get(`/erp/stock/movements/${cleanQuery}`);
+    }
+    return api.get('/erp/stock/movements/');
+  },
+  getLowStockAlerts: () => api.get('/erp/stock/alerts/'),
+  submitAudit: (data) => api.post('/erp/stock/audit/', data),
 };
 export const proformaInvoiceAPI = createAPI('/proforma-invoices');
 export const buyerOrderScheduleAPI = createAPI('/buyer-order-schedules');
 export const buyerOrderAmendmentAPI = createAPI('/buyer-order-amendments');
 export const buyerOrderCompletionAPI = createAPI('/buyer-order-completions');
 export const orderExpenseAPI = createAPI('/order-expenses');
+
+export default api;
+
 
 export const yarnRateMasterAPI = createAPI('/costing-masters/yarn-rates');
 export const washTypeMasterAPI = createAPI('/costing-masters/wash-types');

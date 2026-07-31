@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Bell, Search, Box, CheckSquare, Truck, Wrench, ShoppingCart } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import { companySettingAPI, partyAPI, salesInvoiceAPI, yarnInwardAPI, buyerOrderAPI, yarnPurchaseOrderAPI, designEntryAPI } from '../services/api';
+import { companySettingAPI, partyAPI, salesInvoiceAPI, yarnInwardAPI, buyerOrderAPI, yarnPurchaseOrderAPI, designEntryAPI, notificationAPI } from '../services/api';
 import { confirmDialog } from '../utils/dialogs';
 import defaultLogo from '../assets/logo.svg';
 
@@ -159,14 +159,14 @@ export default function Header() {
 
     const fetchNotifications = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/v1/notifications/");
-        if(res.ok) {
-          const data = await res.json();
-          const formatted = data.map(n => ({
+        const res = await notificationAPI.list();
+        if (res.data) {
+          const formatted = res.data.map(n => ({
             id: n.id,
-            title: n.user_role + " Alert",
+            title: (n.user_role || 'System') + " Alert",
             message: n.message,
             time: new Date(n.created_at).toLocaleTimeString(),
+            raw_time: n.created_at,
             unread: !n.is_read,
             category: 'alert',
             link: n.related_ibpo ? '/buyer-order' : '#'
@@ -208,6 +208,7 @@ export default function Header() {
     window.addEventListener('company-settings-updated', loadCompany);
     return () => {
       window.removeEventListener('company-settings-updated', loadCompany);
+      clearInterval(intervalId);
     };
   }, []);
 

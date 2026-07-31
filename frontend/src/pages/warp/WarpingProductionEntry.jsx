@@ -41,6 +41,7 @@ export default function WarpingProductionEntry() {
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   // Filters state
   const [searchTerm, setSearchTerm] = useState('');
@@ -153,15 +154,46 @@ export default function WarpingProductionEntry() {
     setView('form');
   };
 
+  const toggleSelectAll = (filteredData = []) => {
+    if (selectedIds.length === filteredData.length && filteredData.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredData.map(o => o.id));
+    }
+  };
+
+  const toggleSelectRow = (id, e) => {
+    if (e) e.stopPropagation();
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
   const handleDelete = async (id, e) => {
     if (e) e.stopPropagation();
     if (window.confirm('Are you sure you want to delete this warping set entry?')) {
       try {
         await workOrderTransactionAPI.delete(id);
+        setSelectedIds(prev => prev.filter(item => item !== id));
         fetchEntries();
       } catch (err) {
         console.error(err);
         alert('Failed to delete entry.');
+      }
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (window.confirm(`Are you sure you want to delete ${selectedIds.length} selected warping entry(s)?`)) {
+      try {
+        await Promise.all(selectedIds.map(id => workOrderTransactionAPI.delete(id)));
+        setSelectedIds([]);
+        fetchEntries();
+      } catch (err) {
+        alert('Error deleting selected entries');
+        console.error(err);
+        fetchEntries();
       }
     }
   };
@@ -321,6 +353,31 @@ export default function WarpingProductionEntry() {
           </div>
         </div>
 
+        {/* Bulk Action Bar */}
+        {selectedIds.length > 0 && (
+          <div className="card animate-fade" style={{ padding: '12px 20px', marginBottom: 16, background: '#fef2f2', border: '1px solid #fee2e2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ color: '#991b1b', fontWeight: 700, fontSize: 14 }}>
+                {selectedIds.length} warping entry{selectedIds.length > 1 ? 'ies' : ''} selected
+              </span>
+              <button
+                className="btn btn-secondary"
+                style={{ padding: '4px 10px', fontSize: 12 }}
+                onClick={() => setSelectedIds([])}
+              >
+                Clear Selection
+              </button>
+            </div>
+            <button
+              className="btn"
+              style={{ background: '#ef4444', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', fontWeight: 700, borderRadius: 6, cursor: 'pointer' }}
+              onClick={handleBulkDelete}
+            >
+              <Trash2 size={16} /> Delete Selected ({selectedIds.length})
+            </button>
+          </div>
+        )}
+
         {/* Entries Table */}
         <div className="card" style={{ padding: 0, overflow: 'hidden', border: 'none' }}>
           {loading ? (
@@ -334,6 +391,14 @@ export default function WarpingProductionEntry() {
               <table className="table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', textAlign: 'left', fontWeight: 600 }}>
+                    <th style={{ width: 40, padding: '12px 16px', borderBottom: '1px solid var(--border)', textAlign: 'center' }}>
+                      <input
+                        type="checkbox"
+                        checked={filteredItems.length > 0 && selectedIds.length === filteredItems.length}
+                        onChange={() => toggleSelectAll(filteredItems)}
+                        style={{ cursor: 'pointer', width: 16, height: 16 }}
+                      />
+                    </th>
                     <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>REF NO / ID</th>
                     <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>DATE</th>
                     <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>PARTY / BUYER</th>
@@ -348,7 +413,15 @@ export default function WarpingProductionEntry() {
                   {filteredItems.map(item => {
                     const h = item.details?.header || {};
                     return (
-                      <tr key={item.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                      <tr key={item.id} style={{ borderBottom: '1px solid var(--border)', background: selectedIds.includes(item.id) ? 'rgba(239, 68, 68, 0.05)' : 'transparent' }}>
+                        <td style={{ padding: '12px 16px', textAlign: 'center' }} onClick={evt => evt.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(item.id)}
+                            onChange={(evt) => toggleSelectRow(item.id, evt)}
+                            style={{ cursor: 'pointer', width: 16, height: 16 }}
+                          />
+                        </td>
                         <td style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--primary)' }}>
                           #{h.refNo || item.transaction_no || item.id}
                         </td>

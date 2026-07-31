@@ -1047,6 +1047,7 @@ export default function DesignEntry() {
   const [typeFilter, setTypeFilter] = useState('All Types');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
+  const [selectedIds, setSelectedIds] = useState([]);
 
   const initialForm = {
     ds_date: new Date().toISOString().split('T')[0],
@@ -1565,6 +1566,21 @@ export default function DesignEntry() {
     }
   };
 
+  const toggleSelectAll = (filteredData = []) => {
+    if (selectedIds.length === filteredData.length && filteredData.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredData.map(e => e.id));
+    }
+  };
+
+  const toggleSelectRow = (id, e) => {
+    if (e) e.stopPropagation();
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
   const handleDelete = async (id, ds_ref, e) => {
     if (e) e.stopPropagation();
     const confirmed = await confirmDialog({
@@ -1577,10 +1593,35 @@ export default function DesignEntry() {
       try {
         await designEntryAPI.delete(id);
         if (selectedViewEntry?.id === id) setSelectedViewEntry(null);
+        setSelectedIds(prev => prev.filter(item => item !== id));
         loadData();
       } catch (err) {
         alert('Error deleting');
         console.error(err);
+      }
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    const confirmed = await confirmDialog({
+      title: 'Bulk Delete Design Entries',
+      message: `Are you sure you want to delete ${selectedIds.length} selected design entries?`,
+      type: 'delete',
+      confirmText: 'Delete Selected'
+    });
+    if (confirmed) {
+      try {
+        await Promise.all(selectedIds.map(id => designEntryAPI.delete(id)));
+        if (selectedViewEntry && selectedIds.includes(selectedViewEntry.id)) {
+          setSelectedViewEntry(null);
+        }
+        setSelectedIds([]);
+        loadData();
+      } catch (err) {
+        alert('Error deleting selected designs');
+        console.error(err);
+        loadData();
       }
     }
   };
@@ -1866,22 +1907,63 @@ export default function DesignEntry() {
             </div>
           </div>
 
+          {/* Bulk Action Bar */}
+          {selectedIds.length > 0 && (
+            <div className="card animate-fade" style={{ padding: '12px 20px', marginBottom: 16, background: '#fef2f2', border: '1px solid #fee2e2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ color: '#991b1b', fontWeight: 700, fontSize: 14 }}>
+                  {selectedIds.length} design entry record{selectedIds.length > 1 ? 's' : ''} selected
+                </span>
+                <button
+                  className="btn btn-secondary"
+                  style={{ padding: '4px 10px', fontSize: 12 }}
+                  onClick={() => setSelectedIds([])}
+                >
+                  Clear Selection
+                </button>
+              </div>
+              <button
+                className="btn"
+                style={{ background: '#ef4444', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', fontWeight: 700, borderRadius: 6, cursor: 'pointer' }}
+                onClick={handleBulkDelete}
+              >
+                <Trash2 size={16} /> Delete Selected ({selectedIds.length})
+              </button>
+            </div>
+          )}
+
           <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
             <div style={{ flex: 1, overflowX: 'auto' }}>
               <div className="card" style={{ padding: 0 }}>
                 <table className="data-table">
                   <thead>
                     <tr>
+                      <th style={{ width: 40, textAlign: 'center' }}>
+                        <input
+                          type="checkbox"
+                          checked={filteredEntries.length > 0 && selectedIds.length === filteredEntries.length}
+                          onChange={() => toggleSelectAll(filteredEntries)}
+                          style={{ cursor: 'pointer', width: 16, height: 16 }}
+                        />
+                      </th>
                       <th>Design EntryNo</th><th>DS Date</th><th>Design No</th><th>Buyer</th><th>Fabric</th><th>Weaving</th><th>Status</th><th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {loading ? (
-                      <tr><td colSpan={7} style={{ textAlign: 'center', padding: 40 }}>Loading...</td></tr>
+                      <tr><td colSpan={9} style={{ textAlign: 'center', padding: 40 }}>Loading...</td></tr>
                     ) : filteredEntries.length === 0 ? (
-                      <tr><td colSpan={7} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No designs found.</td></tr>
+                      <tr><td colSpan={9} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No designs found.</td></tr>
                     ) : filteredEntries.map(e => (
-                      <tr key={e.id} onClick={() => handleRowClick(e)} style={{ cursor: 'pointer', background: selectedViewEntry?.id === e.id ? 'var(--bg-secondary)' : 'transparent' }}>
+                      <tr key={e.id} onClick={() => handleRowClick(e)} style={{ cursor: 'pointer', background: selectedIds.includes(e.id) ? 'rgba(239, 68, 68, 0.05)' : selectedViewEntry?.id === e.id ? 'var(--bg-secondary)' : 'transparent' }}>
+                        <td style={{ textAlign: 'center' }} onClick={evt => evt.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(e.id)}
+                            onChange={(evt) => toggleSelectRow(e.id, evt)}
+                            style={{ cursor: 'pointer', width: 16, height: 16 }}
+                          />
+                        </td>
                         <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{e.ds_ref_no}</td>
                         <td>{e.ds_date}</td>
                         <td style={{ fontWeight: 500 }}>{e.design_no}</td>

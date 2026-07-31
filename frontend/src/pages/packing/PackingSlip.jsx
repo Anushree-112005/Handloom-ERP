@@ -23,6 +23,7 @@ export default function PackingSlip() {
 
   // Split view state
   const [selectedViewSlip, setSelectedViewSlip] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
   const [activeTab, setActiveTab] = useState('general');
 
   // Filters
@@ -308,16 +309,50 @@ export default function PackingSlip() {
     setView('form');
   };
 
+  const toggleSelectAll = (filteredData = []) => {
+    if (selectedIds.length === filteredData.length && filteredData.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredData.map(s => s.id));
+    }
+  };
+
+  const toggleSelectRow = (id, e) => {
+    if (e) e.stopPropagation();
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
   const handleDelete = async (id, slipNo, e) => {
     if (e) e.stopPropagation();
     if (window.confirm(`Are you sure you want to delete Packing Slip ${slipNo}?`)) {
       try {
         await packingSlipAPI.delete(id);
         if (selectedViewSlip?.id === id) setSelectedViewSlip(null);
+        setSelectedIds(prev => prev.filter(item => item !== id));
         fetchSlips();
       } catch (err) {
         console.error(err);
         alert("Error deleting packing slip.");
+      }
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (window.confirm(`Are you sure you want to delete ${selectedIds.length} selected packing slip(s)?`)) {
+      try {
+        await Promise.all(selectedIds.map(id => packingSlipAPI.delete(id)));
+        if (selectedViewSlip && selectedIds.includes(selectedViewSlip.id)) {
+          setSelectedViewSlip(null);
+        }
+        setSelectedIds([]);
+        fetchSlips();
+      } catch (err) {
+        alert('Error deleting selected packing slips');
+        console.error(err);
+        fetchSlips();
       }
     }
   };
@@ -1399,6 +1434,31 @@ export default function PackingSlip() {
         </div>
       </div>
 
+      {/* Bulk Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="card animate-fade" style={{ padding: '12px 20px', marginBottom: 16, background: '#fef2f2', border: '1px solid #fee2e2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ color: '#991b1b', fontWeight: 700, fontSize: 14 }}>
+              {selectedIds.length} packing slip{selectedIds.length > 1 ? 's' : ''} selected
+            </span>
+            <button
+              className="btn btn-secondary"
+              style={{ padding: '4px 10px', fontSize: 12 }}
+              onClick={() => setSelectedIds([])}
+            >
+              Clear Selection
+            </button>
+          </div>
+          <button
+            className="btn"
+            style={{ background: '#ef4444', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', fontWeight: 700, borderRadius: 6, cursor: 'pointer' }}
+            onClick={handleBulkDelete}
+          >
+            <Trash2 size={16} /> Delete Selected ({selectedIds.length})
+          </button>
+        </div>
+      )}
+
       {/* Split Table & Details View layout */}
       <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
 
@@ -1408,6 +1468,14 @@ export default function PackingSlip() {
             <table className="data-table">
               <thead>
                 <tr>
+                  <th style={{ width: 40, textAlign: 'center' }}>
+                    <input
+                      type="checkbox"
+                      checked={filteredSlips.length > 0 && selectedIds.length === filteredSlips.length}
+                      onChange={() => toggleSelectAll(filteredSlips)}
+                      style={{ cursor: 'pointer', width: 16, height: 16 }}
+                    />
+                  </th>
                   <th>Packing No</th>
                   <th>Date</th>
                   <th>Party Name</th>
@@ -1420,9 +1488,9 @@ export default function PackingSlip() {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="8" style={{ textAlign: 'center', padding: 20 }}>Loading Packing Slips...</td></tr>
+                  <tr><td colSpan="9" style={{ textAlign: 'center', padding: 20 }}>Loading Packing Slips...</td></tr>
                 ) : filteredSlips.length === 0 ? (
-                  <tr><td colSpan="8" style={{ textAlign: 'center', padding: 20 }}>No records found.</td></tr>
+                  <tr><td colSpan="9" style={{ textAlign: 'center', padding: 20 }}>No records found.</td></tr>
                 ) : (
                   filteredSlips.map(slip => (
                     <tr
@@ -1430,10 +1498,18 @@ export default function PackingSlip() {
                       onClick={() => setSelectedViewSlip(slip)}
                       style={{
                         cursor: 'pointer',
-                        background: selectedViewSlip?.id === slip.id ? 'var(--bg-secondary)' : 'transparent',
+                        background: selectedIds.includes(slip.id) ? 'rgba(239, 68, 68, 0.05)' : selectedViewSlip?.id === slip.id ? 'var(--bg-secondary)' : 'transparent',
                         transition: 'background 0.2s'
                       }}
                     >
+                      <td style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(slip.id)}
+                          onChange={(e) => toggleSelectRow(slip.id, e)}
+                          style={{ cursor: 'pointer', width: 16, height: 16 }}
+                        />
+                      </td>
                       <td style={{ fontWeight: 600 }}>{slip.slip_no}</td>
                       <td>{slip.slip_date}</td>
                       <td style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{slip.party_name || '-'}</td>

@@ -19,6 +19,7 @@ export default function DyedYarnReceived() {
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [saveAndPrint, setSaveAndPrint] = useState(false);
   const [viewModalReceipt, setViewModalReceipt] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   // Search / Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -402,16 +403,47 @@ export default function DyedYarnReceived() {
     }
   };
 
+  const toggleSelectAll = (filteredData = []) => {
+    if (selectedIds.length === filteredData.length && filteredData.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredData.map(o => o.id));
+    }
+  };
+
+  const toggleSelectRow = (id, e) => {
+    if (e) e.stopPropagation();
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
   const handleDelete = async (id, inv, e) => {
     if (e) e.stopPropagation();
     if (window.confirm(`Are you sure you want to delete ${inv || 'this receipt'}?`)) {
       try {
         await dyedYarnReceiptAPI.delete(id);
+        setSelectedIds(prev => prev.filter(item => item !== id));
         loadData();
         setShowForm(false);
         setEditingId(null);
       } catch (err) {
         alert('Error deleting');
+      }
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (window.confirm(`Are you sure you want to delete ${selectedIds.length} selected dyed yarn receipt(s)?`)) {
+      try {
+        await Promise.all(selectedIds.map(id => dyedYarnReceiptAPI.delete(id)));
+        setSelectedIds([]);
+        loadData();
+      } catch (err) {
+        alert('Error deleting selected receipts');
+        console.error(err);
+        loadData();
       }
     }
   };
@@ -552,20 +584,61 @@ export default function DyedYarnReceived() {
             </div>
           </div>
 
+          {/* Bulk Action Bar */}
+          {selectedIds.length > 0 && (
+            <div className="card animate-fade" style={{ padding: '12px 20px', marginBottom: 16, background: '#fef2f2', border: '1px solid #fee2e2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ color: '#991b1b', fontWeight: 700, fontSize: 14 }}>
+                  {selectedIds.length} dyed yarn receipt{selectedIds.length > 1 ? 's' : ''} selected
+                </span>
+                <button
+                  className="btn btn-secondary"
+                  style={{ padding: '4px 10px', fontSize: 12 }}
+                  onClick={() => setSelectedIds([])}
+                >
+                  Clear Selection
+                </button>
+              </div>
+              <button
+                className="btn"
+                style={{ background: '#ef4444', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', fontWeight: 700, borderRadius: 6, cursor: 'pointer' }}
+                onClick={handleBulkDelete}
+              >
+                <Trash2 size={16} /> Delete Selected ({selectedIds.length})
+              </button>
+            </div>
+          )}
+
           <div className="card" style={{ padding: 0, width: '100%', overflowX: 'auto', border: 'none' }}>
             <table className="data-table" style={{ width: '100%' }}>
               <thead>
                 <tr>
+                  <th style={{ width: 40, textAlign: 'center' }}>
+                    <input
+                      type="checkbox"
+                      checked={filteredReceipts.length > 0 && selectedIds.length === filteredReceipts.length}
+                      onChange={() => toggleSelectAll(filteredReceipts)}
+                      style={{ cursor: 'pointer', width: 16, height: 16 }}
+                    />
+                  </th>
                   <th>Inw No</th><th>Inw Date</th><th>Received Type</th><th>Receive Mode</th><th>Party Name</th><th>Total Bags</th><th>Total Kgs</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={8} style={{ textAlign: 'center', padding: 40 }}>Loading...</td></tr>
+                  <tr><td colSpan={9} style={{ textAlign: 'center', padding: 40 }}>Loading...</td></tr>
                 ) : filteredReceipts.length === 0 ? (
-                  <tr><td colSpan={8} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No receipts found.</td></tr>
+                  <tr><td colSpan={9} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No receipts found.</td></tr>
                 ) : filteredReceipts.map(r => (
-                  <tr key={r.id} onClick={() => handleOpenForm(r, true)} style={{ cursor: 'pointer' }}>
+                  <tr key={r.id} onClick={() => handleOpenForm(r, true)} style={{ cursor: 'pointer', background: selectedIds.includes(r.id) ? 'rgba(239, 68, 68, 0.05)' : 'transparent' }}>
+                    <td style={{ textAlign: 'center' }} onClick={evt => evt.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(r.id)}
+                        onChange={(evt) => toggleSelectRow(r.id, evt)}
+                        style={{ cursor: 'pointer', width: 16, height: 16 }}
+                      />
+                    </td>
                     <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{r.inv_no}</td>
                     <td>{r.inv_date}</td>
                     <td>{r.received_type}</td>

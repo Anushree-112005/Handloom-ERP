@@ -96,7 +96,7 @@ const calculateDesignYarnRequirements = (design) => {
       finalAgg[key].order_qty += req_kg;
     } else {
       finalAgg[key] = {
-        design_no: design.design_no || '',
+        design_no: design.ds_ref_no || design.design_no || '',
         yarn_count: count,
         colour: color,
         order_qty: req_kg,
@@ -284,6 +284,7 @@ export default function YarnPurchaseOrder() {
   const [selectedViewOrder, setSelectedViewOrder] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   const [companyProfile, setCompanyProfile] = useState({
     company_name: 'Dinesh Exports Private Limited',
@@ -432,7 +433,7 @@ export default function YarnPurchaseOrder() {
 
   const initialForm = {
     po_date: new Date().toISOString().split('T')[0],
-    org_name: '', internal_po_no: '', used_for: '', against_ref: '', design_no: '', agent_name: '',
+    org_name: '', internal_po_no: '', used_for: '', against_ref: 'Direct', ibpo_no: '', design_no: '', agent_name: '',
     supplier_name: '', delivery_at: '',
     
     freight_type: '', freight_chg: 0, insurance_chg: 0, total_order_kgs: 0,
@@ -484,6 +485,15 @@ export default function YarnPurchaseOrder() {
       taxable_amount: parseFloat(taxableAmount.toFixed(2)),
       net_amount: parseFloat(netAmount.toFixed(2))
     };
+  };
+
+  const getAvailableDesignEntries = () => {
+    const selectedIbpo = form.ibpo_no || (form.against_ref !== 'PO' && form.against_ref !== 'Direct' ? form.against_ref : '');
+    if (selectedIbpo) {
+      const filtered = designEntries.filter(de => de.ibpo_no === selectedIbpo);
+      if (filtered.length > 0) return filtered;
+    }
+    return designEntries;
   };
 
   const loadData = async () => {
@@ -752,15 +762,49 @@ export default function YarnPurchaseOrder() {
     }
   };
 
+  const toggleSelectAll = (filteredData = []) => {
+    if (selectedIds.length === filteredData.length && filteredData.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredData.map(o => o.id));
+    }
+  };
+
+  const toggleSelectRow = (id, e) => {
+    if (e) e.stopPropagation();
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
   const handleDelete = async (id, po, e) => {
     if (e) e.stopPropagation();
     if (window.confirm(`Are you sure you want to delete ${po}?`)) {
       try {
         await yarnPurchaseOrderAPI.delete(id);
         if (selectedViewOrder?.id === id) setSelectedViewOrder(null);
+        setSelectedIds(prev => prev.filter(item => item !== id));
         loadData();
       } catch (err) {
         alert('Error deleting');
+      }
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (window.confirm(`Are you sure you want to delete ${selectedIds.length} selected yarn purchase order(s)?`)) {
+      try {
+        await Promise.all(selectedIds.map(id => yarnPurchaseOrderAPI.delete(id)));
+        if (selectedViewOrder && selectedIds.includes(selectedViewOrder.id)) {
+          setSelectedViewOrder(null);
+        }
+        setSelectedIds([]);
+        loadData();
+      } catch (err) {
+        alert('Error deleting selected yarn purchase orders');
+        console.error(err);
+        loadData();
       }
     }
   };
@@ -778,7 +822,7 @@ export default function YarnPurchaseOrder() {
     
     if (name === 'design_no') {
       if (value) {
-        const selectedDesign = designEntries.find(de => de.design_no === value);
+        const selectedDesign = designEntries.find(de => de.ds_ref_no === value || de.design_no === value);
         if (selectedDesign) {
           const reqs = calculateDesignYarnRequirements(selectedDesign);
           let newIndentDetails = reqs.length > 0 ? reqs : [{
@@ -787,6 +831,7 @@ export default function YarnPurchaseOrder() {
           let agentName = form.agent_name || '';
           let supplierName = form.supplier_name || '';
           let deliveryAt = form.delivery_at || '';
+          let ibpoNo = form.ibpo_no || selectedDesign.ibpo_no || '';
           if (selectedDesign.ibpo_no) {
             const selectedOrder = buyerOrders.find(bo => bo.ibpo_number === selectedDesign.ibpo_no);
             if (selectedOrder) {
@@ -809,8 +854,9 @@ export default function YarnPurchaseOrder() {
           }
           setForm(recalculate({
             ...form,
-            design_no: value,
-            against_ref: selectedDesign.ibpo_no || form.against_ref || '',
+            against_ref: 'PO',
+            ibpo_no: ibpoNo,
+            design_no: selectedDesign.ds_ref_no || selectedDesign.design_no || value,
             agent_name: agentName,
             supplier_name: supplierName,
             delivery_at: deliveryAt,
@@ -824,103 +870,92 @@ export default function YarnPurchaseOrder() {
         }
       } else {
         setForm(prev => ({ ...prev, design_no: '' }));
+        return;
       }
     }
 
     if (name === 'against_ref') {
-      if (value === 'custom') {
-        setIsCustomAgainstRef(true);
-        setCustomAgainstRefVal('');
+      if (value === 'Direct') {
+        setForm(prev => ({
+          ...prev,
+          against_ref: 'Direct',
+          ibpo_no: '',
+          design_no: ''
+        }));
         return;
       }
+      if (value === 'PO') {
+        setForm(prev => ({
+          ...prev,
+          against_ref: 'PO'
+        }));
+        return;
+      }
+      setForm(prev => ({ ...prev, against_ref: value }));
+      return;
+    }
+
+    if (name === 'ibpo_no') {
+      const selectedIbpo = value;
+      if (!selectedIbpo) {
+        setForm(prev => ({ ...prev, ibpo_no: '' }));
+        return;
+      }
+      const selectedOrder = buyerOrders.find(bo => bo.ibpo_number === selectedIbpo);
+      const matchingDesigns = designEntries.filter(de => de.ibpo_no === selectedIbpo);
       
-      if (value && value !== 'No Reference') {
-        const selectedOrder = buyerOrders.find(bo => bo.ibpo_number === value);
-        const matchingDesigns = designEntries.filter(de => de.ibpo_no === value);
-        
-        if (matchingDesigns.length > 0) {
-          let newIndentDetails = [];
-          matchingDesigns.forEach(de => {
-            const reqs = calculateDesignYarnRequirements(de);
-            newIndentDetails.push(...reqs);
-          });
-          
-          if (newIndentDetails.length === 0) {
-            newIndentDetails = [{
-              yarn_count: '', colour: '', order_qty: 0, uom: 'KGS', delivery_date: '', rate: 0, amount: 0, packing_type: '', labeling: '', design_no: ''
-            }];
-          }
+      let newIndentDetails = [];
+      if (matchingDesigns.length > 0) {
+        matchingDesigns.forEach(de => {
+          const reqs = calculateDesignYarnRequirements(de);
+          newIndentDetails.push(...reqs);
+        });
+      }
+      
+      if (newIndentDetails.length === 0 && selectedOrder) {
+        newIndentDetails = (selectedOrder.items || []).map(item => ({
+          yarn_count: item.yarn_count || '',
+          colour: item.color || '',
+          order_qty: parseFloat(item.order_mtrs) || 0,
+          delivery_date: item.po_date ? item.po_date.substring(0, 10) : '',
+          rate: parseFloat(item.rate) || 0,
+          amount: parseFloat(item.amount) || 0,
+          packing_type: item.packing_type || '',
+          labeling: '',
+          design_no: item.design_no || ''
+        }));
+      }
 
-          const supplierName = selectedOrder?.party_name || form.supplier_name || '';
-          const selectedParty = parties.find(p => p.company_name === supplierName);
-          let taxUpdates = {};
-          if (selectedParty) {
-            const stateLower = (selectedParty.state || '').toLowerCase().trim();
-            const gstCode = (selectedParty.gst_no || '').trim().substring(0, 2);
-            const isTN = stateLower.includes('tamil') || gstCode === '33';
-            if (!isTN && (stateLower !== '' || gstCode !== '')) {
-              taxUpdates = { tax_type: 'IGST', sgst_pct: 0, cgst_pct: 0, igst_pct: 5.0 };
-            } else {
-              taxUpdates = { tax_type: 'GST', sgst_pct: 2.5, cgst_pct: 2.5, igst_pct: 0 };
-            }
-          }
+      if (newIndentDetails.length === 0) {
+        newIndentDetails = form.indent_details;
+      }
 
-          setForm(recalculate({
-            ...form,
-            against_ref: value,
-            design_no: matchingDesigns.length === 1 ? matchingDesigns[0].design_no : '',
-            agent_name: selectedOrder?.agent_name || form.agent_name || '',
-            supplier_name: supplierName,
-            delivery_at: selectedOrder?.delivery_at || form.delivery_at || '',
-            indent_details: newIndentDetails,
-            ...taxUpdates
-          }));
-          return;
-        } else if (selectedOrder) {
-          const newIndentDetails = (selectedOrder.items || []).map(item => {
-            return {
-              yarn_count: item.yarn_count || '',
-              colour: item.color || '',
-              order_qty: parseFloat(item.order_mtrs) || 0,
-              delivery_date: item.po_date ? item.po_date.substring(0, 10) : '',
-              rate: parseFloat(item.rate) || 0,
-              amount: parseFloat(item.amount) || 0,
-              packing_type: item.packing_type || '',
-              labeling: '',
-              design_no: item.design_no || ''
-            };
-          });
-
-          const supplierName = selectedOrder.party_name || form.supplier_name || '';
-          const selectedParty = parties.find(p => p.company_name === supplierName);
-          let taxUpdates = {};
-          if (selectedParty) {
-            const stateLower = (selectedParty.state || '').toLowerCase().trim();
-            const gstCode = (selectedParty.gst_no || '').trim().substring(0, 2);
-            const isTN = stateLower.includes('tamil') || gstCode === '33';
-            if (!isTN && (stateLower !== '' || gstCode !== '')) {
-              taxUpdates = { tax_type: 'IGST', sgst_pct: 0, cgst_pct: 0, igst_pct: 5.0 };
-            } else {
-              taxUpdates = { tax_type: 'GST', sgst_pct: 2.5, cgst_pct: 2.5, igst_pct: 0 };
-            }
-          }
-
-          setForm(recalculate({
-            ...form,
-            against_ref: value,
-            design_no: matchingDesigns.length === 1 ? matchingDesigns[0].design_no : '',
-            agent_name: selectedOrder.agent_name || form.agent_name || '',
-            supplier_name: supplierName,
-            delivery_at: selectedOrder.delivery_at || form.delivery_at || '',
-            indent_details: newIndentDetails.length > 0 ? newIndentDetails : form.indent_details,
-            ...taxUpdates
-          }));
-          return;
+      const supplierName = selectedOrder?.party_name || form.supplier_name || '';
+      const selectedParty = parties.find(p => p.company_name === supplierName);
+      let taxUpdates = {};
+      if (selectedParty) {
+        const stateLower = (selectedParty.state || '').toLowerCase().trim();
+        const gstCode = (selectedParty.gst_no || '').trim().substring(0, 2);
+        const isTN = stateLower.includes('tamil') || gstCode === '33';
+        if (!isTN && (stateLower !== '' || gstCode !== '')) {
+          taxUpdates = { tax_type: 'IGST', sgst_pct: 0, cgst_pct: 0, igst_pct: 5.0 };
         } else {
-          setForm(prev => ({ ...prev, against_ref: value }));
-          return;
+          taxUpdates = { tax_type: 'GST', sgst_pct: 2.5, cgst_pct: 2.5, igst_pct: 0 };
         }
       }
+
+      setForm(recalculate({
+        ...form,
+        against_ref: 'PO',
+        ibpo_no: selectedIbpo,
+        design_no: matchingDesigns.length === 1 ? (matchingDesigns[0].ds_ref_no || matchingDesigns[0].design_no) : form.design_no,
+        agent_name: selectedOrder?.agent_name || form.agent_name || '',
+        supplier_name: supplierName,
+        delivery_at: selectedOrder?.delivery_at || form.delivery_at || '',
+        indent_details: newIndentDetails,
+        ...taxUpdates
+      }));
+      return;
     }
 
     if (name === 'supplier_name') {
@@ -1232,22 +1267,63 @@ export default function YarnPurchaseOrder() {
             </div>
           </div>
 
+          {/* Bulk Action Bar */}
+          {selectedIds.length > 0 && (
+            <div className="card animate-fade" style={{ padding: '12px 20px', marginBottom: 16, background: '#fef2f2', border: '1px solid #fee2e2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ color: '#991b1b', fontWeight: 700, fontSize: 14 }}>
+                  {selectedIds.length} yarn purchase order{selectedIds.length > 1 ? 's' : ''} selected
+                </span>
+                <button
+                  className="btn btn-secondary"
+                  style={{ padding: '4px 10px', fontSize: 12 }}
+                  onClick={() => setSelectedIds([])}
+                >
+                  Clear Selection
+                </button>
+              </div>
+              <button
+                className="btn"
+                style={{ background: '#ef4444', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', fontWeight: 700, borderRadius: 6, cursor: 'pointer' }}
+                onClick={handleBulkDelete}
+              >
+                <Trash2 size={16} /> Delete Selected ({selectedIds.length})
+              </button>
+            </div>
+          )}
+
           <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
             <div style={{ flex: 1, overflowX: 'auto' }}>
               <div className="card" style={{ padding: 0 }}>
                 <table className="data-table">
                   <thead>
                     <tr>
+                      <th style={{ width: 40, textAlign: 'center' }}>
+                        <input
+                          type="checkbox"
+                          checked={filteredOrders.length > 0 && selectedIds.length === filteredOrders.length}
+                          onChange={() => toggleSelectAll(filteredOrders)}
+                          style={{ cursor: 'pointer', width: 16, height: 16 }}
+                        />
+                      </th>
                       <th>PO No</th><th>Date</th><th>Supplier</th><th>Amount</th><th>Status</th><th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {loading ? (
-                      <tr><td colSpan={6} style={{ textAlign: 'center', padding: 40 }}>Loading...</td></tr>
+                      <tr><td colSpan={7} style={{ textAlign: 'center', padding: 40 }}>Loading...</td></tr>
                     ) : filteredOrders.length === 0 ? (
-                      <tr><td colSpan={6} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No POs found.</td></tr>
+                      <tr><td colSpan={7} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No POs found.</td></tr>
                     ) : filteredOrders.map(o => (
-                      <tr key={o.id} onClick={() => handleRowClick(o)} style={{ cursor: 'pointer', background: selectedViewOrder?.id === o.id ? 'var(--bg-secondary)' : 'transparent' }}>
+                      <tr key={o.id} onClick={() => handleRowClick(o)} style={{ cursor: 'pointer', background: selectedIds.includes(o.id) ? 'rgba(239, 68, 68, 0.05)' : selectedViewOrder?.id === o.id ? 'var(--bg-secondary)' : 'transparent' }}>
+                        <td style={{ textAlign: 'center' }} onClick={evt => evt.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(o.id)}
+                            onChange={(evt) => toggleSelectRow(o.id, evt)}
+                            style={{ cursor: 'pointer', width: 16, height: 16 }}
+                          />
+                        </td>
                         <td style={{ fontWeight: 600, color: 'var(--primary-light)' }}>{o.po_number}</td>
                         <td>{o.po_date}</td>
                         <td style={{ fontWeight: 500 }}>{o.supplier_name || '-'}</td>
@@ -1682,45 +1758,68 @@ export default function YarnPurchaseOrder() {
                     <div className="form-group"><label>Order Date *</label><input type="date" className="form-control" name="po_date" value={form.po_date} onChange={handleChange} required /></div>
                     <div className="form-group"><label>Internal PO No</label><input className="form-control" name="internal_po_no" value={form.internal_po_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Used For</label><input className="form-control" name="used_for" value={form.used_for} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Against Reference</label>
-                      {isCustomAgainstRef ? (
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <input type="text" className="form-control" autoFocus placeholder="Enter Against Ref..." value={customAgainstRefVal} onChange={e => setCustomAgainstRefVal(e.target.value)} />
-                          <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomAgainstRef}><CheckCircle size={16} /></button>
-                          <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomAgainstRef(false); setCustomAgainstRefVal(''); }}><X size={16} /></button>
-                        </div>
-                      ) : (
-                        <select className="form-control" name="against_ref" value={form.against_ref || ''} onChange={e => {
-                          if (e.target.value === 'custom') setIsCustomAgainstRef(true);
-                          else handleChange(e);
-                        }}>
-                          <option value="">Select...</option>
-                          <option value="No Reference">No Reference (Dummy PO)</option>
+                    <div className="form-group">
+                      <label>Against Reference</label>
+                      <select 
+                        className="form-control" 
+                        name="against_ref" 
+                        value={form.against_ref === 'PO' || (form.against_ref && form.against_ref !== 'Direct' && form.against_ref !== 'No Reference') ? 'PO' : 'Direct'} 
+                        onChange={handleChange}
+                      >
+                        <option value="Direct">Direct</option>
+                        <option value="PO">PO</option>
+                      </select>
+                    </div>
+
+                    {(form.against_ref === 'PO' || (form.against_ref && form.against_ref !== 'Direct' && form.against_ref !== 'No Reference')) && (
+                      <div className="form-group">
+                        <label>IBPO No</label>
+                        <select 
+                          className="form-control" 
+                          name="ibpo_no" 
+                          value={form.ibpo_no || (form.against_ref !== 'PO' && form.against_ref !== 'Direct' ? form.against_ref : '')} 
+                          onChange={handleChange}
+                        >
+                          <option value="">Select IBPO...</option>
                           {buyerOrders.map(bo => (
                             <option key={bo.id} value={bo.ibpo_number}>
                               {bo.ibpo_number} ({bo.party_name || bo.buyer_name || 'No Party'})
                             </option>
                           ))}
-                          {options.masters?.against_reference_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Against Ref...</option>
                         </select>
-                      )}
-                    </div>
+                      </div>
+                    )}
+
                     <div className="form-group">
                       <label>Design Entry No</label>
-                      <select 
-                        className="form-control" 
-                        name="design_no" 
-                        value={form.design_no || ''} 
-                        onChange={handleChange}
-                      >
-                        <option value="">Select...</option>
-                        {designEntries.map(de => (
-                          <option key={de.id} value={de.design_no}>
-                            {de.design_no} {de.ibpo_no ? `(IBPO: ${de.ibpo_no})` : ''}
-                          </option>
-                        ))}
-                      </select>
+                      {form.against_ref === 'Direct' ? (
+                        <select className="form-control" disabled value="">
+                          <option value="">N/A (Direct PO)</option>
+                        </select>
+                      ) : (
+                        <select 
+                          className="form-control" 
+                          name="design_no" 
+                          value={form.design_no || ''} 
+                          onChange={handleChange}
+                        >
+                          <option value="">Select Design Entry...</option>
+                          {form.design_no && !designEntries.some(de => (de.ds_ref_no === form.design_no || de.design_no === form.design_no)) && (
+                            <option value={form.design_no}>{form.design_no}</option>
+                          )}
+                          {getAvailableDesignEntries().map(de => {
+                            const val = de.ds_ref_no || de.design_no || `DE-${de.id}`;
+                            const display = de.ds_ref_no && de.design_no && de.ds_ref_no !== de.design_no
+                              ? `${de.ds_ref_no} (${de.design_no})`
+                              : (de.ds_ref_no || de.design_no || `DE-${de.id}`);
+                            return (
+                              <option key={de.id} value={val}>
+                                {display} {de.ibpo_no ? `(IBPO: ${de.ibpo_no})` : ''}
+                              </option>
+                            );
+                          })}
+                        </select>
+                      )}
                     </div>
                     <div className="form-group"><label>Agent Name</label><input className="form-control" name="agent_name" value={form.agent_name} onChange={handleChange} /></div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Supplier Name</label>
