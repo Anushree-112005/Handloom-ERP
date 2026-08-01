@@ -226,7 +226,7 @@ export default function StockReport() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px', marginBottom: '24px' }}>
-        <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '20px', border: 'none', boxShadow: 'none' }}>
+        <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '20px' }}>
           <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '16px', color: 'var(--text-primary)' }}>Category-wise Inventory</h3>
           <div style={{ height: '250px' }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -243,7 +243,7 @@ export default function StockReport() {
           </div>
         </div>
 
-        <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '20px', border: 'none', boxShadow: 'none' }}>
+        <div className="card" style={{ border: 'none', boxShadow: 'none', padding: '20px' }}>
           <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '16px', color: 'var(--text-primary)' }}>Inventory Value by Category</h3>
           <div style={{ height: '250px' }}>
             <ResponsiveContainer width="100%" height="100%">
