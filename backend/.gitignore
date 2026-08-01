@@ -64,9 +64,10 @@ docker-compose.override.yml
 
 # Environment Variables
 .env
-.env.local
-.env.*.local
+.env*
+.env.*
 *.env
+*.env.*
 *.txt
 
 # Jenkins
