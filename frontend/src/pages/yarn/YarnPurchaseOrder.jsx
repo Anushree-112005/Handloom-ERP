@@ -287,7 +287,7 @@ export default function YarnPurchaseOrder() {
   const [selectedIds, setSelectedIds] = useState([]);
 
   const [companyProfile, setCompanyProfile] = useState({
-    company_name: 'Dinesh Exports Private Limited',
+    company_name: 'Handloom ERP Private Limited',
     description: '1/6-A, AIYNDHUPANAL KADACHANALLUR POST, OPP. TO SPK SCHOOL, KOMARAPALAYAM TALUK, Namakkal, Tamil Nadu, 638183',
     logo: ''
   });
@@ -513,7 +513,7 @@ export default function YarnPurchaseOrder() {
       setDesignEntries(designRes.data || []);
       if (compRes && compRes.data) {
         setCompanyProfile({
-          company_name: compRes.data.company_name || 'Dinesh Exports Private Limited',
+          company_name: compRes.data.company_name || 'Handloom ERP Private Limited',
           description: compRes.data.description || '1/6-A, AIYNDHUPANAL KADACHANALLUR POST, OPP. TO SPK SCHOOL, KOMARAPALAYAM TALUK, Namakkal, Tamil Nadu, 638183',
           logo: compRes.data.logo || ''
         });
@@ -1094,7 +1094,7 @@ export default function YarnPurchaseOrder() {
 
   const exportPDF = () => {
     const doc = new jsPDF('landscape');
-    doc.text("Dinesh Textile - Yarn Purchase Orders", 14, 15);
+    doc.text("Handloom ERP - Yarn Purchase Orders", 14, 15);
     const headers = [["PO No", "Date", "Supplier", "Amount", "Status"]];
     const rows = filteredOrders.map(o => [
       o.po_number || '-',
@@ -1166,7 +1166,7 @@ export default function YarnPurchaseOrder() {
   const getDeliveryOptions = () => {
     const list = [
       {
-        company_name: companyProfile.company_name || 'Dinesh Exports Private Limited',
+        company_name: companyProfile.company_name || 'Handloom ERP Private Limited',
         address: companyProfile.address || '1/6-A, AIYNDHUPANAL KADACHANALLUR POST, OPP. TO SPK SCHOOL, KOMARAPALAYAM TALUK, Namakkal, Tamil Nadu, 638183',
         phone: companyProfile.phone || '',
         gst_no: '33AAACD0905A1ZG'
@@ -1510,7 +1510,7 @@ export default function YarnPurchaseOrder() {
                         </div>
                       ) : (
                         <>
-                          <div style={{ fontWeight: 'bold', fontSize: '13px' }}>DINESH EXPORTS PRIVATE LIMITED</div>
+                          <div style={{ fontWeight: 'bold', fontSize: '13px' }}>HANDLOOM ERP PRIVATE LIMITED</div>
                           <div style={{ fontSize: '11px', lineHeight: '1.4', margin: '4px 0', color: '#1e293b' }}>
                             {form.delivery_at || '1-6-A, Aiyndhupanal post, Kadachanallur post, Komarapalayam TK, Tiruchengodu, Namakkal-638008.'}
                           </div>
@@ -1701,7 +1701,7 @@ export default function YarnPurchaseOrder() {
                               <div style={{ fontWeight: 'bold', marginBottom: '0px' }}>Prepared By</div>
                             </td>
                             <td style={{ width: '34%', padding: '12px', verticalAlign: 'top', height: '110px', position: 'relative' }}>
-                              <div style={{ fontWeight: 'bold', textAlign: 'center' }}>For Dinesh Exports Private Limited</div>
+                              <div style={{ fontWeight: 'bold', textAlign: 'center' }}>For Handloom ERP Private Limited</div>
                               <div style={{ fontWeight: 'bold', position: 'absolute', bottom: '12px', left: 0, right: 0, textAlign: 'center' }}>Authorised Signatory</div>
                             </td>
                           </tr>

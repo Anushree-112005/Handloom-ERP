@@ -1,8 +1,16 @@
 """
-Dinesh Textile ERP — FastAPI application entry point.
+Handloom ERP — FastAPI application entry point.
 """
 import sys
 import os
+
+# Prevent OpenMP / BLAS threading deadlocks on Windows
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
+
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
@@ -32,14 +40,15 @@ async def lifespan(app: FastAPI):
         import asyncpg
         from app.core.config import settings
         db_url_str = str(settings.DATABASE_URL)
-        if "dinesh_textile_erp" in db_url_str:
-            sys_url = db_url_str.replace("dinesh_textile_erp", "postgres").replace("postgresql+asyncpg://", "postgresql://")
+        if "handloom_erp" in db_url_str or "dinesh_textile_erp" in db_url_str:
+            db_name = "handloom_erp" if "handloom_erp" in db_url_str else "dinesh_textile_erp"
+            sys_url = db_url_str.replace(db_name, "postgres").replace("postgresql+asyncpg://", "postgresql://")
             try:
                 sys_conn = await asyncpg.connect(sys_url)
-                exists = await sys_conn.fetchval("SELECT 1 FROM pg_database WHERE datname = 'dinesh_textile_erp'")
+                exists = await sys_conn.fetchval(f"SELECT 1 FROM pg_database WHERE datname = '{db_name}'")
                 if not exists:
-                    logger.info("Creating database dinesh_textile_erp...")
-                    await sys_conn.execute('CREATE DATABASE dinesh_textile_erp')
+                    logger.info(f"Creating database {db_name}...")
+                    await sys_conn.execute(f'CREATE DATABASE {db_name}')
                 await sys_conn.close()
             except Exception as db_e:
                 logger.error(f"Failed to check/create database: {db_e}")
@@ -123,7 +132,7 @@ async def lifespan(app: FastAPI):
                     username="admin",
                     name="Administrator",
                     user_type="Admin",
-                    email="admin@dinesh-textile.com",
+                    email="admin@handloom-erp.com",
                     department="IT",
                     designation="System Admin",
                     status="Active",
@@ -413,7 +422,7 @@ app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 
 @app.get("/")
 async def root():
-    return {"message": "Dinesh Textile ERP API", "version": "1.0.0", "docs": "/docs"}
+    return {"message": "Handloom ERP API", "version": "1.0.0", "docs": "/docs"}
 
 import sys
 import shutil

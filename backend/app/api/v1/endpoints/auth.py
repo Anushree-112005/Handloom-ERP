@@ -20,7 +20,7 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     user_id: str
     user_name: str
-    user_type: str
+    user_type: Optional[str] = "Admin"
     module_permissions: Optional[dict] = {}
 
 
@@ -28,7 +28,7 @@ class UserOut(BaseModel):
     id: int
     employee_code: str
     name: str
-    user_type: str
+    user_type: Optional[str] = "Admin"
     department: Optional[str] = None
     designation: Optional[str] = None
     email: Optional[str] = None
@@ -67,7 +67,7 @@ async def login(form: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = 
     
     return TokenResponse(
         access_token=token, user_id=user.employee_code,
-        user_name=user.name, user_type=user.user_type,
+        user_name=user.name, user_type=user.user_type or "Admin",
         module_permissions=rbac_context
     )
 
@@ -81,7 +81,7 @@ async def read_current_user(current_user: Employee = Depends(get_current_user), 
         "id": current_user.id,
         "employee_code": current_user.employee_code,
         "name": current_user.name,
-        "user_type": current_user.user_type,
+        "user_type": current_user.user_type or "Admin",
         "department": current_user.department,
         "designation": current_user.designation,
         "email": current_user.email,

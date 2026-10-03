@@ -22,7 +22,7 @@ const CustomPODocumentPreview = ({
   isOpen,
   onClose,
   title = "PURCHASE ORDER FORM",
-  companyProfile = { company_name: 'DINESH EXPORTS', description: 'THE HOUSE OF FABRICS', logo: defaultLogo },
+  companyProfile = { company_name: 'HANDLOOM ERP', description: '', logo: defaultLogo },
   poNumber = "-",
   poDate = "-",
   deliveryAt = "1-6-A, Aiyndhupanal post, Kadachanallur post, Komarapalayam TK, Tiruchengodu, Namakkal-638008.",
@@ -88,7 +88,7 @@ const CustomPODocumentPreview = ({
                   <div>
                     <div style={{ fontSize: '15px', fontWeight: 'bold', marginBottom: '4px', textTransform: 'uppercase' }}>{companyProfile.company_name}</div>
                     <div style={{ fontSize: '11px', lineHeight: '1.4', color: '#1e293b', whiteSpace: 'pre-line' }}>{companyProfile.description}</div>
-                    <div style={{ fontSize: '11px', marginTop: '4px', color: '#1e293b' }}><strong>E-Mail:</strong> palanivel@dineshexports.net</div>
+                    <div style={{ fontSize: '11px', marginTop: '4px', color: '#1e293b' }}><strong>E-Mail:</strong> palanivel@handloomerp.net</div>
                     <div style={{ fontSize: '11px', fontWeight: 'bold', marginTop: '2px' }}>GST : 33AAACD0905A1ZG</div>
                   </div>
                 </div>
@@ -114,7 +114,7 @@ const CustomPODocumentPreview = ({
             <tr>
               <td style={{ width: '55%', border: '1px solid #000', padding: '12px', verticalAlign: 'top' }}>
                 <div style={{ textAlign: 'center', textDecoration: 'underline', fontWeight: 'bold', marginBottom: '8px', fontSize: '13px', textTransform: 'uppercase' }}>Delivery At</div>
-                <div style={{ fontWeight: 'bold', fontSize: '13px' }}>DINESH EXPORTS PRIVATE LIMITED</div>
+                <div style={{ fontWeight: 'bold', fontSize: '13px' }}>HANDLOOM ERP PRIVATE LIMITED</div>
                 <div style={{ fontSize: '11px', lineHeight: '1.4', margin: '4px 0', color: '#1e293b' }}>{deliveryAt}</div>
                 <div style={{ fontWeight: 'bold', fontSize: '11px', marginTop: '4px' }}>GST : 33AAACD0905A1ZG</div>
               </td>
@@ -272,7 +272,7 @@ const CustomPODocumentPreview = ({
                         <div style={{ marginTop: '40px', fontWeight: 'bold', fontSize: '12px' }}>Supplier's Signature</div>
                       </td>
                       <td style={{ width: '50%', padding: '12px', textAlign: 'right', verticalAlign: 'top' }}>
-                        <div style={{ fontWeight: 'bold', marginBottom: '40px' }}>For DINESH EXPORTS PRIVATE LIMITED</div>
+                        <div style={{ fontWeight: 'bold', marginBottom: '40px' }}>For HANDLOOM ERP PRIVATE LIMITED</div>
                         <div style={{ fontWeight: 'bold', fontSize: '12px' }}>Authorised Signatory</div>
                       </td>
                     </tr>

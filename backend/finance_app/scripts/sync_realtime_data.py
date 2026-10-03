@@ -36,7 +36,7 @@ def sync_data():
         db.execute(text("SELECT cin FROM companies LIMIT 1"))
     except Exception:
         try:
-            print("  → Adding missing cin and currency columns to SQLite database...")
+            print("  -> Adding missing cin and currency columns to SQLite database...")
             db.execute(text("ALTER TABLE companies ADD COLUMN cin TEXT"))
             db.execute(text("ALTER TABLE companies ADD COLUMN currency_symbol TEXT DEFAULT '₹'"))
             db.execute(text("ALTER TABLE companies ADD COLUMN currency_name TEXT DEFAULT 'INR'"))
@@ -48,33 +48,33 @@ def sync_data():
             db.execute(text("ALTER TABLE companies ADD COLUMN currency_amount_words_unit TEXT DEFAULT 'Rupees'"))
             db.execute(text("ALTER TABLE companies ADD COLUMN currency_amount_words_decimal TEXT DEFAULT 'Paise'"))
             db.commit()
-            print("  → Successfully added missing columns.")
+            print("  -> Successfully added missing columns.")
         except Exception as e:
-            print(f"  → Migration warning: {e}")
+            print(f"  -> Migration warning: {e}")
             db.rollback()
 
     # 2. Establish PostgreSQL Connection
     from dotenv import load_dotenv
     load_dotenv(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".env")))
-    pg_url = os.getenv("DATABASE_URL", "postgresql://postgres:bala2021@localhost:5432/dinesh_textile_erp")
+    pg_url = os.getenv("DATABASE_URL", "postgresql://postgres:Anu1116@localhost:5432/handloom_erp")
     if "postgresql+asyncpg" in pg_url:
         pg_url = pg_url.replace("postgresql+asyncpg", "postgresql")
     try:
         pg_engine = sa.create_engine(pg_url)
         pg_conn = pg_engine.connect()
-        print("  → Connected to PostgreSQL database successfully.")
+        print("  -> Connected to PostgreSQL database successfully.")
     except Exception as e:
-        print(f"  → ERROR: Could not connect to PostgreSQL. {e}")
+        print(f"  -> ERROR: Could not connect to PostgreSQL. {e}")
         db.close()
         return
 
     try:
-        # 3. Find or Create Company "Dinesh Exports"
-        company = db.query(Company).filter(Company.name == "Dinesh Exports").first()
+        # 3. Find or Create Company "Handloom ERP"
+        company = db.query(Company).filter(Company.name == "Handloom ERP").first()
         if not company:
             company = Company(
-                name="Dinesh Exports",
-                legal_name="Dinesh Exports Private Limited",
+                name="Handloom ERP",
+                legal_name="Handloom ERP Private Limited",
                 gstin="27AABCS1429B1ZB",
                 pan="AABCS1429B",
                 state_code="27",
@@ -83,13 +83,14 @@ def sync_data():
                 pincode="400002",
                 phone="022-22001122",
                 email="accounts@shreetextiles.com",
-                maintain_inventory=True
+                maintain_inventory=True,
+                base_currency="INR"
             )
             db.add(company)
             db.flush()
-            print("  → Created 'Dinesh Exports' company in Finance database.")
+            print("  -> Created 'Handloom ERP' company in Finance database.")
         else:
-            print("  → Found 'Dinesh Exports' company in Finance database.")
+            print("  -> Found 'Handloom ERP' company in Finance database.")
 
         # 4. Create standard groups & system ledgers if missing
         existing_groups = db.query(LedgerGroup).filter(LedgerGroup.company_id == company.id).count()
@@ -98,7 +99,7 @@ def sync_data():
             _create_default_groups(company.id, db)
             _create_default_ledgers(company.id, db)
             db.flush()
-            print("  → Initialized default ledger groups and system ledgers.")
+            print("  -> Initialized default ledger groups and system ledgers.")
 
         # 5. Ensure Financial Years Exist
         # FY 2025-26
@@ -113,7 +114,7 @@ def sync_data():
             )
             db.add(fy25)
             db.flush()
-            print("  → Created FY 2025-26.")
+            print("  -> Created FY 2025-26.")
         
         # FY 2026-27
         fy26 = db.query(FinancialYear).filter(FinancialYear.company_id == company.id, FinancialYear.label == "FY 2026-27").first()
@@ -127,7 +128,7 @@ def sync_data():
             )
             db.add(fy26)
             db.flush()
-            print("  → Created FY 2026-27.")
+            print("  -> Created FY 2026-27.")
 
         # Ensure both are set up properly
         db.commit()
@@ -170,7 +171,7 @@ def sync_data():
             ledger_map["Cash"] = cash_led.id
 
         # 7. Import Parties from PostgreSQL
-        print("  → Syncing Party Ledgers from PostgreSQL...")
+        print("  -> Syncing Party Ledgers from PostgreSQL...")
         parties = pg_conn.execute(sa.text("SELECT company_name, party_type, address, city, state, state_code, gst_no, pan_no, bank_name, bank_account, ifsc_code FROM party_master")).fetchall()
         for p in parties:
             if not p.company_name:
@@ -205,7 +206,7 @@ def sync_data():
             ledger_map[p.company_name] = led.id
 
         # 8. Clear Pre-Existing Vouchers to Prevent Duplicates
-        print("  → Clearing pre-existing vouchers and entries in SQLite...")
+        print("  -> Clearing pre-existing vouchers and entries in SQLite...")
         db.query(VoucherEntry).delete()
         db.query(Voucher).delete()
         db.commit()
@@ -228,7 +229,7 @@ def sync_data():
             return led.id
 
         # 9. Sync Yarn Inwards -> Purchase Vouchers (for BOTH FYs)
-        print("  → Syncing Yarn Inward Entries into Purchase Vouchers...")
+        print("  -> Syncing Yarn Inward Entries into Purchase Vouchers...")
         raw_inwards = pg_conn.execute(sa.text("SELECT id, inward_date, received_from, net_amount, cgst_pct, sgst_pct, igst_pct, gross_amount, ref_no FROM yarn_inwards")).fetchall()
         inwards = raw_inwards if raw_inwards is not None else []
         
@@ -289,10 +290,10 @@ def sync_data():
 
             purchase_no_seq += 1
 
-        print(f"  → Successfully imported {len(inwards)} purchase transactions.")
+        print(f"  -> Successfully imported {len(inwards)} purchase transactions.")
 
         # 10. Sync Sales Invoices -> Sales Vouchers (for BOTH FYs)
-        print("  → Syncing Sales Invoices into Sales Vouchers...")
+        print("  -> Syncing Sales Invoices into Sales Vouchers...")
         raw_sales = pg_conn.execute(sa.text("SELECT id, invoice_no, invoice_date, party_name, gross_amount, cgst, sgst, igst, net_amount FROM sales_invoices")).fetchall()
         sales = raw_sales if raw_sales is not None else []
         
@@ -353,10 +354,10 @@ def sync_data():
 
             sales_no_seq += 1
 
-        print(f"  → Successfully imported {len(sales)} sales invoices.")
+        print(f"  -> Successfully imported {len(sales)} sales invoices.")
 
         # 11. Simulate Cash/Bank Payments & Receipts to complete the financial ledger
-        print("  → Simulating Bank Receipts and Payments...")
+        print("  -> Simulating Bank Receipts and Payments...")
         pmt_seq = 1
         rct_seq = 1
         
@@ -434,12 +435,12 @@ def sync_data():
                 rct_seq += 1
 
         db.commit()
-        print("  → Bank Receipts and Payments generated successfully.")
+        print("  -> Bank Receipts and Payments generated successfully.")
         print("\n=== Real-Time Sync and Seeding Complete! ===")
 
     except Exception as e:
         db.rollback()
-        print(f"  → ERROR during seeding transaction: {e}")
+        print(f"  -> ERROR during seeding transaction: {e}")
         import traceback
         traceback.print_exc()
     finally:

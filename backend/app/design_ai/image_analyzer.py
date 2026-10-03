@@ -1,7 +1,8 @@
 # image_analyzer.py
 import cv2
 import numpy as np
-from sklearn.cluster import KMeans
+KMeans = None
+
 
 def _load_bgr(img_or_path, grayscale=False):
     if isinstance(img_or_path, np.ndarray):

@@ -24,7 +24,7 @@ export default function MasterDropdown({
   disabled = false,
   placeholder = '---select----',
   onKeyDown,
-  allowCustom = true
+  allowCustom = false
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -647,40 +647,6 @@ export default function MasterDropdown({
                             {itemLabel}
                           </span>
                         </div>
-                        {allowCustom && (
-                          <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }} onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}>
-                            <button
-                              type="button"
-                              title="Edit option"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingId(itemId);
-                                setEditingText(itemLabel || '');
-                              }}
-                              style={{
-                                background: 'none', border: 'none', padding: '2px', cursor: 'pointer',
-                                color: 'var(--primary)', display: 'flex', alignItems: 'center'
-                              }}
-                            >
-                              <Edit2 size={13} />
-                            </button>
-                            <button
-                              type="button"
-                              title="Delete option"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDelete(item);
-                              }}
-                              style={{
-                                background: 'none', border: 'none', padding: '2px', cursor: 'pointer',
-                                color: '#ef4444', display: 'flex', alignItems: 'center', opacity: busy ? 0.5 : 1
-                              }}
-                              disabled={busy}
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          </div>
-                        )}
                       </>
                     )}
                   </div>

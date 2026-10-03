@@ -235,7 +235,7 @@ def generate_pdf_bytes(report_id: str, data: list[dict]) -> bytes:
     </head>
     <body>
       <div class="header">
-        <h1>DINESH EXPORTS — {{ title }}</h1>
+        <h1>HANDLOOM ERP — {{ title }}</h1>
         <p>Generated on {{ timestamp }}</p>
       </div>
       <div class="meta">
@@ -262,7 +262,7 @@ def generate_pdf_bytes(report_id: str, data: list[dict]) -> bytes:
         </tbody>
       </table>
       <div class="footer">
-        Dinesh Exports ERP &bull; Confidential &bull; {{ timestamp }}
+        Handloom ERP &bull; Confidential &bull; {{ timestamp }}
       </div>
     </body>
     </html>

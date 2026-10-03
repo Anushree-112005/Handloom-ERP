@@ -23,7 +23,6 @@ from app.models.sub_master import SubMaster
 from app.models.work_order import WorkOrderTransaction
 from app.models.textile_design import TextileDesign, WarpDesignItem, WeftDesignItem
 from app.models.production_status import ProductionStatus, ProductionStatusHistory
-from app.models.chat_message import ChatMessage
 from app.models.report_job import ReportJob
 from app.models.generic_po import GenericPurchaseOrder, GenericPurchaseOrderItem
 from app.models.twisting_doubling_po import TwistingDoublingPO, TwistingDoublingPOItem

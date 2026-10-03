@@ -133,7 +133,6 @@ import QuotationEntry from './pages/stationary and consumptions/QuotationEntry';
 
 // Core Yarn & Warping Imports
 import DesignEntry from './pages/design_management/DesignEntry';
-import DesignAI from './pages/design_management/DesignAI';
 import WeavingCalculator from './pages/design_management/WeavingCalculator';
 import YarnPurchaseOrder from './pages/yarn/YarnPurchaseOrder';
 import YarnInward from './pages/yarn/YarnInward';
@@ -174,7 +173,6 @@ const routeModuleMapping = {
   '/party-master': 'textile_operations',
   '/buyer-order': 'textile_operations',
   '/design-entry': 'textile_operations',
-  '/design-ai': 'textile_operations',
   '/yarn': 'textile_operations',
   '/purchase-order': 'textile_operations',
   '/jobwork': 'textile_operations',
@@ -378,7 +376,7 @@ export default function App() {
       <Route path="/login" element={<Login />} />
 
       <Route path="/" element={
-        <ProtectedRoute><Layout title="DINESH EXPORTS - THE HOUSE OF FABRICS" /></ProtectedRoute>
+        <ProtectedRoute><Layout title="HANDLOOM ERP" /></ProtectedRoute>
       }>
         <Route index element={<Dashboard />} />
         <Route path="overview" element={<Overview />} />
@@ -422,7 +420,6 @@ export default function App() {
 
 
         <Route path="design-entry" element={<DesignEntry />} />
-        <Route path="design-ai" element={<DesignAI />} />
         <Route path="weaving-calculator" element={<WeavingCalculator />} />
 
         <Route path="yarn/purchase-order" element={<YarnPurchaseOrder />} />
@@ -639,16 +636,16 @@ export default function App() {
         <Route path="about" element={
           <div className="card animate-fade" style={{ padding: '32px', maxWidth: '600px', margin: '40px auto', textAlign: 'left' }}>
             <h2 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '16px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Info size={24} style={{ color: '#2563eb' }} /> About DINESH EXPORTS ERP
+              <Info size={24} style={{ color: '#2563eb' }} /> About HANDLOOM ERP
             </h2>
             <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '20px' }}>
-              DINESH EXPORTS ERP is a high-performance Enterprise Resource Planning platform tailored for textile manufacturing, procurement, inventory tracking, quality inspection, and sales/export operations.
+              HANDLOOM ERP is a high-performance Enterprise Resource Planning platform tailored for textile manufacturing, procurement, inventory tracking, quality inspection, and sales/export operations.
             </p>
             <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '24px' }}>
               It features real-time data entry pipelines, process visualization, automated GST & E-Way billing modules, and comprehensive logging and audit systems.
             </p>
             <div style={{ borderTop: '1px solid var(--border)', paddingTop: '20px', fontSize: '12px', color: 'var(--text-muted)' }}>
-              Version 1.0.0 • Developed for DINESH EXPORTS
+              Version 1.0.0 • Developed for HANDLOOM ERP
             </div>
           </div>
         } />

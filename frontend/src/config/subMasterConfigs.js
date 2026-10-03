@@ -1245,7 +1245,7 @@ export const ORGANIZATION_NAME_MASTER = {
   color: '#2563eb',
   description: 'Manage organization names for purchase orders.',
   fields: [
-    { name: 'name', label: 'Organization Name', type: 'text', required: true, placeholder: 'e.g. Dinesh Textile Main' },
+    { name: 'name', label: 'Organization Name', type: 'text', required: true, placeholder: 'e.g. Handloom ERP Main' },
   ],
 };
 

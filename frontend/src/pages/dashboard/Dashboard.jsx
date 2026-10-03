@@ -158,9 +158,8 @@ export default function Dashboard() {
   };
 
   const renderMetricGrid = (title, items) => (
-    <div style={{ marginBottom: 20 }}>
-      {/* Compact Grid Layout for clear dashboard visibility */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12 }}>
+    <div style={{ marginBottom: 6 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8 }}>
         {items.map((item, idx) => (
           <div 
             key={idx}
@@ -168,45 +167,45 @@ export default function Dashboard() {
             style={{
               background: 'var(--bg-primary)',
               border: `1px solid var(--border)`,
-              borderLeft: `3px solid ${item.color}`,
-              borderRadius: '8px',
-              padding: '10px 12px',
+              borderLeft: `3.5px solid ${item.color}`,
+              borderRadius: '6px',
+              padding: '6px 10px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '12px',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
+              gap: '8px',
+              transition: 'all 0.15s ease',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = `0 4px 8px ${item.color}15`;
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = `0 2px 6px ${item.color}15`;
               e.currentTarget.style.borderColor = `${item.color}40`;
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'none';
-              e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.03)';
+              e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.02)';
               e.currentTarget.style.borderColor = 'var(--border)';
             }}
           >
             <div style={{ 
               color: item.color, 
-              background: `${item.color}15`, 
-              padding: '8px', 
-              borderRadius: '8px', 
+              background: `${item.color}14`, 
+              padding: '6px', 
+              borderRadius: '6px', 
               display: 'flex', 
               alignItems: 'center',
               flexShrink: 0
             }}>
-              <item.icon size={18} strokeWidth={2.5} />
+              <item.icon size={16} strokeWidth={2.5} />
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+              <span style={{ fontSize: 11.5, fontWeight: 650, color: 'var(--text-secondary)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
                 {item.label}
               </span>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 2 }}>
-                <span style={{ fontSize: 16, fontWeight: 750, color: 'var(--text-primary)' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 3, marginTop: 1 }}>
+                <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)' }}>
                   {item.value.split(' ')[0]} 
                 </span>
                 <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)' }}>
@@ -221,12 +220,12 @@ export default function Dashboard() {
   );
 
   const ChartCard = ({ title, subtitle, children }) => (
-    <div className="card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '8px', boxShadow: 'var(--shadow-sm)' }}>
-      <div style={{ marginBottom: 12, textAlign: 'center' }}>
-        <h4 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{title}</h4>
+    <div className="card" style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+      <div style={{ marginBottom: 4, textAlign: 'center', flexShrink: 0 }}>
+        <h4 style={{ margin: 0, fontSize: 13.5, fontWeight: 750, color: 'var(--text-primary)' }}>{title}</h4>
         {subtitle && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{subtitle}</span>}
       </div>
-      <div style={{ flex: 1, minHeight: 220 }}>
+      <div style={{ flex: 1, height: '100%', minHeight: 0, width: '100%' }}>
         {children}
       </div>
     </div>
@@ -237,8 +236,8 @@ export default function Dashboard() {
     return (
       <ul style={{ listStyle: 'none', padding: 0, margin: 0, textAlign: 'left' }}>
         {payload.map((entry, index) => (
-          <li key={`item-${index}`} style={{ display: 'flex', alignItems: 'center', marginBottom: 4, fontSize: 12, color: 'var(--text-secondary)' }}>
-            <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', backgroundColor: entry.color, marginRight: 8 }}></span>
+          <li key={`item-${index}`} style={{ display: 'flex', alignItems: 'center', marginBottom: 3, fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)' }}>
+            <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', backgroundColor: entry.color, marginRight: 6 }}></span>
             {entry.value}
           </li>
         ))}
@@ -247,21 +246,21 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 96px)', gap: 8, boxSizing: 'border-box' }}>
       {/* Header & Filter Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16, flexWrap: 'wrap', gap: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, flexWrap: 'wrap', gap: 8 }}>
         <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>Textile Operations Dashboard</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>Live overview of yarn, production, and dispatch metrics.</p>
+          <h2 style={{ fontSize: 20, fontWeight: 750, color: 'var(--text-primary)', margin: 0 }}>Textile Operations Dashboard</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: '2px 0 0 0' }}>Live overview of yarn, production, and dispatch metrics.</p>
         </div>
         
-        <div className="card dashboard-filter-bar" style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 16, flexDirection: 'row', width: 'auto', flexWrap: 'wrap', position: 'relative' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-muted)' }}>
-            <Filter size={16} />
-            <span style={{ fontSize: 13, fontWeight: 600 }}>Filter:</span>
+        <div className="card dashboard-filter-bar" style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 10, flexDirection: 'row', width: 'auto', position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
+            <Filter size={15} />
+            <span style={{ fontSize: 13, fontWeight: 650 }}>Filter:</span>
           </div>
           
-          <select className="form-control" style={{ width: 140, padding: '8px 12px' }} value={dateFilter} onChange={e => setDateFilter(e.target.value)}>
+          <select className="form-control" style={{ width: 125, padding: '4px 8px', fontSize: 12.5, fontWeight: 500, height: 30 }} value={dateFilter} onChange={e => setDateFilter(e.target.value)}>
             <option value="All Time">All Time</option>
             <option value="This Week">This Week</option>
             <option value="This Month">This Month</option>
@@ -271,22 +270,22 @@ export default function Dashboard() {
 
           {dateFilter === 'Custom Range' && (
             <>
-              <input type="date" className="form-control" style={{ width: 130, padding: '8px' }} value={fromDate} onChange={e => setFromDate(e.target.value)} />
-              <span style={{ color: 'var(--text-muted)' }}>to</span>
-              <input type="date" className="form-control" style={{ width: 130, padding: '8px' }} value={toDate} onChange={e => setToDate(e.target.value)} />
+              <input type="date" className="form-control" style={{ width: 115, padding: '4px', fontSize: 12, height: 30 }} value={fromDate} onChange={e => setFromDate(e.target.value)} />
+              <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>to</span>
+              <input type="date" className="form-control" style={{ width: 115, padding: '4px', fontSize: 12, height: 30 }} value={toDate} onChange={e => setToDate(e.target.value)} />
             </>
           )}
 
-          <div style={{ position: 'relative', borderLeft: '1.5px solid var(--border)', paddingLeft: 16, display: 'inline-block' }}>
-            <button className="btn btn-primary" onClick={() => setExportDropdownOpen(!exportDropdownOpen)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', fontSize: 13, height: 38, cursor: 'pointer' }}>
-              <Download size={15} /><span>Export</span>
+          <div style={{ position: 'relative', borderLeft: '1px solid var(--border)', paddingLeft: 10, display: 'inline-block' }}>
+            <button className="btn btn-primary" onClick={() => setExportDropdownOpen(!exportDropdownOpen)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px', fontSize: 12.5, fontWeight: 600, height: 30, cursor: 'pointer' }}>
+              <Download size={14} /><span>Export</span>
             </button>
             {exportDropdownOpen && (
               <>
                 <div onClick={() => setExportDropdownOpen(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }} />
-                <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 6, background: 'var(--bg-primary)', border: '1.5px solid var(--border)', borderRadius: 8, boxShadow: 'var(--shadow-md)', zIndex: 999, minWidth: 160 }}>
-                  <button onClick={() => { setExportDropdownOpen(false); exportToPDF(); }} style={{ padding: '10px 16px', fontSize: 12, width: '100%', textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer' }}>Download as PDF</button>
-                  <button onClick={() => { setExportDropdownOpen(false); exportToExcel(); }} style={{ padding: '10px 16px', fontSize: 12, width: '100%', textAlign: 'left', background: 'transparent', border: 'none', borderTop: '1px solid var(--border)', cursor: 'pointer' }}>Download as Excel</button>
+                <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 4, background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 6, boxShadow: 'var(--shadow-md)', zIndex: 999, minWidth: 140 }}>
+                  <button onClick={() => { setExportDropdownOpen(false); exportToPDF(); }} style={{ padding: '8px 12px', fontSize: 12, width: '100%', textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer' }}>Download as PDF</button>
+                  <button onClick={() => { setExportDropdownOpen(false); exportToExcel(); }} style={{ padding: '8px 12px', fontSize: 12, width: '100%', textAlign: 'left', background: 'transparent', border: 'none', borderTop: '1px solid var(--border)', cursor: 'pointer' }}>Download as Excel</button>
                 </div>
               </>
             )}
@@ -294,20 +293,22 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {renderMetricGrid('A. Daily Operations Panel', operations)}
+      <div style={{ flexShrink: 0 }}>
+        {renderMetricGrid('A. Daily Operations Panel', operations)}
+      </div>
 
       {/* Row 1: 3 Columns */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16, marginBottom: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, flex: 1, minHeight: 0 }}>
         <ChartCard title="Production vs Dispatch by Month" subtitle="Volume in Meters">
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={prodVsDispatch} margin={{ top: 20, right: 20, left: -10, bottom: 5 }}>
+            <ComposedChart data={prodVsDispatch} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 500 }} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 500 }} />
               <Tooltip cursor={{fill: 'transparent'}} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="Production" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
-              <Line type="monotone" dataKey="Dispatch" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} />
+              <Bar dataKey="Production" fill="#0ea5e9" radius={[3, 3, 0, 0]} />
+              <Line type="monotone" dataKey="Dispatch" stroke="#f59e0b" strokeWidth={2} dot={{ r: 3 }} />
             </ComposedChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -315,14 +316,14 @@ export default function Dashboard() {
         <ChartCard title="Process Chart" subtitle="Pending Lots/Orders">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={bottleneckData} innerRadius={60} outerRadius={80} paddingAngle={2} dataKey="value">
+              <Pie data={bottleneckData} innerRadius={35} outerRadius={50} paddingAngle={2} dataKey="value">
                 {bottleneckData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
               <Tooltip />
               <Legend content={renderCustomLegend} verticalAlign="middle" align="right" layout="vertical" />
-              <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" style={{ fontSize: 20, fontWeight: 'bold', fill: 'var(--text-primary)' }}>
+              <text x="40%" y="50%" textAnchor="middle" dominantBaseline="middle" style={{ fontSize: 15, fontWeight: 'bold', fill: 'var(--text-primary)' }}>
                 {bottleneckData.reduce((acc, curr) => acc + curr.value, 0)}
               </text>
             </PieChart>
@@ -332,7 +333,7 @@ export default function Dashboard() {
         <ChartCard title="Buyer Order Volumes" subtitle="Total Meters Ordered">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={buyerQty} innerRadius={60} outerRadius={80} paddingAngle={2} dataKey="value">
+              <Pie data={buyerQty} innerRadius={35} outerRadius={50} paddingAngle={2} dataKey="value">
                 {buyerQty.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
@@ -345,63 +346,45 @@ export default function Dashboard() {
       </div>
 
       {/* Row 2: 3 Columns */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16, marginBottom: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, flex: 1, minHeight: 0 }}>
         <ChartCard title="Quality Compliance %" subtitle="Pass rate per process step">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={qualityCompliance} layout="vertical" margin={{ top: 20, right: 30, left: 10, bottom: 5 }} barSize={20}>
+            <BarChart data={qualityCompliance} layout="vertical" margin={{ top: 5, right: 15, left: 0, bottom: 0 }} barSize={12}>
               <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-              <XAxis type="number" domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-              <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} width={80} />
+              <XAxis type="number" domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 500 }} />
+              <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 500 }} width={65} />
               <Tooltip cursor={{fill: 'transparent'}} />
-              <Bar dataKey="value" fill="#0284c7" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="value" fill="#0284c7" radius={[0, 3, 3, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
 
         <ChartCard title="Dispatch by Transporter" subtitle="Volume distributed (Meters)">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={dispatchByTransporter} layout="vertical" margin={{ top: 20, right: 30, left: 10, bottom: 5 }} barSize={20}>
+            <BarChart data={dispatchByTransporter} layout="vertical" margin={{ top: 5, right: 15, left: 0, bottom: 0 }} barSize={12}>
               <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-              <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-              <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} width={80} />
+              <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 500 }} />
+              <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 500 }} width={65} />
               <Tooltip cursor={{fill: 'transparent'}} />
-              <Bar dataKey="value" fill="#0ea5e9" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="value" fill="#0ea5e9" radius={[0, 3, 3, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
 
         <ChartCard title="Dispatch Target vs Actual" subtitle="Last 4 Weeks Analysis">
            <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={prodVsDispatch.slice(-4)} margin={{ top: 20, right: 20, left: -10, bottom: 5 }}>
+            <BarChart data={prodVsDispatch.slice(-4)} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 500 }} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 500 }} />
               <Tooltip cursor={{fill: 'transparent'}} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="Dispatch" name="Actual Dispatch" fill="#38bdf8" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="Production" name="Target Dispatch" fill="#94a3b8" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Dispatch" name="Actual" fill="#38bdf8" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="Production" name="Target" fill="#94a3b8" radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
       </div>
-      {/* Row 3: 1 Full-width Column (Daily Activity) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16 }}>
-        <ChartCard title="Daily Factory Activity" subtitle="Past 7 days overview of inward and output processes">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={dailyProduction} margin={{ top: 20, right: 20, left: -20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-              <Tooltip cursor={{fill: 'transparent'}} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="Vendor" name="Vendor Inward (Rolls)" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="Checking" name="QC Checking (Lots)" fill="#0284c7" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="GreyDelivery" name="Grey Delivery (Batches)" fill="#94a3b8" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-      </div>
-
     </div>
   );
 }

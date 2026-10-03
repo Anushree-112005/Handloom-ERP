@@ -344,7 +344,7 @@ export default function StoresReport({ defaultTab = 'stock' }) {
   const handleExportPDF = () => {
     const doc = new jsPDF({ orientation: 'portrait' });
     doc.setFont('helvetica', 'bold');
-    doc.text(`DINESH EXPORTS TEXTILE ERP — STORES & CONSUMABLES`, 14, 15);
+    doc.text(`HANDLOOM ERP — STORES & CONSUMABLES`, 14, 15);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
 

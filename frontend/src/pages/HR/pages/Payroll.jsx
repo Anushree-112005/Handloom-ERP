@@ -468,7 +468,7 @@ const Payroll = () => {
       <body>
         <div class="payslip-container">
           <div class="header">
-            <h1>${companySettings?.company_name || 'Dinesh Exports Pvt Ltd'}</h1>
+            <h1>${companySettings?.company_name || 'Handloom ERP Pvt Ltd'}</h1>
             <p>${companySettings?.address || '1/6-A, Aiyndhupanai, Kadachanallur, Pallipalayam Road, Komarapalayam Tk, Namakkal Dt - 638008'}</p>
             <h2>Pay in Slip for the Period of ${viewingPayslip.month || 'May'} ${viewingPayslip.year || '2026'}</h2>
           </div>
@@ -579,7 +579,7 @@ const Payroll = () => {
     doc.setFont("courier", "bold");
     doc.setFontSize(18);
     doc.setTextColor("#000000");
-    doc.text(companySettings?.company_name || "DINESH EXPORTS PVT LTD", 148, 20, { align: 'center' });
+    doc.text(companySettings?.company_name || "HANDLOOM ERP PVT LTD", 148, 20, { align: 'center' });
 
     doc.setFont("courier", "normal");
     doc.setFontSize(10);
@@ -898,7 +898,7 @@ const Payroll = () => {
                   {/* Header */}
                   <div style={{ textAlign: 'center', marginBottom: 20 }}>
                     <h2 style={{ margin: '0 0 4px 0', fontSize: 18, fontWeight: 'bold', color: '#000', textTransform: 'uppercase' }}>
-                      {companySettings?.company_name || 'DINESH EXPORTS PVT LTD'}
+                      {companySettings?.company_name || 'HANDLOOM ERP PVT LTD'}
                     </h2>
                     <p style={{ margin: 0, fontSize: 11, lineHeight: '1.4', opacity: 0.8 }}>
                       {companySettings?.address || '1/6-A, Aiyndhupanai, Kadachanallur, Pallipalayam Road, Komarapalayam Tk, Namakkal Dt - 638008'}

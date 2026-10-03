@@ -154,7 +154,7 @@ export default function DyedYarnDelivery() {
   const getDeliveryOptions = () => {
     const list = [
       {
-        company_name: 'Dinesh Exports Private Limited',
+        company_name: 'Handloom ERP Private Limited',
         address: '1/6-A, AIYNDHUPANAL KADACHANALLUR POST, OPP. TO SPK SCHOOL, KOMARAPALAYAM TALUK, Namakkal, Tamil Nadu, 638183',
         phone: '',
         gst_no: '33AAACD0905A1ZG'
@@ -640,7 +640,7 @@ export default function DyedYarnDelivery() {
 
   const exportPDF = () => {
     const doc = new jsPDF('landscape');
-    doc.text("Dinesh Textile - Dyed Yarn Deliveries", 14, 15);
+    doc.text("Handloom ERP - Dyed Yarn Deliveries", 14, 15);
     const headers = [["DC No", "DC Date", "Party Name", "Delivery Type", "Status"]];
     const rows = filteredDeliveries.map(d => [
       d.dc_no || '-',

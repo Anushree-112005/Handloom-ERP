@@ -151,14 +151,14 @@ export default function YarnDyeingPO() {
         designEntryAPI.list(),
         yarnInwardAPI.list()
       ]);
-      setOrders(ordRes.data);
-      setParties(partRes.data);
-      setOptions(dropRes.data);
-      setBuyerOrders(buyerOrdRes.data || []);
-      setDesignEntries(dsRes.data || []);
-      setYarnInwards(inwardRes.data || []);
+      setOrders(Array.isArray(ordRes.data) ? ordRes.data : (ordRes.data?.items || ordRes.data?.data || []));
+      setParties(Array.isArray(partRes.data) ? partRes.data : (partRes.data?.items || partRes.data?.data || []));
+      setOptions(dropRes.data || {});
+      setBuyerOrders(Array.isArray(buyerOrdRes.data) ? buyerOrdRes.data : (buyerOrdRes.data?.items || buyerOrdRes.data?.data || []));
+      setDesignEntries(Array.isArray(dsRes.data) ? dsRes.data : (dsRes.data?.items || dsRes.data?.data || []));
+      setYarnInwards(Array.isArray(inwardRes.data) ? inwardRes.data : (inwardRes.data?.items || inwardRes.data?.data || []));
     } catch (err) {
-      console.error(err);
+      console.error("Error loading data in YarnDyeingPO:", err);
     } finally {
       setLoading(false);
     }
@@ -592,14 +592,14 @@ export default function YarnDyeingPO() {
     }
 
     if (name === 'ref_no_1') {
-      const selectedBo = buyerOrders.find(bo => bo.ibpo_number === value);
-      const de = designEntries.find(d => d.ibpo_no === value);
+      const selectedBo = buyerOrders.find(bo => (bo.ibpo_number || bo.order_no || bo.ibpo_no) === value);
+      const de = designEntries.find(d => d.ibpo_no === value || d.ref_no_1 === value || d.buyer_order_no === value || (selectedBo && (d.ds_ref_no === selectedBo.design_no || d.design_no === selectedBo.design_no)));
       if (de) {
         let newItems = getDesignRequirementItems(de);
         if (newItems.length === 0) {
           newItems = [{
             ...initialForm.items[0],
-            sp_no: de.ds_ref_no || '',
+            sp_no: de.ds_ref_no || de.design_no || '',
             uom: 'Kgs'
           }];
         }
@@ -607,7 +607,7 @@ export default function YarnDyeingPO() {
           ...form,
           ref_no_1: value,
           design_no: de.ds_ref_no || de.design_no || '',
-          buyer_name: de.buyer_name || (selectedBo ? (selectedBo.party_name || selectedBo.buyer_name || '') : ''),
+          buyer_name: de.buyer_name || (selectedBo ? (selectedBo.party_name || selectedBo.buyer_name || '') : form.buyer_name),
           items: newItems
         }));
         return;
@@ -615,7 +615,7 @@ export default function YarnDyeingPO() {
         setForm(recalculate({
           ...form,
           ref_no_1: value,
-          buyer_name: selectedBo ? (selectedBo.party_name || selectedBo.buyer_name || '') : ''
+          buyer_name: selectedBo ? (selectedBo.party_name || selectedBo.buyer_name || '') : form.buyer_name
         }));
         return;
       }
@@ -628,14 +628,16 @@ export default function YarnDyeingPO() {
         if (newItems.length === 0) {
           newItems = [{
             ...initialForm.items[0],
-            sp_no: de.ds_ref_no || '',
+            sp_no: de.ds_ref_no || de.design_no || '',
             uom: 'Kgs'
           }];
         }
+        const matchedBo = buyerOrders.find(bo => (bo.ibpo_number || bo.order_no || bo.ibpo_no) === de.ibpo_no);
         setForm(recalculate({
           ...form,
           design_no: value,
-          buyer_name: de.buyer_name || '',
+          ref_no_1: form.ref_no_1 || de.ibpo_no || (matchedBo ? (matchedBo.ibpo_number || matchedBo.order_no) : ''),
+          buyer_name: de.buyer_name || (matchedBo ? (matchedBo.party_name || matchedBo.buyer_name || '') : form.buyer_name),
           items: newItems
         }));
         return;
@@ -765,7 +767,7 @@ export default function YarnDyeingPO() {
 
   const exportPDF = () => {
     const doc = new jsPDF('landscape');
-    doc.text(`Dinesh Textile - ${title}`, 14, 15);
+    doc.text(`Handloom ERP - ${title}`, 14, 15);
     const headers = [["PO No", "Date", "Supplier", "Amount", "Status"]];
     const rows = filteredOrders.map(o => [
       o.po_no || o.po_number || '-',
@@ -1068,18 +1070,33 @@ export default function YarnDyeingPO() {
                 <label>Order No. (Buyer Order) *</label>
                 <select className="form-control" name="ref_no_1" value={form.ref_no_1 || ''} onChange={handleChange} required>
                   <option value="">Select Order No...</option>
-                  {buyerOrders.map(bo => (
-                    <option key={bo.id} value={bo.ibpo_number}>{bo.ibpo_number} ({bo.party_name || bo.buyer_name || 'No Party'})</option>
-                  ))}
+                  {buyerOrders.map((bo, idx) => {
+                    const val = bo.ibpo_number || bo.order_no || bo.ibpo_no || '';
+                    if (!val) return null;
+                    return (
+                      <option key={bo.id || idx} value={val}>
+                        {val} ({bo.party_name || bo.buyer_name || 'No Party'})
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
               <div className="form-group">
                 <label>Design No. *</label>
-                <select className="form-control" name="design_no" value={form.design_no} onChange={handleChange} required>
+                <select className="form-control" name="design_no" value={form.design_no || ''} onChange={handleChange} required>
                   <option value="">Select Design No...</option>
-                  {designEntries.map(de => (
-                    <option key={de.id} value={de.ds_ref_no}>{de.ds_ref_no} ({de.design_no})</option>
-                  ))}
+                  {designEntries.map((de, idx) => {
+                    const val = de.ds_ref_no || de.design_no || '';
+                    if (!val) return null;
+                    const label = (de.ds_ref_no && de.design_no && de.ds_ref_no !== de.design_no)
+                      ? `${de.ds_ref_no} (${de.design_no})`
+                      : val;
+                    return (
+                      <option key={de.id || idx} value={val}>
+                        {label}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
 

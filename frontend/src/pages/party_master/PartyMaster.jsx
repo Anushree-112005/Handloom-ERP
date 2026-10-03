@@ -29,24 +29,36 @@ const isSalesParty = (p) => {
   const type = (p.party_type || '').toLowerCase();
   const group = (p.party_group || '').toLowerCase();
 
-  const excludeTerms = [
-    'job', 'worker', 'processor', 'dyeing', 'weaving', 'weaver', 'warping', 
-    'sizing', 'printing', 'finishing', 'doubling', 'twisting', 'converter', 
-    'coverter', 'loom', 'logistics', 'agent', 'courier', 'postage', 'testing', 
-    'lab', 'washing', 'service'
-  ];
-
-  if (excludeTerms.some(term => type.includes(term) || group.includes(term))) {
-    return false;
-  }
-
-  return (
+  const isExplicitBuyer = (
     type.includes('sales') ||
     type.includes('customer') ||
     type.includes('buyer') ||
+    type.includes('debtor') ||
+    type.includes('client') ||
+    type.includes('wholesaler') ||
+    type.includes('garment') ||
+    group.includes('debtor') ||
     group.includes('customer') ||
-    group.includes('buyer')
+    group.includes('buyer') ||
+    group.includes('client') ||
+    group.includes('wholesaler') ||
+    group.includes('garment')
   );
+
+  if (isExplicitBuyer) return true;
+
+  const excludeTerms = [
+    'job', 'worker', 'processor', 'dyeing', 'weaving', 'weaver', 'warping', 
+    'sizing', 'printing', 'finishing', 'doubling', 'twisting', 'converter', 
+    'coverter', 'loom', 'logistics', 'courier', 'postage', 'testing', 
+    'lab', 'washing', 'service', 'supplier', 'vendor', 'mill'
+  ];
+
+  if (excludeTerms.some(term => type.includes(term))) {
+    return false;
+  }
+
+  return true;
 };
 
 const isPurchaseParty = (p) => {
@@ -611,12 +623,12 @@ export default function PartyMaster() {
     doc.setFontSize(24);
     doc.setTextColor(15, 23, 42); // #0f172a
     doc.setFont("helvetica", "bold");
-    doc.text("DINESH EXPORTS", 80, y + 16);
+    doc.text("HANDLOOM ERP", 80, y + 16);
     
     doc.setFontSize(10);
     doc.setTextColor(148, 163, 184); // #94a3b8
     doc.setFont("helvetica", "bold");
-    doc.text("THE HOUSE OF FABRICS", 80, y + 28);
+    doc.text("", 80, y + 28);
     
     // Header Right
     doc.setFontSize(16);
@@ -798,12 +810,12 @@ export default function PartyMaster() {
     doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(15, 23, 42);
-    doc.text("Dinesh Exports", 40, doc.internal.pageSize.getHeight() - 40);
+    doc.text("Handloom ERP", 40, doc.internal.pageSize.getHeight() - 40);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(71, 85, 105);
     doc.text("No. 123, Textile Street, Erode, Tamil Nadu - 638001", 40, doc.internal.pageSize.getHeight() - 30);
     
-    doc.text("0424-1234567 | info@dineshexports.com", pageWidth / 2, doc.internal.pageSize.getHeight() - 40, { align: 'center' });
+    doc.text("0424-1234567 | info@handloomerp.com", pageWidth / 2, doc.internal.pageSize.getHeight() - 40, { align: 'center' });
     
     doc.setFont("helvetica", "bold");
     doc.setTextColor(15, 23, 42);
@@ -817,25 +829,36 @@ export default function PartyMaster() {
     const type = (p.party_type || '').toLowerCase();
     const group = (p.party_group || '').toLowerCase();
 
-    // Exclude service providers (job workers, processors, logistics, agents, etc.)
-    const excludeTerms = [
-      'job', 'worker', 'processor', 'dyeing', 'weaving', 'weaver', 'warping', 
-      'sizing', 'printing', 'finishing', 'doubling', 'twisting', 'converter', 
-      'coverter', 'loom', 'logistics', 'agent', 'courier', 'postage', 'testing', 
-      'lab', 'washing', 'service'
-    ];
-
-    if (excludeTerms.some(term => type.includes(term) || group.includes(term))) {
-      return false;
-    }
-
-    return (
+    const isExplicitBuyer = (
       type.includes('sales') ||
       type.includes('customer') ||
       type.includes('buyer') ||
+      type.includes('debtor') ||
+      type.includes('client') ||
+      type.includes('wholesaler') ||
+      type.includes('garment') ||
+      group.includes('debtor') ||
       group.includes('customer') ||
-      group.includes('buyer')
+      group.includes('buyer') ||
+      group.includes('client') ||
+      group.includes('wholesaler') ||
+      group.includes('garment')
     );
+
+    if (isExplicitBuyer) return true;
+
+    const excludeTerms = [
+      'job', 'worker', 'processor', 'dyeing', 'weaving', 'weaver', 'warping', 
+      'sizing', 'printing', 'finishing', 'doubling', 'twisting', 'converter', 
+      'coverter', 'loom', 'logistics', 'courier', 'postage', 'testing', 
+      'lab', 'washing', 'service', 'supplier', 'vendor', 'mill'
+    ];
+
+    if (excludeTerms.some(term => type.includes(term))) {
+      return false;
+    }
+
+    return true;
   };
 
   const isPurchaseParty = (p) => {
@@ -942,7 +965,6 @@ export default function PartyMaster() {
                         required
                         disabled={isReadOnly}
                         placeholder="-- Select Party Type --"
-                        multiple={true}
                       />
                       <div className="form-group">
                         <label>Business Name *</label>
@@ -1748,11 +1770,11 @@ export default function PartyMaster() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
                       <div>
-                        <img src={logoImg} alt="Dinesh Exports" style={{ width: 56, height: 56, objectFit: 'contain' }} />
+                        <img src={logoImg} alt="Handloom ERP" style={{ width: 56, height: 56, objectFit: 'contain' }} />
                       </div>
                       <div>
-                         <h1 style={{ margin: 0, color: '#0f172a', fontSize: 28, fontWeight: 900, letterSpacing: '-0.02em' }}>DINESH EXPORTS</h1>
-                         <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em' }}>THE HOUSE OF FABRICS</p>
+                         <h1 style={{ margin: 0, color: '#0f172a', fontSize: 28, fontWeight: 900, letterSpacing: '-0.02em' }}>HANDLOOM ERP</h1>
+                         <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em' }}></p>
                       </div>
                     </div>
                     <div style={{ textAlign: 'left', width: 300 }}>
@@ -1911,14 +1933,14 @@ export default function PartyMaster() {
                   <div style={{ display: 'flex', gap: 12 }}>
                     <MapPin size={16} strokeWidth={2.5} style={{ flexShrink: 0, marginTop: 2, color: '#1e3a8a' }} />
                     <div>
-                      <div style={{ fontWeight: 800, marginBottom: 2 }}>Dinesh Exports</div>
+                      <div style={{ fontWeight: 800, marginBottom: 2 }}>Handloom ERP</div>
                       <div style={{ color: '#475569', fontWeight: 500, lineHeight: '16px' }}>No. 123, Textile Street,<br/>Erode, Tamil Nadu - 638001, India</div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Phone size={14} color="#1e3a8a" strokeWidth={2.5}/> 0424-1234567</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Mail size={14} color="#1e3a8a" strokeWidth={2.5}/> info@dineshexports.com</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Globe size={14} color="#1e3a8a" strokeWidth={2.5}/> www.dineshexports.com</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Mail size={14} color="#1e3a8a" strokeWidth={2.5}/> info@handloomerp.com</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Globe size={14} color="#1e3a8a" strokeWidth={2.5}/> www.handloomerp.com</div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end', fontWeight: 700 }}>
                       <FileText size={16} color="#1e3a8a" strokeWidth={2.5}/> GSTIN : 33ABCDE1234F1Z5

@@ -384,7 +384,7 @@ export default function WarpDelivery() {
 
   const exportPDF = () => {
     const doc = new jsPDF('landscape');
-    doc.text("Dinesh Textile - Warp Deliveries", 14, 15);
+    doc.text("Handloom ERP - Warp Deliveries", 14, 15);
     const headers = [["DC No", "DC Date", "Vendor Name", "Delivery Type", "Total Mtrs", "Status"]];
     const rows = filteredDeliveries.map(r => [
       r.dc_no || '-',

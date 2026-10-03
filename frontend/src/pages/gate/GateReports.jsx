@@ -177,7 +177,7 @@ export default function GateReports() {
   const handleExportPDF = () => {
     const doc = new jsPDF({ orientation: 'landscape' });
     doc.setFont('helvetica', 'bold');
-    doc.text(`DINESH EXPORTS TEXTILE ERP — GATE ${activeTab.toUpperCase()} REGISTER`, 14, 15);
+    doc.text(`HANDLOOM ERP — GATE ${activeTab.toUpperCase()} REGISTER`, 14, 15);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
     doc.text(`Generated: ${new Date().toISOString().substring(0, 10)} | Checkpost Audit Module`, 14, 21);

@@ -6,15 +6,15 @@ from typing import Optional, List
 
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "Dinesh Textile ERP"
+    PROJECT_NAME: str = "Handloom ERP"
     FRONTEND_URL: str = "http://localhost:5173"
     API_V1_STR: str = "/api/v1"
 
     # Database
-    DATABASE_URL: str = "sqlite+aiosqlite:///./textile_erp.db"
+    DATABASE_URL: str = "sqlite+aiosqlite:///./handloom_erp.db"
 
     # JWT Auth
-    SECRET_KEY: str = "dinesh_textile_erp_secret_change_in_production"
+    SECRET_KEY: str = "handloom_erp_secret_change_in_production"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
     ALGORITHM: str = "HS256"
 

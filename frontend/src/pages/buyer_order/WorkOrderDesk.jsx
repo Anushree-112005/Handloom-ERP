@@ -49,8 +49,14 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
   const [options, setOptions] = useState({});
 
   const BUYERS = useMemo(() => {
-    const list = parties.filter(p => p.party_type === 'Sales').map(p => p.company_name);
-    return list.length > 0 ? list : ['Raymond Ltd', 'Vardhman Spinning', 'Reliance Retail', 'Standard Gears Ltd'];
+    const list = parties
+      .filter(p => {
+        const t = (p.party_type || '').toLowerCase();
+        const g = (p.party_group || '').toLowerCase();
+        return t.includes('sales') || t.includes('buyer') || t.includes('customer') || g.includes('debtor') || g.includes('buyer') || g.includes('customer');
+      })
+      .map(p => p.company_name);
+    return list.length > 0 ? list : (parties.length > 0 ? parties.map(p => p.company_name) : ['Raymond Ltd', 'Vardhman Spinning', 'Reliance Retail', 'Standard Gears Ltd']);
   }, [parties]);
   const [isCustomSeason, setIsCustomSeason] = useState(false);
   const [customSeasonVal, setCustomSeasonVal] = useState('');
@@ -787,7 +793,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
         processType: 'Warping + Sizing',
         warpingUnitName: 'Dinesh Warping Unit',
         sizingUnitName: 'Dinesh Sizing Unit',
-        vendorName: 'Dinesh Exports',
+        vendorName: 'Handloom ERP',
         operatorName: '',
         buyerOrderNo: '',
         workOrderNo: '',

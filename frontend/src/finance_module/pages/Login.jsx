@@ -145,7 +145,7 @@ export default function Login() {
                 </div>
                 <ArrowRight size={18} className="text-slate-500 group-hover:text-amber-400 group-hover:translate-x-1 transition-all" />
               </div>
-              <h2 className="text-xl font-bold text-white mb-1">Dinesh Exports ERP</h2>
+              <h2 className="text-xl font-bold text-white mb-1">Handloom ERP</h2>
               <p className="text-slate-400 text-sm leading-relaxed">Textile Manufacturing & Operations</p>
               <div className="mt-4 flex items-center gap-2">
                 <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
@@ -195,7 +195,7 @@ export default function Login() {
           className="bg-white/10 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl"
         >
           <h2 className="text-xl font-bold text-white mb-1">Sign In</h2>
-          <p className="text-slate-400 text-sm mb-6">Access CubeBook &amp; Dinesh Exports ERP</p>
+          <p className="text-slate-400 text-sm mb-6">Access CubeBook &amp; Handloom ERP</p>
 
           {error && (
             <div className="mb-4 px-4 py-3 bg-red-500/20 border border-red-500/30 rounded-xl text-red-300 text-sm flex items-center gap-2">

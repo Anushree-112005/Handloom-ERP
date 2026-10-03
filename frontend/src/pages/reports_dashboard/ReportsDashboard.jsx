@@ -1107,16 +1107,16 @@ export default function ReportsDashboard() {
   const [scheduleFreq, setScheduleFreq] = useState('Daily');
   const [scheduleTime, setScheduleTime] = useState('09:00');
   const [scheduleMedium, setScheduleMedium] = useState('Email');
-  const [scheduleTarget, setScheduleTarget] = useState('mis.head@dineshexports.com');
+  const [scheduleTarget, setScheduleTarget] = useState('mis.head@handloomerp.com');
   const [schedules, setSchedules] = useState([
-    { id: 1, report: 'Loom Production', freq: 'Daily', time: '09:00', medium: 'Email', target: 'director@dineshexports.com' },
+    { id: 1, report: 'Loom Production', freq: 'Daily', time: '09:00', medium: 'Email', target: 'director@handloomerp.com' },
     { id: 2, report: 'Store Stock Summary', freq: 'Weekly', time: '18:00', medium: 'WhatsApp', target: '+91 98765 43210' }
   ]);
 
   // AI Chat simulation
   const [aiQuestion, setAiQuestion] = useState('');
   const [aiChatLog, setAiChatLog] = useState([
-    { sender: 'ai', text: 'Hello! I am your Dinesh Exports Business Intelligence assistant. How can I help you analyze reports today?' }
+    { sender: 'ai', text: 'Hello! I am your Handloom ERP Business Intelligence assistant. How can I help you analyze reports today?' }
   ]);
 
   // Bulk Export State
@@ -2051,7 +2051,7 @@ export default function ReportsDashboard() {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(16);
     doc.setTextColor(15, 23, 42);
-    doc.text('DINESH EXPORTS - ENTERPRISE MIS REPORT', 14, 22);
+    doc.text('HANDLOOM ERP - ENTERPRISE MIS REPORT', 14, 22);
     
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(11);
@@ -2100,7 +2100,7 @@ export default function ReportsDashboard() {
           </style>
         </head>
         <body>
-          <h1>DINESH EXPORTS ERP — ${targetTitle.toUpperCase()}</h1>
+          <h1>HANDLOOM ERP — ${targetTitle.toUpperCase()}</h1>
           <p>Generated on: ${new Date().toLocaleString()}</p>
           <table>
             <thead>
@@ -2165,7 +2165,7 @@ export default function ReportsDashboard() {
       } else if (q.includes('stock') || q.includes('cotton') || q.includes('yarn')) {
         replyText = "Your Yarn Stock shows 6,800 Kgs of Cotton Combed Yarn. Given the current daily production average of 250 Kgs, our systems warn that stock levels will drop below the 5,000 Kgs reorder point in exactly 7 days. We recommend initiating a replenishment purchase order today.";
       } else {
-        replyText = "Analyzing... The Dinesh Exports database shows strong overall operational efficiency at 94.2%. Looms are running optimally with only minor warp downtime. Let me know if you would like me to generate a PDF summary or check standard debtor/creditor ledger balances!";
+        replyText = "Analyzing... The Handloom ERP database shows strong overall operational efficiency at 94.2%. Looms are running optimally with only minor warp downtime. Let me know if you would like me to generate a PDF summary or check standard debtor/creditor ledger balances!";
       }
 
       setAiChatLog(prev => [...prev, { sender: 'ai', text: replyText }]);
@@ -3419,8 +3419,8 @@ export default function ReportsDashboard() {
               {/* Logo block inside voucher */}
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px dashed var(--border)', paddingBottom: '16px' }}>
                 <div>
-                  <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#4f46e5', margin: 0 }}>DINESH EXPORTS</h4>
-                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>The House Of Fabrics</span>
+                  <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#4f46e5', margin: 0 }}>HANDLOOM ERP</h4>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}></span>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <span style={{ fontSize: '10px', background: '#e2e8f0', color: 'var(--text-primary)', padding: '3px 8px', borderRadius: '4px', fontWeight: 700 }}>
@@ -3508,7 +3508,7 @@ export default function ReportsDashboard() {
                 <input 
                   type="text" 
                   className="form-control" 
-                  defaultValue={`Dinesh Exports MIS - ${showEmailModal.title}`} 
+                  defaultValue={`Handloom ERP MIS - ${showEmailModal.title}`} 
                   style={{ padding: '8px 12px', fontSize: '13px', margin: 0 }} 
                 />
               </div>
@@ -3518,7 +3518,7 @@ export default function ReportsDashboard() {
                 <textarea 
                   className="form-control" 
                   rows={4}
-                  defaultValue={`Dear Partner,\n\nPlease find attached the requested "${showEmailModal.title}" transaction log voucher for your reference.\n\nBest Regards,\nMIS Team — Dinesh Exports`} 
+                  defaultValue={`Dear Partner,\n\nPlease find attached the requested "${showEmailModal.title}" transaction log voucher for your reference.\n\nBest Regards,\nMIS Team — Handloom ERP`} 
                   style={{ padding: '10px 12px', fontSize: '13px', margin: 0, resize: 'vertical' }} 
                 />
               </div>

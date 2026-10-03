@@ -21,7 +21,7 @@ export default function SubMasterDropdown({
   placeholder = '---select----',
   onKeyDown,
   filterFn,
-  allowCustom = true,
+  allowCustom = false,
   multiple = false,
   extraOptions = [],
 }) {
@@ -414,53 +414,6 @@ export default function SubMasterDropdown({
                           )}
                           <span style={{ fontWeight: (multiple ? selectedValues.includes(item.name) : value === item.name) ? 600 : 400 }}>{item.name}</span>
                         </div>
-                        {allowCustom && (
-                          <div style={{ display: 'flex', gap: '6px' }} onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}>
-                            <button
-                              type="button"
-                              title="Edit option"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const itemId = item.id;
-                                const itemName = item.name;
-                                setTimeout(() => {
-                                  setEditingId(itemId);
-                                  setEditingText(itemName);
-                                }, 0);
-                              }}
-                              style={{
-                                background: 'none',
-                                border: 'none',
-                                padding: '2px',
-                                cursor: 'pointer',
-                                color: 'var(--primary)',
-                                display: 'flex',
-                                alignItems: 'center'
-                              }}
-                            >
-                              <Edit2 size={13} />
-                            </button>
-                            <button
-                              type="button"
-                              title="Delete option"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setTimeout(() => handleDelete(item), 0);
-                              }}
-                              style={{
-                                background: 'none',
-                                border: 'none',
-                                padding: '2px',
-                                cursor: 'pointer',
-                                color: '#ef4444',
-                                display: 'flex',
-                                alignItems: 'center'
-                              }}
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          </div>
-                        )}
                       </>
                     )}
                   </div>

@@ -134,16 +134,16 @@ def create_company(payload: CompanyCreate, db: Session = Depends(get_db)):
 
 @router.post("/seed-textile")
 def seed_textile_company(db: Session = Depends(get_db)):
-    # Remove existing Dinesh Exports company to allow clean re-seeding
-    existing = db.query(Company).filter(Company.name == "Dinesh Exports").first()
+    # Remove existing Handloom ERP company to allow clean re-seeding
+    existing = db.query(Company).filter(Company.name == "Handloom ERP").first()
     if existing:
         db.delete(existing)
         db.commit()
     
     # 1. Create company
     company = Company(
-        name="Dinesh Exports",
-        legal_name="Dinesh Exports Private Limited",
+        name="Handloom ERP",
+        legal_name="Handloom ERP Private Limited",
         gstin="27AABCS1429B1ZB",
         pan="AABCS1429B",
         state_code="27",

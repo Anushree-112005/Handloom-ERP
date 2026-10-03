@@ -468,7 +468,7 @@ export default function DyedYarnReceived() {
 
   const exportPDF = () => {
     const doc = new jsPDF('landscape');
-    doc.text("Dinesh Textile - Dyed Yarn Receipts", 14, 15);
+    doc.text("Handloom ERP - Dyed Yarn Receipts", 14, 15);
     const headers = [["Inw No", "Inw Date", "Party", "Type", "Bags", "Total Kgs"]];
     const rows = filteredReceipts.map(r => [
       r.inv_no || '-',

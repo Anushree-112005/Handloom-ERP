@@ -162,7 +162,7 @@ export default function YarnStock() {
 
   const exportPDF = () => {
     const doc = new jsPDF('portrait');
-    doc.text('Dinesh Exports - Yarn Stock Summary', 14, 15);
+    doc.text('Handloom ERP - Yarn Stock Summary', 14, 15);
     const headers = [['Yarn Count', 'Mill', 'Color', 'Lot No', 'Bags', 'Net Wt (Kgs)', 'Godown']];
     const rows = filteredStock.map(item => [
       item.count,

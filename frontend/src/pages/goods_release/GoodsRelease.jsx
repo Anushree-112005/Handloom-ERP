@@ -188,7 +188,7 @@ export default function GoodsRelease() {
 
     try {
       const { data: partyList } = await partyAPI.list();
-      const party = partyList.find(p => p.business_name === partyName);
+      const party = partyList.find(p => p.company_name === partyName || p.business_name === partyName || p.name === partyName);
       if (party) {
         setFormData(prev => {
           const updated = {
@@ -198,7 +198,7 @@ export default function GoodsRelease() {
             delivery_at_address: party.delivery_address || party.address || '',
             delivery_st: party.state_code || '',
             agent: party.agent_name || '',
-            due_days: party.bill_credit_days ? String(party.bill_credit_days) : '90'
+            due_days: String(party.credit_days || party.bill_credit_days || '90')
           };
           // Recalculate due date
           const days = Number(updated.due_days) || 0;

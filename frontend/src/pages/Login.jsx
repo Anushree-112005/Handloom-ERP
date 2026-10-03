@@ -48,7 +48,7 @@ export default function Login() {
           <div className="logo-box" style={{ background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 4 }}>
             <img src={defaultLogo} alt="Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
           </div>
-          <h1>DINESH EXPORTS ERP</h1>
+          <h1>HANDLOOM ERP</h1>
         </div>
 
         {error && <div className="login-error">{error}</div>}

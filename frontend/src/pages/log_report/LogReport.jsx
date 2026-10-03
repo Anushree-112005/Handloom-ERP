@@ -110,7 +110,7 @@ export default function LogReport() {
 
   const exportPDF = () => {
     const doc = new jsPDF('landscape');
-    doc.text("DINESH EXPORTS ERP - System Audit & Log Report", 14, 15);
+    doc.text("HANDLOOM ERP - System Audit & Log Report", 14, 15);
     const tableColumn = ["Date", "User Name", "User ID", "Mode", "Module", "Remarks"];
     const tableRows = [];
 

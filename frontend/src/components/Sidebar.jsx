@@ -67,7 +67,6 @@ const modules = [
 
       { section: 'Design Management' },
       { path: '/design-entry', label: 'Design Entry', icon: Palette },
-      { path: '/design-ai', label: 'Design AI', icon: Sparkles },
 
       { section: 'Purchase Management' },
       { path: '/yarn/purchase-order', label: 'Grey / Color Yarn PO', icon: Box },
@@ -339,8 +338,8 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
   const navigate = useNavigate();
   const [openMenus, setOpenMenus] = useState({ 'Purchase Order': true, 'Textile Operations Management': true });
   const [companyProfile, setCompanyProfile] = useState({
-    company_name: 'DINESH EXPORTS',
-    description: 'THE HOUSE OF FABRICS',
+    company_name: 'HANDLOOM ERP',
+    description: '',
     logo: ''
   });
 
@@ -375,8 +374,8 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
         const response = await companySettingAPI.get();
         if (response.data) {
           setCompanyProfile({
-            company_name: response.data.company_name || 'DINESH EXPORTS',
-            description: response.data.description || 'THE HOUSE OF FABRICS',
+            company_name: response.data.company_name || 'HANDLOOM ERP',
+            description: response.data.description || '',
             logo: response.data.logo || ''
           });
         }
@@ -398,19 +397,7 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
         {!isCollapsed ? (
           <>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              {companyProfile.logo ? (
-                <div className="logo-icon" style={{ background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                  <img src={companyProfile.logo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                </div>
-              ) : (
-                <div className="logo-icon" style={{ background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                  <img src={defaultLogo} alt="Default Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                </div>
-              )}
-              <div>
-                <h1 style={{ fontSize: companyProfile.company_name.length > 15 ? '13px' : '15px', margin: 0, fontWeight: 700 }}>{companyProfile.company_name}</h1>
-                <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block' }}>{companyProfile.description}</span>
-              </div>
+              <h1 style={{ fontSize: companyProfile.company_name.length > 15 ? '14px' : '16px', margin: 0, fontWeight: 800, color: 'var(--text-primary)' }}>{companyProfile.company_name}</h1>
             </div>
             <button
               onClick={onToggleSidebar}

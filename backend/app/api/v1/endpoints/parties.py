@@ -106,7 +106,7 @@ async def list_parties(skip: int = 0, limit: int = 100, party_type: Optional[str
 async def create_party(party: PartyMasterCreate, db: AsyncSession = Depends(get_db)):
     # Auto-generate code prefix-wise based on party_type
     party_type_lower = party.party_type.lower()
-    if "sales" in party_type_lower or "export" in party_type_lower:
+    if "sales" in party_type_lower or "export" in party_type_lower or "customer" in party_type_lower or "buyer" in party_type_lower:
         prefix = "CUST"
     elif "purchase" in party_type_lower or "vendor" in party_type_lower:
         prefix = "VEND"
@@ -165,7 +165,7 @@ async def create_party(party: PartyMasterCreate, db: AsyncSession = Depends(get_
         pgroup = db_party.party_group.lower() if db_party.party_group else ""
         
         ledger_group_name = "Sundry Creditors"
-        if "sales" in ptype or "buyer" in ptype or "debtor" in pgroup:
+        if "sales" in ptype or "buyer" in ptype or "debtor" in pgroup or "customer" in ptype or "customer" in pgroup:
             ledger_group_name = "Sundry Debtors"
 
         # Find the LedgerGroup to get group_id (if exists)

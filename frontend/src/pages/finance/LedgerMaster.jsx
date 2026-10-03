@@ -32,18 +32,21 @@ export default function LedgerMaster() {
   const syncPartiesToLedgers = async () => {
     try {
       // Create a ledger for any party that doesn't have one
-      const existingLedgerNames = new Set(ledgers.map(l => l.name.toLowerCase()));
-      const missingParties = parties.filter(p => !existingLedgerNames.has(p.party_name.toLowerCase()));
+      const existingLedgerNames = new Set(ledgers.map(l => (l.name || '').toLowerCase()));
+      const missingParties = parties.filter(p => !existingLedgerNames.has((p.company_name || p.party_name || '').toLowerCase()));
       
       let createdCount = 0;
       for (const party of missingParties) {
-        const groupName = party.party_type === 'Buyer' ? 'Sundry Debtors' : 'Sundry Creditors';
+        const pName = party.company_name || party.party_name;
+        if (!pName) continue;
+        const isBuyer = (party.party_type || '').toLowerCase().includes('buyer') || (party.party_type || '').toLowerCase().includes('sales') || (party.party_type || '').toLowerCase().includes('customer');
+        const groupName = isBuyer ? 'Sundry Debtors' : 'Sundry Creditors';
         await ledgersAPI.create({
-          name: party.party_name,
+          name: pName,
           group_name: groupName,
           company_id: 1, // Assume default company
           opening_balance: 0.0,
-          opening_balance_type: party.party_type === 'Buyer' ? 'Dr' : 'Cr'
+          opening_balance_type: isBuyer ? 'Dr' : 'Cr'
         });
         createdCount++;
       }

@@ -58,8 +58,8 @@ export default function Header() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [companyProfile, setCompanyProfile] = useState({
-    company_name: 'DINESH EXPORTS',
-    description: 'THE HOUSE OF FABRICS',
+    company_name: 'HANDLOOM ERP',
+    description: '',
     logo: ''
   });
 
@@ -146,8 +146,8 @@ export default function Header() {
         const response = await companySettingAPI.get();
         if (response.data) {
           setCompanyProfile({
-            company_name: response.data.company_name || 'DINESH EXPORTS',
-            description: response.data.description || 'THE HOUSE OF FABRICS',
+            company_name: response.data.company_name || 'HANDLOOM ERP',
+            description: response.data.description || '',
             logo: response.data.logo || ''
           });
         }
@@ -228,7 +228,7 @@ export default function Header() {
   const handleLogout = async () => {
     const confirmed = await confirmDialog({
       title: 'Logout Confirmation',
-      message: 'Are you sure you want to log out of DINESH EXPORTS ERP?',
+      message: 'Are you sure you want to log out of HANDLOOM ERP?',
       type: 'logout',
       confirmText: 'Logout'
     });
@@ -321,30 +321,7 @@ export default function Header() {
         }
       `}</style>
 
-      <div style={{ flex: '0 0 260px', marginRight: '16px', position: 'relative', zIndex: 2 }} />
-
-      {/* Background Running Marquee across topbar (stops before administrator) */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: '250px',
-        height: '100%',
-        pointerEvents: 'none',
-        zIndex: 1,
-        display: 'flex',
-        alignItems: 'center',
-        overflow: 'hidden'
-      }}>
-        <marquee behavior="scroll" direction="left" scrollamount="5" style={{ width: '100%' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '16px', verticalAlign: 'middle' }}>
-            <img src={companyProfile.logo || defaultLogo} alt="Logo" style={{ height: '32px', width: 'auto', objectFit: 'contain' }} />
-            <span style={{ fontWeight: 700, fontSize: '15px', color: '#000000', letterSpacing: '0.03em', whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
-              {companyProfile.company_name} — {companyProfile.description}
-            </span>
-          </div>
-        </marquee>
-      </div>
+      <div style={{ flex: '0 0 20px', marginRight: '16px' }} />
 
       {/* Central Global Search Bar */}
       <div style={{ flex: 1, position: 'relative', maxWidth: '380px', margin: '0 16px', zIndex: 2 }}>

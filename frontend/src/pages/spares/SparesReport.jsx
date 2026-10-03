@@ -84,7 +84,7 @@ export default function SparesReport() {
   const handleExportPDF = () => {
     const doc = new jsPDF({ orientation: 'portrait' });
     doc.setFont('helvetica', 'bold');
-    doc.text('DINESH EXPORTS TEXTILE ERP — SPARES STOCK REPORT', 14, 15);
+    doc.text('HANDLOOM ERP — SPARES STOCK REPORT', 14, 15);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
     doc.text(`Generated on: ${new Date().toISOString().substring(0, 10)} | Scope: Spares & Maintenance`, 14, 21);

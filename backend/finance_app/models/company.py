@@ -27,7 +27,8 @@ class Company(Base):
     pincode: Mapped[Optional[str]]    = mapped_column(String)
     phone: Mapped[Optional[str]]      = mapped_column(String)
     email: Mapped[Optional[str]]      = mapped_column(String)
-    
+    base_currency: Mapped[str]        = mapped_column(String, default="INR", insert_default="INR")
+
     # Currency Configurations
     currency_symbol: Mapped[str]       = mapped_column(String, default="₹")
     currency_name: Mapped[str]         = mapped_column(String, default="INR")

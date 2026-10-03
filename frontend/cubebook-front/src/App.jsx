@@ -133,8 +133,8 @@ function AppRoutes() {
               }
             } catch (e) {
               const basicComp = await companies.create({
-                name: "Dinesh Exports",
-                legal_name: "Dinesh Exports",
+                name: "Handloom ERP",
+                legal_name: "Handloom ERP",
                 maintain_inventory: true
               });
               localStorage.setItem('cb_company_id', basicComp.id);

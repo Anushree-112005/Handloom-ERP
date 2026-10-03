@@ -7,16 +7,16 @@ DATABASE_URL = "postgresql+asyncpg://postgres:Karthi%401234@localhost:5432/dines
 engine = create_async_engine(DATABASE_URL, echo=False)
 
 users_data = [
-    ("EMP001", "Dinesh Kumar R", "Managing Director", "Administration", "Super Admin", "dinesh.admin", "dinesh@dineshexports.com", "9876543210", "01-01-2024"),
-    ("EMP002", "Priya Venkatesan", "Senior Merchandiser", "Order Management", "Merchandiser", "priya.merch", "priya@dineshexports.com", "9865321470", "15-03-2024"),
-    ("EMP003", "Karthik Subramanian", "Senior Accountant", "Accounts & Finance", "Accountant", "karthik.accounts", "karthik@dineshexports.com", "9789456123", "10-02-2024"),
-    ("EMP004", "Mohan Raj S", "Store & Yarn Manager", "Inventory & Warehousing", "Store Manager", "mohan.store", "mohan@dineshexports.com", "9944778855", "20-01-2024"),
-    ("EMP005", "Saravanan K", "Quality Control Inspector", "Quality Control", "QC Inspector", "saravanan.qc", "saravanan@dineshexports.com", "9843216789", "05-04-2024"),
-    ("EMP006", "Muthu Kumar V", "Security Supervisor", "Gate & Security", "Gate Staff", "muthu.gate", "muthu@dineshexports.com", "9791234567", "12-01-2024"),
-    ("EMP007", "Anitha Ramesh", "HR Manager", "Human Resources", "HR Manager", "anitha.hr", "anitha@dineshexports.com", "9962345678", "08-02-2024"),
-    ("EMP008", "Bala Murugan T", "Production Planner", "Production Planning", "PPC Planner", "bala.ppc", "bala@dineshexports.com", "9884567123", "18-03-2024"),
-    ("EMP009", "Ravi Shankar P", "Packing & Dispatch Executive", "Packing / Sales & Dispatch", "Packing Staff", "ravi.packing", "ravi@dineshexports.com", "9787654321", "22-04-2024"),
-    ("EMP010", "Divya Lakshmi N", "Export Documentation Executive", "Sales & Dispatch (Export Desk)", "Export Staff", "divya.export", "divya@dineshexports.com", "9678123456", "01-05-2024"),
+    ("EMP001", "Dinesh Kumar R", "Managing Director", "Administration", "Super Admin", "dinesh.admin", "dinesh@handloomerp.com", "9876543210", "01-01-2024"),
+    ("EMP002", "Priya Venkatesan", "Senior Merchandiser", "Order Management", "Merchandiser", "priya.merch", "priya@handloomerp.com", "9865321470", "15-03-2024"),
+    ("EMP003", "Karthik Subramanian", "Senior Accountant", "Accounts & Finance", "Accountant", "karthik.accounts", "karthik@handloomerp.com", "9789456123", "10-02-2024"),
+    ("EMP004", "Mohan Raj S", "Store & Yarn Manager", "Inventory & Warehousing", "Store Manager", "mohan.store", "mohan@handloomerp.com", "9944778855", "20-01-2024"),
+    ("EMP005", "Saravanan K", "Quality Control Inspector", "Quality Control", "QC Inspector", "saravanan.qc", "saravanan@handloomerp.com", "9843216789", "05-04-2024"),
+    ("EMP006", "Muthu Kumar V", "Security Supervisor", "Gate & Security", "Gate Staff", "muthu.gate", "muthu@handloomerp.com", "9791234567", "12-01-2024"),
+    ("EMP007", "Anitha Ramesh", "HR Manager", "Human Resources", "HR Manager", "anitha.hr", "anitha@handloomerp.com", "9962345678", "08-02-2024"),
+    ("EMP008", "Bala Murugan T", "Production Planner", "Production Planning", "PPC Planner", "bala.ppc", "bala@handloomerp.com", "9884567123", "18-03-2024"),
+    ("EMP009", "Ravi Shankar P", "Packing & Dispatch Executive", "Packing / Sales & Dispatch", "Packing Staff", "ravi.packing", "ravi@handloomerp.com", "9787654321", "22-04-2024"),
+    ("EMP010", "Divya Lakshmi N", "Export Documentation Executive", "Sales & Dispatch (Export Desk)", "Export Staff", "divya.export", "divya@handloomerp.com", "9678123456", "01-05-2024"),
 ]
 
 async def seed():

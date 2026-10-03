@@ -287,7 +287,7 @@ export default function WarpBeamReceipt() {
 
   const exportPDF = () => {
     const doc = new jsPDF('landscape');
-    doc.text("Dinesh Textile - Warp Beam Receipts", 14, 15);
+    doc.text("Handloom ERP - Warp Beam Receipts", 14, 15);
     const headers = [["Ref No", "Rcvd Date", "Party Name", "Type", "Status"]];
     const rows = filteredReceipts.map(r => [
       r.ref_no || '-',

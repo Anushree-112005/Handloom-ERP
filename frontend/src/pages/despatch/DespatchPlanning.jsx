@@ -143,7 +143,7 @@ export default function DespatchPlanning() {
   // Export actions
   const exportPDF = () => {
     const doc = new jsPDF('landscape');
-    doc.text("Dinesh Textile - Despatch Planning Report", 14, 15);
+    doc.text("Handloom ERP - Despatch Planning Report", 14, 15);
     const headers = [["Ref No", "Date", "Billing Party", "Design No", "Order No", "Planned Qty", "UOM", "Stock", "Merchand"]];
     const rows = filteredRecords.map(r => [
       r.ref_no,

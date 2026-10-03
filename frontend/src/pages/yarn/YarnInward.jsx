@@ -700,7 +700,7 @@ export default function YarnInward() {
 
   const exportPDF = () => {
     const doc = new jsPDF('landscape');
-    doc.text("Dinesh Textile - Yarn Inwards Report", 14, 15);
+    doc.text("Handloom ERP - Yarn Inwards Report", 14, 15);
     const headers = [["Ref No", "Date", "Received From", "Type", "Status"]];
     const rows = filteredInwards.map(i => [
       i.ref_no || '-',

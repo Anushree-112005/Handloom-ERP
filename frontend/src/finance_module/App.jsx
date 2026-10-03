@@ -117,7 +117,7 @@ function AppRoutes() {
         }
 
         let companyId = localStorage.getItem('cb_company_id');
-        let erpCompanyName = "Dinesh Exports";
+        let erpCompanyName = "Handloom ERP";
 
         // Try to fetch the active company name from the main ERP
         try {

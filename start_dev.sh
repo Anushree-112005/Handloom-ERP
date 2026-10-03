@@ -4,7 +4,7 @@
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}Starting Dinesh Textile ERP Development Environment...${NC}"
+echo -e "${GREEN}Starting Handloom ERP Development Environment...${NC}"
 
 # Start Main Backend (port 8000)
 echo -e "${GREEN}Starting Main Backend on port 8000...${NC}"

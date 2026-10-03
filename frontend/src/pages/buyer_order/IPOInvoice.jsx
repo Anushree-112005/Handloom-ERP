@@ -104,8 +104,8 @@ export default function IPOInvoice() {
     
     if (inv.invoice_type === 'Export Proforma Invoice') {
       text = `==================================================================
-                        DINESH EXPORTS
-                    THE HOUSE OF FABRICS
+                        HANDLOOM ERP
+                    
 ==================================================================
 
 Address    : 123, Textile Park Road,
@@ -113,7 +113,7 @@ Address    : 123, Textile Park Road,
              Tiruppur - 641602, Tamil Nadu, India
 
 Phone      : +91 98765 43210
-Email      : exports@dineshexports.com
+Email      : exports@handloomerp.com
 GSTIN      : 33ABCDE1234F1Z5
 IEC No     : ${inv.iec_number || '-'}
 
@@ -128,7 +128,7 @@ Buyer PO No        : ${inv.buyer_po_no || '-'}
 
 EXPORTER DETAILS
 ------------------------------------------------------------------
-Dinesh Exports
+Handloom ERP
 Tiruppur, Tamil Nadu, India
 
 BUYER DETAILS
@@ -170,8 +170,8 @@ SWIFT Code         : HDFCINBBXXX
 Authorized Signatory`;
     } else if (inv.invoice_type === 'Open Invoice') {
       text = `==================================================================
-                        DINESH EXPORTS
-                    THE HOUSE OF FABRICS
+                        HANDLOOM ERP
+                    
 ==================================================================
 
 Address    : 123, Textile Park Road,
@@ -179,7 +179,7 @@ Address    : 123, Textile Park Road,
              Tiruppur - 641602, Tamil Nadu, India
 
 Phone      : +91 98765 43210
-Email      : accounts@dineshexports.com
+Email      : accounts@handloomerp.com
 GSTIN      : 33ABCDE1234F1Z5
 
 ------------------------------------------------------------------
@@ -230,13 +230,13 @@ ${inv.payment_terms || '45 Days Credit'}
 Remarks:
 ${inv.remarks || 'Goods dispatched as per buyer order and approved schedule.'}
 
-For Dinesh Exports
+For Handloom ERP
 
 Authorized Signatory`;
     } else {
       text = `==================================================================
-                        DINESH EXPORTS
-                    THE HOUSE OF FABRICS
+                        HANDLOOM ERP
+                    
 ==================================================================
 
 Address    : 123, Textile Park Road,
@@ -244,7 +244,7 @@ Address    : 123, Textile Park Road,
              Tiruppur - 641602, Tamil Nadu, India
 
 Phone      : +91 98765 43210
-Email      : sales@dineshexports.com
+Email      : sales@handloomerp.com
 GSTIN      : 33ABCDE1234F1Z5
 PAN No     : ABCDE1234F
 

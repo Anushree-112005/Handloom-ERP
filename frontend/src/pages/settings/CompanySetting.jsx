@@ -184,7 +184,7 @@ export default function CompanySetting() {
                   name="description"
                   className="form-control"
                   style={{ paddingLeft: 38, width: '100%', margin: 0 }}
-                  placeholder="e.g. THE HOUSE OF FABRICS"
+                  placeholder="e.g. "
                   value={formData.description}
                   onChange={handleInputChange}
                 />
@@ -388,7 +388,7 @@ export default function CompanySetting() {
               <div>
                 <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.7, fontWeight: 700 }}>ERP Profile Preview</span>
                 <h4 style={{ margin: '4px 0 0 0', fontSize: 20, fontWeight: 800 }}>{formData.company_name || 'Your Company Name'}</h4>
-                <p style={{ margin: '2px 0 0 0', fontSize: 11, opacity: 0.8, fontWeight: 500 }}>{formData.description || 'THE HOUSE OF FABRICS'}</p>
+                <p style={{ margin: '2px 0 0 0', fontSize: 11, opacity: 0.8, fontWeight: 500 }}>{formData.description || ''}</p>
               </div>
               <div
                 style={{
@@ -440,7 +440,7 @@ export default function CompanySetting() {
           </div>
 
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, opacity: 0.7 }}>
-            <span>DINESH EXPORTS ERP Platform</span>
+            <span>HANDLOOM ERP Platform</span>
             <span>Profile Status: Active</span>
           </div>
         </div>

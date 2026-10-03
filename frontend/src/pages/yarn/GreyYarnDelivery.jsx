@@ -269,7 +269,7 @@ export default function GreyYarnDelivery() {
 
   const exportPDF = () => {
     const doc = new jsPDF('landscape');
-    doc.text("Dinesh Textile - Grey Yarn Deliveries", 14, 15);
+    doc.text("Handloom ERP - Grey Yarn Deliveries", 14, 15);
     const headers = [["DC No", "DC Date", "Party Name", "Delivery Type", "Status"]];
     const rows = filteredDeliveries.map(d => [
       d.dc_no || '-',

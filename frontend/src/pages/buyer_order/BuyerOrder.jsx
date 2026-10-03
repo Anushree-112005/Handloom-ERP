@@ -325,19 +325,29 @@ export default function BuyerOrder() {
       }
     }
 
-    setForm({
-      ...form,
+    const deliveryAddr = party?.delivery_address || fullAddress || '';
+    const deliveryPlace = party?.deliver_party_name || party?.city || party?.state || '';
+
+    setForm(prev => ({
+      ...prev,
       party_id: partyId,
       party_name: party?.company_name || '',
       buyer_name: party?.buyer_name || party?.company_name || '',
       billing_address: fullAddress || '',
       state: party?.state || '',
-      agent_name: party?.agent_name || '',
-      order_taken_by: party?.manager || '',
-      merchandiser: party?.merchandiser || '',
+      state_code: party?.state_code || '',
+      agent_name: party?.agent_name || prev.agent_name || '',
+      order_taken_by: party?.manager || prev.order_taken_by || '',
+      merchandiser: party?.merchandiser || prev.merchandiser || '',
       gst_no: party?.gst_no || '',
       pan_no: party?.pan_no || '',
-    });
+      max_crd_days: party?.credit_days || prev.max_crd_days || 0,
+      po_credit: party?.credit_limit || prev.po_credit || 0,
+      payment_terms: party?.payment_terms || prev.payment_terms || '',
+      transport_name: party?.transport_name || prev.transport_name || '',
+      delivery_place: deliveryPlace || prev.delivery_place || '',
+      delivery_address: deliveryAddr || prev.delivery_address || '',
+    }));
   };
 
   const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
@@ -1100,7 +1110,7 @@ export default function BuyerOrder() {
 
   const exportPDF = () => {
     const doc = new jsPDF('landscape');
-    doc.text("Dinesh Textile - Buyer Orders Report", 14, 15);
+    doc.text("Handloom ERP - Buyer Orders Report", 14, 15);
     const headers = [["IBPO No", "Date", "Party Name", "Order Type", "Agent", "Status"]];
     const rows = filteredOrders.map(o => [
       o.ibpo_number || '-',
@@ -1138,25 +1148,38 @@ export default function BuyerOrder() {
     const type = (p.party_type || '').toLowerCase();
     const group = (p.party_group || '').toLowerCase();
 
-    // Exclude service providers (job workers, processors, logistics, agents, etc.)
-    const excludeTerms = [
-      'job', 'worker', 'processor', 'dyeing', 'weaving', 'weaver', 'warping', 
-      'sizing', 'printing', 'finishing', 'doubling', 'twisting', 'converter', 
-      'coverter', 'loom', 'logistics', 'agent', 'courier', 'postage', 'testing', 
-      'lab', 'washing', 'service'
-    ];
-
-    if (excludeTerms.some(term => type.includes(term) || group.includes(term))) {
-      return false;
-    }
-
-    return (
+    // 1. Any customer, buyer, sales party, debtor, client, wholesaler
+    const isExplicitBuyer = (
       type.includes('sales') ||
       type.includes('customer') ||
       type.includes('buyer') ||
+      type.includes('debtor') ||
+      type.includes('client') ||
+      type.includes('wholesaler') ||
+      type.includes('garment') ||
+      group.includes('debtor') ||
       group.includes('customer') ||
-      group.includes('buyer')
+      group.includes('buyer') ||
+      group.includes('client') ||
+      group.includes('wholesaler') ||
+      group.includes('garment')
     );
+
+    if (isExplicitBuyer) return true;
+
+    // 2. Exclude service providers / vendors only if not explicitly a buyer
+    const excludeTerms = [
+      'job', 'worker', 'processor', 'dyeing', 'weaving', 'weaver', 'warping', 
+      'sizing', 'printing', 'finishing', 'doubling', 'twisting', 'converter', 
+      'coverter', 'loom', 'logistics', 'courier', 'postage', 'testing', 
+      'lab', 'washing', 'service', 'supplier', 'vendor', 'mill'
+    ];
+
+    if (excludeTerms.some(term => type.includes(term))) {
+      return false;
+    }
+
+    return true;
   };
 
   return (
@@ -1453,9 +1476,13 @@ export default function BuyerOrder() {
                       <label>Party Name *</label>
                       <select className="form-control" required value={form.party_id} onChange={handlePartyChange}>
                         <option value="">Select Party...</option>
-                        {parties.filter(isSalesParty).map(p => (
-                          <option key={p.id} value={p.id}>{p.company_name} ({p.customer_code})</option>
-                        ))}
+                        {(() => {
+                          const salesList = parties.filter(isSalesParty);
+                          const list = salesList.length > 0 ? salesList : parties;
+                          return list.map(p => (
+                            <option key={p.id} value={p.id}>{p.company_name} ({p.customer_code})</option>
+                          ));
+                        })()}
                       </select>
                     </div>
                     <div className="form-group">
@@ -1469,12 +1496,16 @@ export default function BuyerOrder() {
                       ) : (
                         <select className="form-control" name="buyer_name" value={form.buyer_name} onChange={handleChange}>
                           <option value="">-- Select Buyer Name --</option>
-                          {form.buyer_name && !parties.filter(isSalesParty).some(p => p.company_name === form.buyer_name) && (
+                          {form.buyer_name && !parties.some(p => p.company_name === form.buyer_name) && (
                             <option value={form.buyer_name}>{form.buyer_name}</option>
                           )}
-                          {parties.filter(isSalesParty).map(p => (
-                            <option key={p.id} value={p.company_name}>{p.company_name} ({p.customer_code})</option>
-                          ))}
+                          {(() => {
+                            const salesList = parties.filter(isSalesParty);
+                            const list = salesList.length > 0 ? salesList : parties;
+                            return list.map(p => (
+                              <option key={p.id} value={p.company_name}>{p.company_name} ({p.customer_code})</option>
+                            ));
+                          })()}
                           <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
                         </select>
                       )}

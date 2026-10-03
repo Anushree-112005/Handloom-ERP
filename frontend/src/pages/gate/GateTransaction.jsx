@@ -595,7 +595,7 @@ export default function GateTransaction() {
                     <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)' }}>Gate Pass Ticket Summary Preview</span>
                   </div>
                   <div style={{ fontSize: '11px', fontFamily: 'monospace', color: 'var(--text-secondary)' }}>
-                    DINESH EXPORTS SECURITY SYSTEM - {activeTx.passNo}<br />
+                    HANDLOOM ERP SECURITY SYSTEM - {activeTx.passNo}<br />
                     VEHICLE: {activeTx.vehicleNo} | DIR: {activeTx.type.toUpperCase()}<br />
                     FROM/TO: {activeTx.party}<br />
                     NET WEIGHT: {activeTx.weightNet.toLocaleString()} Kgs<br />

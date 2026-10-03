@@ -2,8 +2,8 @@ import requests
 
 try:
     res = requests.post("http://127.0.0.1:8000/api/finance/api/companies/", json={
-        "name": "Dinesh Exports",
-        "legal_name": "Dinesh Exports",
+        "name": "Handloom ERP",
+        "legal_name": "Handloom ERP",
         "maintain_inventory": True
     })
     print(res.status_code)

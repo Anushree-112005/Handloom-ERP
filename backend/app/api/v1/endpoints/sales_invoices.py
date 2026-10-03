@@ -445,7 +445,7 @@ async def generate_eway_bill_json(invoice_id: int, db: AsyncSession = Depends(ge
         "documentNo": inv.invoice_no,
         "documentDate": inv.invoice_date.strftime("%d/%m/%Y") if inv.invoice_date else "",
         "fromGstin": "YOUR_COMPANY_GSTIN", # Placeholder for actual company GSTIN
-        "fromTrdName": "Dinesh Exports",
+        "fromTrdName": "Handloom ERP",
         "fromAddr1": "Company Address",
         "fromPlace": "City",
         "fromPincode": 600001,

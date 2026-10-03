@@ -450,7 +450,7 @@ function DesignSheetModal({ isOpen, onClose, design, colorMasters }) {
     try {
       setDownloading(true);
       const payload = {
-        company_name: "Dinesh Exports Private Limited",
+        company_name: "Handloom ERP Private Limited",
         design_no: design.design_no,
         weave_type: design.weaving || 'Plain',
         reed: parseInt(design.reed) || 0,
@@ -563,7 +563,7 @@ function DesignSheetModal({ isOpen, onClose, design, colorMasters }) {
             <div style={{ border: '2.5px solid #000', padding: '16px', marginBottom: 20, borderRadius: 4 }}>
               <div style={{ textAlign: 'center', marginBottom: 12 }}>
                 <h2 style={{ margin: '0 0 4px 0', fontSize: 18, fontWeight: 800, textTransform: 'uppercase', color: '#000' }}>
-                  Dinesh Exports Private Limited -Tiruchengode,Namakkal-638008
+                  Handloom ERP Private Limited -Tiruchengode,Namakkal-638008
                 </h2>
                 <h3 style={{ margin: 0, fontSize: 13, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#444' }}>
                   DESIGN SHEET
@@ -1772,7 +1772,7 @@ export default function DesignEntry() {
 
   const exportPDF = () => {
     const doc = new jsPDF('landscape');
-    doc.text("Dinesh Textile - Design Entry Report", 14, 15);
+    doc.text("Handloom ERP - Design Entry Report", 14, 15);
     const headers = [["DS Ref No", "Date", "Design No", "Buyer", "Fabric", "Weaving", "Book No", "Page No"]];
     const rows = filteredEntries.map(e => [
       e.ds_ref_no || '-',

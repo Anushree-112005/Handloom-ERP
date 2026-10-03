@@ -699,7 +699,7 @@ export default function HRReports() {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(16);
     doc.setTextColor(15, 23, 42);
-    doc.text('DINESH EXPORTS - HR INTELLIGENCE SYSTEM', 14, 22);
+    doc.text('HANDLOOM ERP - HR INTELLIGENCE SYSTEM', 14, 22);
     
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(11);
@@ -748,7 +748,7 @@ export default function HRReports() {
           </style>
         </head>
         <body>
-          <h1>DINESH EXPORTS ERP — ${targetTitle.toUpperCase()}</h1>
+          <h1>HANDLOOM ERP — ${targetTitle.toUpperCase()}</h1>
           <p>Generated on: ${new Date().toLocaleString()}</p>
           <table>
             <thead>
@@ -1661,8 +1661,8 @@ export default function HRReports() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px dashed var(--border)', paddingBottom: '16px' }}>
                 <div>
-                  <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#4f46e5', margin: 0 }}>DINESH EXPORTS</h4>
-                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>The House Of Fabrics — HR Master</span>
+                  <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#4f46e5', margin: 0 }}>HANDLOOM ERP</h4>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}> — HR Master</span>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <span style={{ fontSize: '10px', background: '#e2e8f0', color: 'var(--text-primary)', padding: '3px 8px', borderRadius: '4px', fontWeight: 700 }}>
@@ -1737,7 +1737,7 @@ export default function HRReports() {
                 <input 
                   type="email" 
                   className="form-control" 
-                  defaultValue="hr.partner@dineshexports.com" 
+                  defaultValue="hr.partner@handloomerp.com" 
                   placeholder="recipient@example.com" 
                   style={{ padding: '8px 12px', fontSize: '13px', margin: 0 }} 
                 />
@@ -1748,7 +1748,7 @@ export default function HRReports() {
                 <input 
                   type="text" 
                   className="form-control" 
-                  defaultValue={`Dinesh Exports HR MIS - ${showEmailModal.title}`} 
+                  defaultValue={`Handloom ERP HR MIS - ${showEmailModal.title}`} 
                   style={{ padding: '8px 12px', fontSize: '13px', margin: 0 }} 
                 />
               </div>
@@ -1758,7 +1758,7 @@ export default function HRReports() {
                 <textarea 
                   className="form-control" 
                   rows={4}
-                  defaultValue={`Dear Partner,\n\nPlease find attached the requested "${showEmailModal.title}" log voucher for your reference.\n\nBest Regards,\nHR MIS Team — Dinesh Exports`} 
+                  defaultValue={`Dear Partner,\n\nPlease find attached the requested "${showEmailModal.title}" log voucher for your reference.\n\nBest Regards,\nHR MIS Team — Handloom ERP`} 
                   style={{ padding: '10px 12px', fontSize: '13px', margin: 0, resize: 'vertical' }} 
                 />
               </div>

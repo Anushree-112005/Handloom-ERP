@@ -375,7 +375,7 @@ export default function FabricDyeingPO() {
 
   const exportPDF = () => {
     const doc = new jsPDF('landscape');
-    doc.text(`Dinesh Textile - ${title}`, 14, 15);
+    doc.text(`Handloom ERP - ${title}`, 14, 15);
     const headers = [["PO No", "Date", "Supplier", "Amount", "Status"]];
     const rows = filteredOrders.map(o => [
       o.po_no || o.po_number || '-',
